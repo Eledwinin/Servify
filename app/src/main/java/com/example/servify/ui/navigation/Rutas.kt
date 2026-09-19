@@ -3,7 +3,13 @@ package com.example.servify.ui.navigation
 sealed class Rutas(val ruta: String) {
     // Pantallas públicas
     object Login : Rutas("login")
-    object Registro : Rutas("registro")
+    object RecuperarPassword : Rutas("recuperar_password")
+    object SeleccionRol : Rutas("seleccion_rol")
+    object RegistroCliente : Rutas("registro_cliente")
+    object RegistroTrabajador : Rutas("registro_trabajador")
+
+
+
 
     // Pestañas principales
     object Home : Rutas("home")

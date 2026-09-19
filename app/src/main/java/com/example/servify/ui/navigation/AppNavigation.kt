@@ -17,6 +17,11 @@ import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScr
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.LoginScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.OlvidePasswordScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
 
 @Composable
 fun AppNavigation() {
@@ -58,6 +63,73 @@ fun AppNavigation() {
                 LoginScreen(
                     onLoginExitoso = {
                         navController.navigate(Rutas.Home.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onIrARegistro = {
+                        navController.navigate(Rutas.SeleccionRol.ruta)
+                    },
+                    onOlvidastePassword = {
+                        navController.navigate(Rutas.RecuperarPassword.ruta)
+                    }
+                )
+            }
+            // Pantalla de Selección de Rol
+            composable(Rutas.SeleccionRol.ruta) {
+                SeleccionRolScreen(
+                    onContinuar = { rol ->
+                        when (rol) {
+                            TipoRol.CLIENTE -> navController.navigate(Rutas.RegistroCliente.ruta)
+                            TipoRol.TRABAJADOR -> navController.navigate(Rutas.RegistroTrabajador.ruta)
+                        }
+                    },
+                    onIrALogin = {
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            //pantalla de olvidaste la contra
+            composable(Rutas.RecuperarPassword.ruta) {
+                OlvidePasswordScreen(
+                    onPasswordRestablecido = {
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onVolverALogin = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            // Registro Cliente
+            composable(Rutas.RegistroCliente.ruta) {
+                RegistroClienteScreen(
+                    onRegistroExitoso = {
+                        navController.navigate(Rutas.Home.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onIrALogin = {
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Registro Trabajador
+            composable(Rutas.RegistroTrabajador.ruta) {
+                RegistroTrabajadorScreen(
+                    onRegistroExitoso = {
+                        navController.navigate(Rutas.Home.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onIrALogin = {
+                        navController.navigate(Rutas.Login.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     }
