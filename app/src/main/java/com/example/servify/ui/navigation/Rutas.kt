@@ -17,6 +17,8 @@ sealed class Rutas(val ruta: String) {
     object Mensajes : Rutas("mensajes")
     object Perfil : Rutas("perfil")
 
+    object MuroSolicitudes : Rutas("muro_solicitudes")
+
     // Subflujos
     object CheckoutPago : Rutas("checkout_pago")
     object DetalleTecnico : Rutas("detalle_tecnico/{tecnicoId}") {

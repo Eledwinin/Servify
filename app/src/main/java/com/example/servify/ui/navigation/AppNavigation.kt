@@ -22,6 +22,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteSc
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
+import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
 
 @Composable
 fun AppNavigation() {
@@ -31,6 +32,7 @@ fun AppNavigation() {
 
     val rutasConBarraInferior = listOf(
         Rutas.Home.ruta,
+        Rutas.MuroSolicitudes.ruta,
         Rutas.Actividad.ruta,
         Rutas.Mensajes.ruta,
         Rutas.Perfil.ruta
@@ -59,10 +61,14 @@ fun AppNavigation() {
             startDestination = Rutas.Login.ruta,
             modifier = Modifier.padding(paddingValores)
         ) {
-            composable(Rutas.Login.ruta) {
+            composable(route = Rutas.Login.ruta) {
                 LoginScreen(
-                    onLoginExitoso = {
-                        navController.navigate(Rutas.Home.ruta) {
+                    onLoginExitoso = { usuario ->
+                        val rutaDestino = when (usuario.rol.lowercase()) {
+                            "tecnico", "trabajador" -> Rutas.MuroSolicitudes.ruta
+                            else -> Rutas.Home.ruta
+                        }
+                        navController.navigate(rutaDestino) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
@@ -108,7 +114,7 @@ fun AppNavigation() {
             composable(Rutas.RegistroCliente.ruta) {
                 RegistroClienteScreen(
                     onRegistroExitoso = {
-                        navController.navigate(Rutas.Home.ruta) {
+                        navController.navigate(Rutas.Login.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
@@ -124,7 +130,7 @@ fun AppNavigation() {
             composable(Rutas.RegistroTrabajador.ruta) {
                 RegistroTrabajadorScreen(
                     onRegistroExitoso = {
-                        navController.navigate(Rutas.Home.ruta) {
+                        navController.navigate(Rutas.Login.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
@@ -136,11 +142,13 @@ fun AppNavigation() {
                 )
             }
 
+            composable(Rutas.MuroSolicitudes.ruta) {
+                MuroSolicitudesScreen(navController = navController)
+            }
+
             composable(Rutas.Home.ruta) {
                 HomeScreen(
-                    onIrADetalleTecnico = { id ->
-                        navController.navigate(Rutas.DetalleTecnico.crearRuta(id))
-                    }
+                    navController = navController
                 )
             }
 

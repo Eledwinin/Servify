@@ -31,7 +31,7 @@ data class UsuarioModel(
     val direccionTexto: String? = null,
 
     @SerializedName("es_vip")
-    val esVip: Boolean = false,
+    val es_vip: Any? = null,
 
     @SerializedName("calificacion_promedio")
     val calificacionPromedio: Double = 0.0,

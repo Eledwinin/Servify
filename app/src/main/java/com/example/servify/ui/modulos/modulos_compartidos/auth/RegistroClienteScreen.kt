@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -64,7 +63,6 @@ fun RegistroClienteScreen(
     val context = LocalContext.current
     val estadoRegistro by viewModel.estadoRegistro.collectAsState()
 
-    // Manejo del estado del registro (mensajes de error/éxito)
     LaunchedEffect(estadoRegistro) {
         when (val estado = estadoRegistro) {
             is RegistroState.Error -> {
@@ -89,7 +87,6 @@ fun RegistroClienteScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ServifySurface)
-            .imePadding()
             .padding(horizontal = 24.dp)
     ) {
         Column(
@@ -98,7 +95,7 @@ fun RegistroClienteScreen(
                 .verticalScroll(scrollState)
                 .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Box(
                 modifier = Modifier
