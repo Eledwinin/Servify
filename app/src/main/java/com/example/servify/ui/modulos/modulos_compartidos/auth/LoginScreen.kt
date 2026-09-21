@@ -1,5 +1,7 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
+import android.R.attr.password
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.WorkOutline
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +35,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.data.model.Usuario
 import com.example.servify.ui.componentes.botones.BotonPrincipal
 import com.example.servify.ui.componentes.inputs.CampoTexto
 import com.example.servify.ui.theme.ServifyGreenPrimary
@@ -42,12 +47,11 @@ import com.example.servify.ui.theme.ServifyTheme
 
 @Composable
 fun LoginScreen(
-    onLoginExitoso: () -> Unit = {},
+    viewModel: LoginViewModel = viewModel(),
+    onLoginExitoso: (Usuario) -> Unit = {},
     onIrARegistro: () -> Unit = {},
     onOlvidastePassword: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -98,8 +102,8 @@ fun LoginScreen(
             // Campo Email
             CampoTexto(
                 etiqueta = "Correo Electrónico",
-                valor = email,
-                onValorCambiado = { email = it },
+                valor = viewModel.correo,
+                onValorCambiado = { viewModel.onCorreoChange(it) },
                 placeholder = "tu@correo.com",
                 iconoInicio = Icons.Outlined.Email,
                 tipoTeclado = KeyboardType.Email
@@ -110,8 +114,8 @@ fun LoginScreen(
             // Campo Contraseña
             CampoTexto(
                 etiqueta = "Contraseña",
-                valor = password,
-                onValorCambiado = { password = it },
+                valor = viewModel.password,
+                onValorCambiado = { viewModel.onPasswordChange(it) },
                 placeholder = "••••••••",
                 iconoInicio = Icons.Outlined.Lock,
                 esPassword = true,
@@ -130,13 +134,31 @@ fun LoginScreen(
                     .clickable { onOlvidastePassword() }
             )
 
+            // Mensaje de error si falla la autenticación
+            AnimatedVisibility(visible = viewModel.mensajeError != null) {
+                viewModel.mensajeError?.let { error ->
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(28.dp))
+
 
             // Botón de inicio de sesión
             BotonPrincipal(
-                texto = "Iniciar Sesión",
-                onClick = onLoginExitoso,
-                habilitado = email.isNotBlank() && password.isNotBlank()
+                texto = if (viewModel.cargando) "Iniciando Sesión..." else "Iniciar Sesión",
+                onClick = {
+                    viewModel.iniciarSesion{ usuario ->
+                        onLoginExitoso(usuario)
+                    }
+                },
+                habilitado = !viewModel.cargando && viewModel.correo.isNotBlank() && viewModel.password.isNotBlank()
             )
 
             Spacer(modifier = Modifier.height(24.dp))
