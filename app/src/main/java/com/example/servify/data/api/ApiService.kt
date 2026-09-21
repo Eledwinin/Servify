@@ -1,10 +1,13 @@
 package com.example.servify.data.api
 
 import com.example.servify.data.model.AuthResponse
+import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
+import com.example.servify.data.model.MensajeResponse
 import com.example.servify.data.model.RegisterRequest
+import com.example.servify.data.model.SolicitarRecuperacionRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -25,4 +28,16 @@ interface ApiService {
     suspend fun registrarUsuario(
         @Body request: RegisterRequest
     ): Response<AuthResponse>
+
+    // Endpoint para Solicitar Recuperación
+    @POST("api/auth/solicitar-recuperacion")
+    suspend fun solicitarRecuperacion(
+        @Body request: SolicitarRecuperacionRequest
+    ): Response<MensajeResponse>
+
+    // Endpoint para Cambiar Contraseña
+    @POST("api/auth/cambiar-password")
+    suspend fun cambiarPassword(
+        @Body request: CambiarPasswordRequest
+    ): Response<MensajeResponse>
 }

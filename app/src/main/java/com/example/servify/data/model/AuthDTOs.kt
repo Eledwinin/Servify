@@ -39,3 +39,27 @@ data class LoginResponse(
     @SerializedName("usuario")
     val usuario: UsuarioModel?
 )
+
+// lo que mandamos para pedir el código de 6 dígitos
+data class SolicitarRecuperacionRequest(
+    @SerializedName("correo")
+    val correo: String
+)
+
+// lo que mandamos para validar el código y cambiar la clave
+data class CambiarPasswordRequest(
+    @SerializedName("correo")
+    val correo: String,
+
+    @SerializedName("codigo")
+    val codigo: String,
+
+    @SerializedName("nuevaPassword")
+    val nuevaPassword: String
+)
+
+//lo que Node.js nos responde en ambos endpoints
+data class MensajeResponse(
+    @SerializedName("mensaje")
+    val mensaje: String
+)

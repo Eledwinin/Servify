@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     private const val BASE_URL = "https://servify-backend-45ae.onrender.com/"
+//private const val BASE_URL = "http://192.168.18.7:3000/"
 
     // Agregamos tiempo de espera extra por si Render está dormido
     private val okHttpClient = OkHttpClient.Builder()

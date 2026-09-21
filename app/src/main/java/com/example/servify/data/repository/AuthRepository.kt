@@ -3,8 +3,10 @@ package com.example.servify.data.repository
 import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.AuthResponse
+import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.RegisterRequest
+import com.example.servify.data.model.SolicitarRecuperacionRequest
 import com.example.servify.data.model.UsuarioModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,6 +42,36 @@ class AuthRepository(
             } catch (e: Exception) {
                 Result.failure(Exception("No se pudo conectar con el servidor: ${e.localizedMessage ?: "Error de red"}"))
             }
+        }
+    }
+
+    suspend fun solicitarRecuperacion(correo: String): Result<String> {
+        return try {
+            val respuesta = apiService.solicitarRecuperacion(
+                SolicitarRecuperacionRequest(correo)
+            )
+            if (respuesta.isSuccessful) {
+                Result.success(respuesta.body()?.mensaje ?: "Código enviado exitosamente")
+            } else {
+                Result.failure(Exception("Error al enviar código: correo no encontrado"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de red: ${e.localizedMessage}"))
+        }
+    }
+
+    suspend fun cambiarPassword(correo: String, codigo: String, nuevaPassword: String): Result<String> {
+        return try {
+            val respuesta = apiService.cambiarPassword(
+                CambiarPasswordRequest(correo, codigo, nuevaPassword)
+            )
+            if (respuesta.isSuccessful) {
+                Result.success(respuesta.body()?.mensaje ?: "Contraseña actualizada exitosamente")
+            } else {
+                Result.failure(Exception("El código es incorrecto o ha expirado"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de red: ${e.localizedMessage}"))
         }
     }
 }
