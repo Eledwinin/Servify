@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +23,12 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.WorkOutline
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,10 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
 import com.example.servify.ui.componentes.inputs.CampoTexto
 import com.example.servify.ui.theme.ServifyGreenPrimary
@@ -46,7 +52,8 @@ import com.example.servify.ui.theme.ServifyTextTitle
 @Composable
 fun RegistroClienteScreen(
     onRegistroExitoso: () -> Unit = {},
-    onIrALogin: () -> Unit = {}
+    onIrALogin: () -> Unit = {},
+    viewModel: RegistroViewModel = viewModel()
 ) {
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -54,12 +61,29 @@ fun RegistroClienteScreen(
     var password by remember { mutableStateOf("") }
     var confirmarPassword by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+    val estadoRegistro by viewModel.estadoRegistro.collectAsState()
+
+    // Manejo del estado del registro (mensajes de error/éxito)
+    LaunchedEffect(estadoRegistro) {
+        when (val estado = estadoRegistro) {
+            is RegistroState.Error -> {
+                Toast.makeText(context, estado.mensaje, Toast.LENGTH_LONG).show()
+            }
+            is RegistroState.Success -> {
+                Toast.makeText(context, estado.mensaje, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+        }
+    }
+
     val scrollState = rememberScrollState()
     val formularioValido = nombre.isNotBlank() &&
             email.isNotBlank() &&
             telefono.isNotBlank() &&
             password.isNotBlank() &&
-            password == confirmarPassword
+            password == confirmarPassword &&
+            estadoRegistro !is RegistroState.Loading
 
     Box(
         modifier = Modifier
@@ -163,11 +187,29 @@ fun RegistroClienteScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            BotonPrincipal(
-                texto = "Crear Cuenta de Cliente",
-                onClick = onRegistroExitoso,
-                habilitado = formularioValido
-            )
+            if (estadoRegistro is RegistroState.Loading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = ServifyGreenPrimary)
+                }
+            } else {
+                BotonPrincipal(
+                    texto = "Crear Cuenta de Cliente",
+                    onClick = {
+                        viewModel.registrarUsuario(
+                            nombre = nombre,
+                            correo = email,
+                            password = password,
+                            telefono = telefono,
+                            rol = "cliente",
+                            onSuccess = onRegistroExitoso
+                        )
+                    },
+                    habilitado = formularioValido
+                )
+            }
 
             Spacer(modifier = Modifier.height(18.dp))
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.example.servify.ui.navigation.AppNavigation
 import com.example.servify.ui.theme.ServifyTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,8 +19,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Aquí irá la pantalla principal o el NavHost de navegación
-                    // Por ejemplo: LoginScreen() o HomeScreen()
+                    AppNavigation()
                 }
             }
         }

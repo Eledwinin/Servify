@@ -2,6 +2,7 @@ package com.example.servify.ui.modulos.modulos_compartidos.auth
 
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -23,7 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
@@ -34,10 +34,13 @@ import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
 import com.example.servify.ui.componentes.inputs.CampoTexto
 import com.example.servify.ui.theme.ServifyBorder
@@ -62,20 +66,34 @@ import com.example.servify.ui.theme.ServifyTextTitle
 @Composable
 fun RegistroTrabajadorScreen(
     onRegistroExitoso: () -> Unit = {},
-    onIrALogin: () -> Unit = {}
+    onIrALogin: () -> Unit = {},
+    viewModel: RegistroViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val estadoRegistro by viewModel.estadoRegistro.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var especialidad by remember { mutableStateOf("") }
-    var tarifaHora by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     // Estado para el archivo PDF
     var pdfUri by remember { mutableStateOf<Uri?>(null) }
     var pdfNombre by remember { mutableStateOf<String?>(null) }
+
+    // Manejo de respuestas del servidor
+    LaunchedEffect(estadoRegistro) {
+        when (val estado = estadoRegistro) {
+            is RegistroState.Error -> {
+                Toast.makeText(context, estado.mensaje, Toast.LENGTH_LONG).show()
+            }
+            is RegistroState.Success -> {
+                Toast.makeText(context, estado.mensaje, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+        }
+    }
 
     // Selector de archivos del sistema
     val selectorPdf = rememberLauncherForActivityResult(
@@ -83,7 +101,6 @@ fun RegistroTrabajadorScreen(
     ) { uri: Uri? ->
         pdfUri = uri
         if (uri != null) {
-            // Obtener el nombre real del archivo seleccionado
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 if (cursor.moveToFirst() && nameIndex >= 0) {
@@ -101,8 +118,8 @@ fun RegistroTrabajadorScreen(
             email.isNotBlank() &&
             telefono.isNotBlank() &&
             especialidad.isNotBlank() &&
-            tarifaHora.isNotBlank() &&
-            password.isNotBlank()
+            password.isNotBlank() &&
+            estadoRegistro !is RegistroState.Loading
 
     Box(
         modifier = Modifier
@@ -204,7 +221,7 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // seccion de curriculum
+            // Sección de curriculum
             Text(
                 text = "Currículum o Certificados (Opcional)",
                 fontSize = 13.sp,
@@ -214,7 +231,6 @@ fun RegistroTrabajadorScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (pdfUri == null) {
-                // Botón para subir el CV
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -246,7 +262,6 @@ fun RegistroTrabajadorScreen(
                     }
                 }
             } else {
-                // aqui se va a mostrar el archivo con opcion de quitarlo si quire
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -293,11 +308,29 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            BotonPrincipal(
-                texto = "Registrarme como Profesional",
-                onClick = onRegistroExitoso,
-                habilitado = formularioValido
-            )
+            if (estadoRegistro is RegistroState.Loading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = ServifyGreenPrimary)
+                }
+            } else {
+                BotonPrincipal(
+                    texto = "Registrarme como Profesional",
+                    onClick = {
+                        viewModel.registrarUsuario(
+                            nombre = nombre,
+                            correo = email,
+                            password = password,
+                            telefono = telefono,
+                            rol = "tecnico",
+                            onSuccess = onRegistroExitoso
+                        )
+                    },
+                    habilitado = formularioValido
+                )
+            }
 
             Spacer(modifier = Modifier.height(18.dp))
 
