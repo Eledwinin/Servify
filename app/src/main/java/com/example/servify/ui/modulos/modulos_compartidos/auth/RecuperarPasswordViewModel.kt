@@ -90,14 +90,32 @@ class RecuperarPasswordViewModel(
             )
         }
     }
-
     fun verificarCodigoPaso() {
-        if (codigoOtp.trim().length != 6) {
+        val codigoTrim = codigoOtp.trim()
+        if (codigoTrim.length != 6) {
             mensajeError = "El código debe tener 6 dígitos"
             return
         }
+
+        cargando = true
         mensajeError = null
-        pasoActual = 3
+
+        viewModelScope.launch {
+            val resultado = repository.verificarCodigoOtp(
+                correo = correo.trim(),
+                codigo = codigoTrim
+            )
+            cargando = false
+
+            resultado.fold(
+                onSuccess = {
+                    pasoActual = 3
+                },
+                onFailure = {
+                    mensajeError = "El código ingresado es incorrecto o ha expirado"
+                }
+            )
+        }
     }
 
     fun restablecerPassword(onExito: () -> Unit) {

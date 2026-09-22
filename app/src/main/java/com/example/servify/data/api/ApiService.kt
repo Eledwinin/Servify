@@ -40,4 +40,10 @@ interface ApiService {
     suspend fun cambiarPassword(
         @Body request: CambiarPasswordRequest
     ): Response<MensajeResponse>
+
+    //endpoint para verificar el codigo
+    @POST("api/auth/verificar-codigo")
+    suspend fun verificarCodigoOtp(
+        @Body request: CambiarPasswordRequest
+    ): Response<MensajeResponse>
 }

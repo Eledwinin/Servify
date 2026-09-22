@@ -53,10 +53,12 @@ class AuthRepository(
             if (respuesta.isSuccessful) {
                 Result.success(respuesta.body()?.mensaje ?: "Código enviado exitosamente")
             } else {
-                Result.failure(Exception("Error al enviar código: correo no encontrado"))
+                // Esto te dirá si es 500, 404, 400 y el texto exacto que escupió Node.js
+                val errorText = respuesta.errorBody()?.string() ?: "Sin detalle"
+                Result.failure(Exception("Error HTTP ${respuesta.code()}: $errorText"))
             }
         } catch (e: Exception) {
-            Result.failure(Exception("Error de red: ${e.localizedMessage}"))
+            Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
         }
     }
 
@@ -72,6 +74,22 @@ class AuthRepository(
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error de red: ${e.localizedMessage}"))
+        }
+    }
+
+    suspend fun verificarCodigoOtp(correo: String, codigo: String): Result<String> {
+        return try {
+            val respuesta = apiService.verificarCodigoOtp(
+                CambiarPasswordRequest(correo = correo, codigo = codigo, nuevaPassword = "")
+            )
+            if (respuesta.isSuccessful) {
+                Result.success(respuesta.body()?.mensaje ?: "Código válido")
+            } else {
+                val errorText = respuesta.errorBody()?.string() ?: "Código incorrecto"
+                Result.failure(Exception(errorText))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
         }
     }
 }
