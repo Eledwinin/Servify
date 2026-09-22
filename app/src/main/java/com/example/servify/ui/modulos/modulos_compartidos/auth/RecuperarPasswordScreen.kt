@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,16 +34,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
+import com.example.servify.ui.componentes.feedback.MensajeFeedback
 import com.example.servify.ui.componentes.indicadores.ProgresoPasos
 import com.example.servify.ui.componentes.inputs.CampoTexto
 import com.example.servify.ui.theme.ServifyBackground
@@ -58,7 +62,20 @@ fun OlvidePasswordScreen(
     onVolverALogin: () -> Unit = {},
     viewModel: RecuperarPasswordViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(viewModel.cambioExitoso) {
+        if (viewModel.cambioExitoso) {
+            Toast.makeText(
+                context,
+                "¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            onPasswordRestablecido()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -115,22 +132,10 @@ fun OlvidePasswordScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            viewModel.mensajeError?.let { error ->
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    color = ServifyDangerBg
-                ) {
-                    Text(
-                        text = error,
-                        color = ServifyDanger,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
+            MensajeFeedback(
+                mensaje = viewModel.mensajeError,
+                esError = true
+            )
 
             AnimatedContent(
                 targetState = viewModel.pasoActual,

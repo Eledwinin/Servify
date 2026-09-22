@@ -17,6 +17,9 @@ class RecuperarPasswordViewModel(
     var pasoActual by mutableIntStateOf(1)
         private set
 
+    var cambioExitoso by mutableStateOf(false)
+        private set
+
     var correo by mutableStateOf("")
         private set
 
@@ -85,11 +88,12 @@ class RecuperarPasswordViewModel(
                     pasoActual = 2
                 },
                 onFailure = { error ->
-                    mensajeError = error.message
+                    mensajeError = error.message ?: "No se pudo enviar el código. Intenta de nuevo"
                 }
             )
         }
     }
+
     fun verificarCodigoPaso() {
         val codigoTrim = codigoOtp.trim()
         if (codigoTrim.length != 6) {
@@ -112,19 +116,28 @@ class RecuperarPasswordViewModel(
                     pasoActual = 3
                 },
                 onFailure = {
-                    mensajeError = "El código ingresado es incorrecto o ha expirado"
+                    mensajeError = "El código ingresado es incorrecto"
                 }
             )
         }
     }
 
     fun restablecerPassword(onExito: () -> Unit) {
-        if (nuevaPassword.length < 6) {
+        val pass1 = nuevaPassword.trim()
+        val pass2 = confirmarPassword.trim()
+
+        if (pass1.isEmpty() || pass2.isEmpty()) {
+            mensajeError = "Por favor completa ambos campos de contraseña"
+            return
+        }
+
+        if (pass1.length < 6) {
             mensajeError = "La contraseña debe tener al menos 6 caracteres"
             return
         }
-        if (nuevaPassword != confirmarPassword) {
-            mensajeError = "Las contraseñas no coinciden"
+
+        if (pass1 != pass2) {
+            mensajeError = "Las contraseñas no coinciden. Verifícalas bien"
             return
         }
 
@@ -135,16 +148,25 @@ class RecuperarPasswordViewModel(
             val resultado = repository.cambiarPassword(
                 correo = correo.trim(),
                 codigo = codigoOtp.trim(),
-                nuevaPassword = nuevaPassword
+                nuevaPassword = pass1
             )
             cargando = false
 
             resultado.fold(
                 onSuccess = {
+                    cambioExitoso = true
                     onExito()
                 },
                 onFailure = { error ->
-                    mensajeError = error.message
+                    val detalle = error.message ?: ""
+                    mensajeError = when {
+                        detalle.contains("código", ignoreCase = true) || detalle.contains("codigo", ignoreCase = true) ->
+                            "El código ingresado no es válido"
+                        detalle.contains("conexión", ignoreCase = true) || detalle.contains("conexion", ignoreCase = true) ->
+                            "Error de red. Revisa tu conexión a internet"
+                        else ->
+                            "No se pudo actualizar la contraseña. Intenta nuevamente"
+                    }
                 }
             )
         }

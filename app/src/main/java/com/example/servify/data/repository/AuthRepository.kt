@@ -37,10 +37,17 @@ class AuthRepository(
                         Result.failure(Exception(cuerpo?.message ?: "Error al autenticar usuario"))
                     }
                 } else {
-                    Result.failure(Exception("Error del servidor: código HTTP ${respuesta.code()}"))
+                    val errorRaw = respuesta.errorBody()?.string() ?: ""
+                    val mensajeAmigable = when (respuesta.code()) {
+                        401 -> "Correo o contraseña incorrectos. Verifica tus datos."
+                        404 -> "El usuario no existe."
+                        500 -> "Error en el servidor. Intenta de nuevo más tarde."
+                        else -> "No se pudo iniciar sesión (Error ${respuesta.code()})"
+                    }
+                    Result.failure(Exception(mensajeAmigable))
                 }
             } catch (e: Exception) {
-                Result.failure(Exception("No se pudo conectar con el servidor: ${e.localizedMessage ?: "Error de red"}"))
+                Result.failure(Exception("No hay conexión con el servidor. Revisa tu internet."))
             }
         }
     }

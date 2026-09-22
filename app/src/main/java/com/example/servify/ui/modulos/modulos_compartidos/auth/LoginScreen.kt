@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.data.model.UsuarioModel
+import com.example.servify.ui.componentes.feedback.MensajeFeedback
 import com.example.servify.ui.theme.*
 
 @Composable
@@ -69,22 +70,10 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            viewModel.mensajeError?.let { error ->
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    color = ServifyDangerBg
-                ) {
-                    Text(
-                        text = error,
-                        color = ServifyDanger,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
+            MensajeFeedback(
+                mensaje = viewModel.mensajeError,
+                esError = true
+            )
 
             OutlinedTextField(
                 value = viewModel.correo,
