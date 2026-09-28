@@ -11,7 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
+import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
+import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
 import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
@@ -80,7 +82,8 @@ fun AppNavigation() {
                     }
                 )
             }
-            // Pantalla de Selección de Rol
+
+            // Selección de Rol
             composable(Rutas.SeleccionRol.ruta) {
                 SeleccionRolScreen(
                     onContinuar = { rol ->
@@ -97,7 +100,7 @@ fun AppNavigation() {
                 )
             }
 
-            //pantalla de olvidaste la contra
+            // Recuperación de Contraseña
             composable(Rutas.RecuperarPassword.ruta) {
                 OlvidePasswordScreen(
                     onPasswordRestablecido = {
@@ -110,6 +113,7 @@ fun AppNavigation() {
                     }
                 )
             }
+
             // Registro Cliente
             composable(Rutas.RegistroCliente.ruta) {
                 RegistroClienteScreen(
@@ -160,12 +164,28 @@ fun AppNavigation() {
                 ChatScreen()
             }
 
+            // Pantalla Perfil con datos reales
             composable(Rutas.Perfil.ruta) {
                 PerfilScreen(
+                    token = SessionManager.token ?: "", // el token generado
+                    onIrAEditarPerfil = {
+                        navController.navigate(Rutas.EditarPerfil.ruta)
+                    },
                     onCerrarSesion = {
+                        SessionManager.cerrarSesion()
                         navController.navigate(Rutas.Login.ruta) {
                             popUpTo(0) { inclusive = true }
                         }
+                    }
+                )
+            }
+
+            // Pantalla Editar Perfil
+            composable(Rutas.EditarPerfil.ruta) {
+                EditarPerfilClienteScreen(
+                    token = SessionManager.token ?: "",
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }

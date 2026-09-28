@@ -1,5 +1,6 @@
 package com.example.servify.data.repository
 
+import com.example.servify.data.SessionManager
 import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.AuthResponse
@@ -30,8 +31,11 @@ class AuthRepository(
                 if (respuesta.isSuccessful) {
                     val cuerpo = respuesta.body()
                     val usuario = cuerpo?.usuario
+                    val token = cuerpo?.token
 
                     if (cuerpo?.success == true && usuario != null) {
+                        // Guardamos token y usuario en la sesión activa
+                        SessionManager.guardarSesion(token, usuario)
                         Result.success(usuario)
                     } else {
                         Result.failure(Exception(cuerpo?.message ?: "Error al autenticar usuario"))
@@ -60,7 +64,6 @@ class AuthRepository(
             if (respuesta.isSuccessful) {
                 Result.success(respuesta.body()?.mensaje ?: "Código enviado exitosamente")
             } else {
-                // Esto te dirá si es 500, 404, 400 y el texto exacto que escupió Node.js
                 val errorText = respuesta.errorBody()?.string() ?: "Sin detalle"
                 Result.failure(Exception("Error HTTP ${respuesta.code()}: $errorText"))
             }

@@ -8,18 +8,15 @@ sealed class Rutas(val ruta: String) {
     object RegistroCliente : Rutas("registro_cliente")
     object RegistroTrabajador : Rutas("registro_trabajador")
 
-
-
-
     // Pestañas principales
     object Home : Rutas("home")
     object Actividad : Rutas("actividad")
     object Mensajes : Rutas("mensajes")
     object Perfil : Rutas("perfil")
-
     object MuroSolicitudes : Rutas("muro_solicitudes")
 
     // Subflujos
+    object EditarPerfil : Rutas("editar_perfil")
     object CheckoutPago : Rutas("checkout_pago")
     object DetalleTecnico : Rutas("detalle_tecnico/{tecnicoId}") {
         fun crearRuta(tecnicoId: String) = "detalle_tecnico/$tecnicoId"
