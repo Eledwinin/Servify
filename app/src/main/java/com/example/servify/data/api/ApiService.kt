@@ -7,15 +7,18 @@ import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
+import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.RegisterRequest
 import com.example.servify.data.model.SolicitarRecuperacionRequest
 import com.example.servify.data.model.UsuarioModel
 import retrofit2.Response
+
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface ApiService {
     @GET("api/categories")
@@ -63,4 +66,10 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: ActualizarPerfilRequest
     ): Response<MensajeResponse>
+
+    // para obtener el perfil del trabajador
+    @GET("api/users/{id}")
+    suspend fun getPerfilProfesional(
+        @Path("id") id: String
+    ): Response<ProfesionalPerfil>
 }
