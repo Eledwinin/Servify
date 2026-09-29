@@ -26,6 +26,10 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteSc
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
+import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
+import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
+import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
+import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
 
 @Composable
@@ -48,7 +52,14 @@ fun AppNavigation() {
                 BarraNavegacion(
                     rutaActual = rutaActual,
                     onItemClick = { destino ->
-                        navController.navigate(destino) {
+                        // Si presiona el primer botón (Home o Muro), decidimos según el rol
+                        val destinoFinal = if (destino == Rutas.Home.ruta || destino == Rutas.MuroSolicitudes.ruta) {
+                            if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
+                        } else {
+                            destino
+                        }
+
+                        navController.navigate(destinoFinal) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
@@ -68,9 +79,13 @@ fun AppNavigation() {
             composable(route = Rutas.Login.ruta) {
                 LoginScreen(
                     onLoginExitoso = { usuario ->
-                        val rutaDestino = when (usuario.rol.lowercase()) {
-                            "tecnico", "trabajador" -> Rutas.MuroSolicitudes.ruta
-                            else -> Rutas.Home.ruta
+                        // Guardamos el token actual
+                        SessionManager.guardarSesion(SessionManager.token, usuario)
+
+                        val rutaDestino = if (SessionManager.esTecnico) {
+                            Rutas.MuroSolicitudes.ruta
+                        } else {
+                            Rutas.Home.ruta
                         }
                         navController.navigate(rutaDestino) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
@@ -177,6 +192,61 @@ fun AppNavigation() {
 
             composable(Rutas.Mensajes.ruta) {
                 ChatScreen()
+            }
+
+            composable("detalle_averia/{idSolicitud}") { backStackEntry ->
+                val idString = backStackEntry.arguments?.getString("idSolicitud") ?: "1"
+                val idSolicitud = idString.toIntOrNull() ?: 1
+
+                DetalleAveriaScreen(
+                    idSolicitud = idSolicitud,
+                    navController = navController,
+                    onBackClick = { navController.popBackStack() },
+                    onPostularseClick = {
+                        // Abre el modal o flujo de postulación
+                    }
+                )
+            }
+
+            // Planes de Membresía
+            // Planes de Membresía
+            composable(Rutas.PlanesMembresia.ruta) {
+                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
+                PlanesMembresiaScreen(
+                    navController = navController,
+                    onPlanAdquirido = {
+                        perfilViewModel.cambiarMembresiaVip(esVip = true) { exito ->
+                            SessionManager.activarSuscripcionVip()
+                            navController.navigate(Rutas.PagoExitoso.ruta)
+                        }
+                    }
+                )
+            }
+
+
+            // Selección de Tarjeta / Metodo de Pago
+            composable(Rutas.MetodosPago.ruta) {
+                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
+
+                MetodosPagoScreen(
+                    navController = navController,
+                    onPagoConfirmado = {
+
+                        perfilViewModel.cambiarMembresiaVip(esVip = true) { exito ->
+                            SessionManager.activarSuscripcionVip()
+                            navController.navigate(Rutas.PagoExitoso.ruta) {
+                                popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            }
+
+            // Pantalla de Recibo / Confirmación
+            composable(Rutas.PagoExitoso.ruta) {
+                PagoExitosoScreen(
+                    navController = navController
+                )
             }
 
             // Pantalla Perfil con datos reales

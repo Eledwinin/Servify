@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.data.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,11 +66,12 @@ fun PerfilScreen(
     val bordeSuave = Color(0xFFE2E8F0)
     val rojoAlerta = Color(0xFFDC2626)
     val fondoRojoClaro = Color(0xFFFEF2F2)
+    val doradoVip = Color(0xFFD97706)
+    val fondoDoradoClaro = Color(0xFFFEF3C7)
 
-    // Lista temporal de fotos seleccionadas por el técnico
+    var mostrarDialogoCancelar by remember { mutableStateOf(false) }
     val listaFotosPortafolio = remember { mutableStateListOf<Uri>() }
 
-    // Selector nativo de fotos
     val fotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
@@ -84,6 +87,46 @@ fun PerfilScreen(
         }
     }
 
+    val user = uiState.usuario
+    val esTecnico = user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")
+    // Estado unificado: lee tanto memoria local como persistencia de backend
+    val esVipActivo = SessionManager.esVip || (user?.esVip == true)
+
+    if (mostrarDialogoCancelar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCancelar = false },
+            title = {
+                Text("Cancelar Membresía PRO", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text("¿Estás seguro de que deseas cancelar tu suscripción? Perderás el acceso prioritario al muro de clientes y tu insignia de verificación.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.cambiarMembresiaVip(esVip = false) { exito ->
+                            SessionManager.cancelarSuscripcionVip()
+                            mostrarDialogoCancelar = false
+                            if (exito) {
+                                Toast.makeText(context, "Suscripción cancelada exitosamente", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Suscripción cancelada localmente", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = rojoAlerta)
+                ) {
+                    Text("Sí, cancelar plan", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { mostrarDialogoCancelar = false }) {
+                    Text("Mantener plan")
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = Color(0xFFF8FAFC),
         topBar = {
@@ -97,25 +140,57 @@ fun PerfilScreen(
                     )
                 },
                 actions = {
-                    uiState.usuario?.let { u ->
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = verdeClaroFondo,
-                            modifier = Modifier.padding(end = 16.dp)
-                        ) {
-                            Text(
-                                text = u.rol.uppercase(),
-                                color = verdePrincipal,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 16.dp)
+                    ) {
+                        if (esVipActivo) {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = fondoDoradoClaro,
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.WorkspacePremium,
+                                        contentDescription = null,
+                                        tint = doradoVip,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = "PRO",
+                                        color = doradoVip,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+                        }
+
+                        user?.let { u ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = verdeClaroFondo
+                            ) {
+                                Text(
+                                    text = u.rol.uppercase(),
+                                    color = verdePrincipal,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
-                )
+                ),
+                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { padding ->
@@ -129,23 +204,25 @@ fun PerfilScreen(
                 CircularProgressIndicator(color = verdePrincipal)
             }
         } else {
-            val user = uiState.usuario
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(scrollState)
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // CABECERA: Iniciales, Nombre y Rol
+                // TARJETA DE PERFIL
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(fondoTarjeta, RoundedCornerShape(16.dp))
-                        .border(1.dp, bordeSuave, RoundedCornerShape(16.dp))
+                        .border(
+                            1.dp,
+                            if (esVipActivo) doradoVip.copy(alpha = 0.5f) else bordeSuave,
+                            RoundedCornerShape(16.dp)
+                        )
                         .padding(16.dp)
                 ) {
                     val iniciales = remember(user?.nombre) {
@@ -161,12 +238,12 @@ fun PerfilScreen(
                         modifier = Modifier
                             .size(64.dp)
                             .clip(CircleShape)
-                            .background(verdeClaroFondo),
+                            .background(if (esVipActivo) fondoDoradoClaro else verdeClaroFondo),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = iniciales,
-                            color = verdePrincipal,
+                            color = if (esVipActivo) doradoVip else verdePrincipal,
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp
                         )
@@ -175,20 +252,33 @@ fun PerfilScreen(
                     Spacer(modifier = Modifier.width(16.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = user?.nombre ?: "Usuario",
-                            color = textoOscuro,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = user?.nombre ?: "Usuario",
+                                color = textoOscuro,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (esVipActivo) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.WorkspacePremium,
+                                    contentDescription = "VIP Activo",
+                                    tint = doradoVip,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = user?.rol?.replaceFirstChar { it.uppercase() } ?: "Cliente",
-                            color = textoGris,
-                            fontSize = 13.sp
+                            text = if (esVipActivo && esTecnico) "Técnico Verificado PRO" else (user?.rol?.replaceFirstChar { it.uppercase() } ?: "Cliente"),
+                            color = if (esVipActivo && esTecnico) doradoVip else textoGris,
+                            fontSize = 13.sp,
+                            fontWeight = if (esVipActivo && esTecnico) FontWeight.Bold else FontWeight.Normal
                         )
 
-                        if (user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")) {
+                        if (esTecnico) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
@@ -209,7 +299,54 @@ fun PerfilScreen(
                     }
                 }
 
-                // TARJETA DE INFORMACIÓN DE CONTACTO
+                // TARJETA VIP (Si es técnico)
+                if (esTecnico) {
+                    if (esVipActivo) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = fondoDoradoClaro),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, doradoVip.copy(alpha = 0.4f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = doradoVip)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Plan Servify PRO Activo",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = Color(0xFF78350F)
+                                        )
+                                    }
+
+                                    TextButton(
+                                        onClick = { mostrarDialogoCancelar = true },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Text("Cancelar Plan", color = rojoAlerta, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Text(
+                                    text = "Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF92400E)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // INFORMACIÓN DE CONTACTO
                 Card(
                     colors = CardDefaults.cardColors(containerColor = fondoTarjeta),
                     shape = RoundedCornerShape(16.dp),
@@ -252,7 +389,6 @@ fun PerfilScreen(
                 }
 
                 // PORTAFOLIO DE TRABAJOS (Solo visible si es técnico)
-                val esTecnico = user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")
                 if (esTecnico) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = fondoTarjeta),

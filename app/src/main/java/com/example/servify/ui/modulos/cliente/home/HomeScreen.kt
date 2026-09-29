@@ -26,90 +26,89 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.data.repository.UsuarioRepository
 import com.example.servify.ui.navigation.Rutas
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 data class Categoria(val nombre: String, val icono: String)
-data class Trabajador(
-    val id: String,
-    val iniciales: String,
-    val nombre: String,
-    val rating: Double,
-    val distancia: String,
-    val categoria: String,
-    val precioHora: String
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val repository = remember { UsuarioRepository() }
     val verdeServify = Color(0xFF1B7B61)
+
     var busqueda by remember { mutableStateOf("") }
 
-    // Estados para la ubicación
+    // Estados para la carga de técnicos reales desde la API
+    var listaProfesionales by remember { mutableStateOf<List<ProfesionalPerfil>>(emptyList()) }
+    var estaCargando by remember { mutableStateOf(true) }
+    var mensajeError by remember { mutableStateOf<String?>(null) }
+
+    // Función para consultar los profesionales a Node.js
+    fun cargarTecnicos() {
+        scope.launch {
+            estaCargando = true
+            mensajeError = null
+            val resultado = repository.obtenerProfesionales()
+            resultado.onSuccess { data ->
+                listaProfesionales = data
+                estaCargando = false
+            }.onFailure { error ->
+                mensajeError = error.localizedMessage
+                estaCargando = false
+            }
+        }
+    }
+
+    // Ubicación GPS
     var tienePermisoUbicacion by remember { mutableStateOf(false) }
     var textoUbicacion by remember { mutableStateOf("Obteniendo ubicación...") }
-
-    // Cliente para obtener el GPS
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Función para obtener las coordenadas en tiempo real
     @SuppressLint("MissingPermission")
     fun obtenerCoordenadas() {
         textoUbicacion = "Obteniendo GPS..."
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
                 if (location != null) {
-                    val lat = location.latitude
-                    val lng = location.longitude
-                    textoUbicacion = "GPS: %.2f, %.2f".format(lat, lng)
+                    textoUbicacion = "GPS: %.2f, %.2f".format(location.latitude, location.longitude)
                 } else {
                     textoUbicacion = "GPS sin señal"
                 }
             }
-            .addOnFailureListener {
-                textoUbicacion = "Error GPS"
-            }
+            .addOnFailureListener { textoUbicacion = "Error GPS" }
     }
 
-    // Launcher para pedir permisos en pantalla
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val concedido = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         tienePermisoUbicacion = concedido
-        if (concedido) {
-            obtenerCoordenadas()
-        } else {
-            textoUbicacion = "Permiso denegado"
-        }
+        if (concedido) obtenerCoordenadas() else textoUbicacion = "Permiso denegado"
     }
 
-    // Efecto inicial: solicita permiso automáticamente al entrar a la pantalla
+    // Se ejecuta al entrar a la pantalla: pide ubicación y carga los técnicos reales
     LaunchedEffect(Unit) {
-        val fineLocationGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        cargarTecnicos()
 
-        val coarseLocationGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-        if (fineLocationGranted || coarseLocationGranted) {
+        if (fineGranted || coarseGranted) {
             tienePermisoUbicacion = true
             obtenerCoordenadas()
         } else {
-            // Esperamos un instante breve para asegurar que la vista cargó antes de pedir el permiso
             delay(300)
             permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
         }
     }
@@ -121,14 +120,6 @@ fun HomeScreen(navController: NavController) {
         Categoria("Diseño", "🎨"),
         Categoria("Limpieza", "🧹"),
         Categoria("Mudanzas", "📦")
-    )
-
-    val trabajadores = listOf(
-        Trabajador("1", "JP", "Juan Pérez", 4.9, "A 2.5 km de ti", "Electricidad", "$25/h"),
-        Trabajador("2", "MG", "María Gómez", 4.7, "A 1.2 km de ti", "Plomería", "$30/h"),
-        Trabajador("3", "CR", "Carlos Ruiz", 5.0, "A 3.0 km de ti", "Reparación de PC", "$40/h"),
-        Trabajador("4", "AL", "Ana López", 4.8, "A 0.8 km de ti", "Limpieza", "$15/h"),
-        Trabajador("5", "PS", "Pedro Sánchez", 4.1, "A 4.1 km de ti", "Mudanzas", "$20/h")
     )
 
     Scaffold(
@@ -168,18 +159,13 @@ fun HomeScreen(navController: NavController) {
                                 .background(Color(0xFFE0E0E0)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Perfil",
-                                tint = Color.Gray
-                            )
+                            Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.Gray)
                         }
                     }
                 }
             }
         }
     ) { paddingValues ->
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -187,17 +173,14 @@ fun HomeScreen(navController: NavController) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Botón de Ubicación / Mapa
+            // Ubicación
             item {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button(
                         onClick = {
                             if (!tienePermisoUbicacion) {
                                 permissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
-                                    )
+                                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                                 )
                             } else {
                                 obtenerCoordenadas()
@@ -222,7 +205,7 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            // Banner Verde + Buscador
+            // Banner
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -269,30 +252,125 @@ fun HomeScreen(navController: NavController) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        categorias.take(3).forEach { cat ->
-                            CategoriaItem(cat, Modifier.weight(1f))
-                        }
+                        categorias.take(3).forEach { cat -> CategoriaItem(cat, Modifier.weight(1f)) }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        categorias.drop(3).take(3).forEach { cat ->
-                            CategoriaItem(cat, Modifier.weight(1f))
-                        }
+                        categorias.drop(3).take(3).forEach { cat -> CategoriaItem(cat, Modifier.weight(1f)) }
                     }
                 }
             }
 
-            // Mejor Valorados
+            // Sección Técnicos
             item {
                 Text("Mejor Valorados", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
-            items(trabajadores) { trabajador ->
-                TrabajadorCard(
-                    trabajador = trabajador,
-                    onClick = {
-                        navController.navigate(Rutas.DetalleTecnico.crearRuta(trabajador.id))
+            if (estaCargando) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = verdeServify)
                     }
-                )
+                }
+            } else if (mensajeError != null) {
+                item {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Text("No se pudieron cargar los técnicos", color = Color.Red, fontSize = 13.sp)
+                        TextButton(onClick = { cargarTecnicos() }) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+            } else if (listaProfesionales.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay técnicos registrados aún.",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
+            } else {
+                items(listaProfesionales) { prof ->
+                    val iniciales = prof.nombreCompleto
+                        .split(" ")
+                        .filter { it.isNotBlank() }
+                        .take(2)
+                        .mapNotNull { it.firstOrNull()?.uppercase() }
+                        .joinToString("")
+                        .ifEmpty { "PR" }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                // Convertimos el Int a String con .toString()
+                                navController.navigate(Rutas.DetalleTecnico.crearRuta(prof.id.toString()))
+                            },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE2F3EE)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = iniciales,
+                                    color = Color(0xFF1B7B61),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(prof.nombreCompleto, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text("${prof.anosExperiencia} años de experiencia", fontSize = 11.sp, color = Color.Gray)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Surface(
+                                    color = Color(0xFFEEEEEE),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = prof.oficio,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFB800),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(
+                                        text = "%.1f".format(prof.calificacionPromedio),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFFFFB800)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -319,83 +397,6 @@ fun CategoriaItem(categoria: Categoria, modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.Bold,
                 color = Color.DarkGray
             )
-        }
-    }
-}
-
-@Composable
-fun TrabajadorCard(trabajador: Trabajador, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE2F3EE)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = trabajador.iniciales,
-                    color = Color(0xFF1B7B61),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(trabajador.nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(trabajador.distancia, fontSize = 11.sp, color = Color.Gray)
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                    color = Color(0xFFEEEEEE),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = trabajador.categoria,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFFB800),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = trabajador.rating.toString(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = Color(0xFFFFB800)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = trabajador.precioHora,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
         }
     }
 }

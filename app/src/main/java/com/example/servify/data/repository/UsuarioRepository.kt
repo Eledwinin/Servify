@@ -4,6 +4,7 @@ import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.UsuarioModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,15 +49,47 @@ class UsuarioRepository(
     }
 
     suspend fun obtenerPerfilProfesional(id: String): Result<ProfesionalPerfil> {
-        return try {
-            val respuesta = apiService.getPerfilProfesional(id)
-            if (respuesta.isSuccessful && respuesta.body() != null) {
-                Result.success(respuesta.body()!!)
-            } else {
-                Result.failure(Exception("Error al cargar perfil (${respuesta.code()})"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.getPerfilProfesional(id)
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!)
+                } else {
+                    Result.failure(Exception("Error al cargar perfil (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
+        }
+    }
+
+    suspend fun obtenerProfesionales(): Result<List<ProfesionalPerfil>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.getProfesionales()
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!)
+                } else {
+                    Result.failure(Exception("Error al cargar profesionales (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    suspend fun actualizarEstadoVip(idUsuario: Int, esVip: Boolean): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.actualizarEstadoVip(idUsuario, SolicitudVipDto(esVip))
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!.esVip)
+                } else {
+                    Result.failure(Exception("Error al actualizar estado VIP (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
         }
     }
 }

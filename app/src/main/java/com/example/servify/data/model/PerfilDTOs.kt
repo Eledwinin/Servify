@@ -43,6 +43,5 @@ data class ProfesionalPerfil(
     val anosExperiencia: Int,
     val calificacionPromedio: Double,
     val totalResenas: Int,
-    val biografia: String,
-    val tarifaHora: Double
+    val biografia: String
 )

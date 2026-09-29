@@ -37,7 +37,7 @@ fun TarjetaCategoria(
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFE8F3F1)) // Fondo verde pastel muy suave
+                .background(Color(0xFFE8F3F1))
         ) {
             Icon(
                 imageVector = icono,

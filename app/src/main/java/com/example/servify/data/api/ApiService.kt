@@ -9,7 +9,9 @@ import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.RegisterRequest
+import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
+import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.UsuarioModel
 import retrofit2.Response
 
@@ -72,4 +74,15 @@ interface ApiService {
     suspend fun getPerfilProfesional(
         @Path("id") id: String
     ): Response<ProfesionalPerfil>
+
+    // Endpoint para listar todos los profesionales en el Home
+    @GET("api/users/profesionales")
+    suspend fun getProfesionales(): Response<List<ProfesionalPerfil>>
+
+
+    @PUT("api/users/{id}/vip")
+    suspend fun actualizarEstadoVip(
+        @Path("id") idUsuario: Int,
+        @Body body: SolicitudVipDto
+    ): Response<RespuestaVipDto>
 }

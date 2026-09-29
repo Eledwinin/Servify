@@ -34,7 +34,6 @@ class AuthRepository(
                     val token = cuerpo?.token
 
                     if (cuerpo?.success == true && usuario != null) {
-                        // Guardamos token y usuario en la sesión activa
                         SessionManager.guardarSesion(token, usuario)
                         Result.success(usuario)
                     } else {
@@ -45,13 +44,16 @@ class AuthRepository(
                     val mensajeAmigable = when (respuesta.code()) {
                         401 -> "Correo o contraseña incorrectos. Verifica tus datos."
                         404 -> "El usuario no existe."
-                        500 -> "Error en el servidor. Intenta de nuevo más tarde."
-                        else -> "No se pudo iniciar sesión (Error ${respuesta.code()})"
+                        500 -> "Error en el servidor ($errorRaw)"
+                        else -> "No se pudo iniciar sesión (Error ${respuesta.code()}: $errorRaw)"
                     }
                     Result.failure(Exception(mensajeAmigable))
                 }
             } catch (e: Exception) {
-                Result.failure(Exception("No hay conexión con el servidor. Revisa tu internet."))
+                // Imprime el stacktrace real en el Logcat
+                android.util.Log.e("LOGIN_DEBUG", "Error REAL del login:", e)
+                // Muestra en la alerta roja el error exacto
+                Result.failure(Exception("${e.javaClass.simpleName}: ${e.localizedMessage}"))
             }
         }
     }

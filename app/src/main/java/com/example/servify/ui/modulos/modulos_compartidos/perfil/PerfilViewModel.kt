@@ -2,6 +2,7 @@ package com.example.servify.ui.modulos.modulos_compartidos.perfil
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.servify.data.SessionManager
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.data.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,7 @@ class PerfilViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             val resultado = repository.obtenerPerfil(token)
             resultado.onSuccess { usuario ->
+                SessionManager.guardarSesion(token, usuario)
                 _uiState.value = _uiState.value.copy(
                     usuario = usuario,
                     isLoading = false
@@ -37,6 +39,22 @@ class PerfilViewModel(
                     isLoading = false,
                     error = err.message
                 )
+            }
+        }
+    }
+
+    fun cambiarMembresiaVip(esVip: Boolean, onResultado: (Boolean) -> Unit) {
+        val usuario = SessionManager.usuarioActual ?: return
+        viewModelScope.launch {
+            val resultado = repository.actualizarEstadoVip(usuario.id, esVip)
+            resultado.onSuccess { nuevoEstado ->
+                SessionManager.esVip = nuevoEstado
+                val usuarioActualizado = usuario.copy(esVip = nuevoEstado)
+                SessionManager.guardarSesion(SessionManager.token, usuarioActualizado)
+                _uiState.value = _uiState.value.copy(usuario = usuarioActualizado)
+                onResultado(true)
+            }.onFailure {
+                onResultado(false)
             }
         }
     }
