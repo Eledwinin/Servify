@@ -3,6 +3,7 @@ package com.example.servify.data.repository
 import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ActualizarPerfilRequest
+import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.UsuarioModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,6 +44,19 @@ class UsuarioRepository(
             } catch (e: Exception) {
                 Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
             }
+        }
+    }
+
+    suspend fun obtenerPerfilProfesional(id: String): Result<ProfesionalPerfil> {
+        return try {
+            val respuesta = apiService.getPerfilProfesional(id)
+            if (respuesta.isSuccessful && respuesta.body() != null) {
+                Result.success(respuesta.body()!!)
+            } else {
+                Result.failure(Exception("Error al cargar perfil (${respuesta.code()})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

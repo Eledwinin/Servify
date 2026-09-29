@@ -5,6 +5,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +16,7 @@ import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
+import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
@@ -146,6 +148,19 @@ fun AppNavigation() {
                 )
             }
 
+            composable("detalle_tecnico/{idTecnico}") { backStackEntry ->
+                val idString = backStackEntry.arguments?.getString("idTecnico") ?: "1"
+                val idTecnico = idString.toIntOrNull() ?: 1
+
+                DetalleTecnicoScreen(
+                    idTecnico = idTecnico,
+                    onBackClick = { navController.popBackStack() },
+                    onContratarClick = { idContratado ->
+                        navController.navigate("contratacion/$idContratado")
+                    }
+                )
+            }
+
             composable(Rutas.MuroSolicitudes.ruta) {
                 MuroSolicitudesScreen(navController = navController)
             }
@@ -157,7 +172,7 @@ fun AppNavigation() {
             }
 
             composable(Rutas.Actividad.ruta) {
-                ActividadScreen()
+                ActividadScreen(navController = navController)
             }
 
             composable(Rutas.Mensajes.ruta) {

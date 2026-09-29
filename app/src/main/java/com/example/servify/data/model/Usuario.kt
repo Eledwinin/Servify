@@ -43,5 +43,6 @@ data class UsuarioModel(
     val actualizadoEn: String? = null
 )
 
+
 typealias Usuario = UsuarioModel
 
