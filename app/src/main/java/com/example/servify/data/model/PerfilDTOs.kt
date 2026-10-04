@@ -37,11 +37,30 @@ data class PerfilTecnicoResponse(
 )
 
 data class ProfesionalPerfil(
+    @SerializedName("id")
     val id: Int,
+
+    @SerializedName("nombreCompleto")
     val nombreCompleto: String,
+
+    @SerializedName("oficio")
     val oficio: String,
+
+    @SerializedName("anosExperiencia")
     val anosExperiencia: Int,
+
+    @SerializedName("calificacionPromedio")
     val calificacionPromedio: Double,
-    val totalResenas: Int,
-    val biografia: String
+
+    @SerializedName("totalResenas")
+    val totalResenas: Int = 0,
+
+    @SerializedName("biografia")
+    val biografia: String? = null,
+
+    @SerializedName("latitud")
+    val latitud: Double? = null,
+
+    @SerializedName("longitud")
+    val longitud: Double? = null
 )

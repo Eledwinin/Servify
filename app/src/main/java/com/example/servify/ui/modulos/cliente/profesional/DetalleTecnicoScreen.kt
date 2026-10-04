@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.servify.ui.componentes.botones.BotonContratar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +26,7 @@ fun DetalleTecnicoScreen(
     onContratarClick: (Int) -> Unit,
     viewModel: DetalleTecnicoViewModel = viewModel()
 ) {
-    // cuando entra a la pantalla pide los datos al bacekdn
+    // cuando entra a la pantalla pide los datos al backend
     LaunchedEffect(idTecnico) {
         viewModel.cargarDetalleTecnico(idTecnico)
     }
@@ -87,7 +86,6 @@ fun DetalleTecnicoScreen(
                 .padding(innerPadding)
         ) {
             when {
-
                 state.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -142,7 +140,7 @@ fun DetalleTecnicoScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = tecnico.biografia.ifEmpty { "Sin descripción disponible." },
+                                text = if (tecnico.biografia.isNullOrBlank()) "Sin descripción disponible." else tecnico.biografia,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }

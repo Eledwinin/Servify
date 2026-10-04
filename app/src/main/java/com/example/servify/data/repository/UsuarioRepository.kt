@@ -9,7 +9,7 @@ import com.example.servify.data.model.UsuarioModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UsuarioRepository(
+class  UsuarioRepository(
     private val apiService: ApiService = RetrofitClient.instance
 ) {
     suspend fun obtenerPerfil(token: String): Result<UsuarioModel> {

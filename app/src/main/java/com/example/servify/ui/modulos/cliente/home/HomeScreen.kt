@@ -25,47 +25,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.servify.data.model.ProfesionalPerfil
-import com.example.servify.data.repository.UsuarioRepository
 import com.example.servify.ui.navigation.Rutas
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-data class Categoria(val nombre: String, val icono: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel()
+) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val repository = remember { UsuarioRepository() }
     val verdeServify = Color(0xFF1B7B61)
 
     var busqueda by remember { mutableStateOf("") }
 
-    // Estados para la carga de técnicos reales desde la API
-    var listaProfesionales by remember { mutableStateOf<List<ProfesionalPerfil>>(emptyList()) }
-    var estaCargando by remember { mutableStateOf(true) }
-    var mensajeError by remember { mutableStateOf<String?>(null) }
-
-    // Función para consultar los profesionales a Node.js
-    fun cargarTecnicos() {
-        scope.launch {
-            estaCargando = true
-            mensajeError = null
-            val resultado = repository.obtenerProfesionales()
-            resultado.onSuccess { data ->
-                listaProfesionales = data
-                estaCargando = false
-            }.onFailure { error ->
-                mensajeError = error.localizedMessage
-                estaCargando = false
-            }
-        }
-    }
+    val listaProfesionales by viewModel.listaProfesionales.collectAsState()
+    val estaCargando by viewModel.estaCargando.collectAsState()
+    val mensajeError by viewModel.mensajeError.collectAsState()
 
     // Ubicación GPS
     var tienePermisoUbicacion by remember { mutableStateOf(false) }
@@ -78,6 +58,7 @@ fun HomeScreen(navController: NavController) {
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
                 if (location != null) {
+                    viewModel.actualizarUbicacionCliente(location.latitude, location.longitude)
                     textoUbicacion = "GPS: %.2f, %.2f".format(location.latitude, location.longitude)
                 } else {
                     textoUbicacion = "GPS sin señal"
@@ -95,10 +76,7 @@ fun HomeScreen(navController: NavController) {
         if (concedido) obtenerCoordenadas() else textoUbicacion = "Permiso denegado"
     }
 
-    // Se ejecuta al entrar a la pantalla: pide ubicación y carga los técnicos reales
     LaunchedEffect(Unit) {
-        cargarTecnicos()
-
         val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
@@ -112,15 +90,6 @@ fun HomeScreen(navController: NavController) {
             )
         }
     }
-
-    val categorias = listOf(
-        Categoria("Reparación PC", "💻"),
-        Categoria("Electricidad", "⚡"),
-        Categoria("Plomería", "🔧"),
-        Categoria("Diseño", "🎨"),
-        Categoria("Limpieza", "🧹"),
-        Categoria("Mudanzas", "📦")
-    )
 
     Scaffold(
         topBar = {
@@ -173,7 +142,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Ubicación
+            // Ubicación GPS
             item {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button(
@@ -244,25 +213,9 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            // Categorías
-            item {
-                Text("Categorías", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        categorias.take(3).forEach { cat -> CategoriaItem(cat, Modifier.weight(1f)) }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        categorias.drop(3).take(3).forEach { cat -> CategoriaItem(cat, Modifier.weight(1f)) }
-                    }
-                }
-            }
-
             // Sección Técnicos
             item {
-                Text("Mejor Valorados", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Más Cercanos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
             if (estaCargando) {
@@ -275,7 +228,7 @@ fun HomeScreen(navController: NavController) {
                 item {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                         Text("No se pudieron cargar los técnicos", color = Color.Red, fontSize = 13.sp)
-                        TextButton(onClick = { cargarTecnicos() }) {
+                        TextButton(onClick = { viewModel.cargarTecnicos() }) {
                             Text("Reintentar")
                         }
                     }
@@ -299,11 +252,15 @@ fun HomeScreen(navController: NavController) {
                         .joinToString("")
                         .ifEmpty { "PR" }
 
+                    val distanciaMetros = viewModel.calcularDistanciaMetros(prof.latitud, prof.longitud)
+                    val textoDistancia = if (distanciaMetros != Float.MAX_VALUE) {
+                        if (distanciaMetros >= 1000) "%.1f km".format(distanciaMetros / 1000) else "%.0f m".format(distanciaMetros)
+                    } else null
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                // Convertimos el Int a String con .toString()
                                 navController.navigate(Rutas.DetalleTecnico.crearRuta(prof.id.toString()))
                             },
                         shape = RoundedCornerShape(16.dp),
@@ -337,16 +294,33 @@ fun HomeScreen(navController: NavController) {
                                 Text(prof.nombreCompleto, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                 Text("${prof.anosExperiencia} años de experiencia", fontSize = 11.sp, color = Color.Gray)
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Surface(
-                                    color = Color(0xFFEEEEEE),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = prof.oficio,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Surface(
+                                        color = Color(0xFFEEEEEE),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = prof.oficio,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+
+                                    if (textoDistancia != null) {
+                                        Surface(
+                                            color = Color(0xFFE2F3EE),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text(
+                                                text = "📍 $textoDistancia",
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = verdeServify
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
@@ -366,37 +340,11 @@ fun HomeScreen(navController: NavController) {
                                         color = Color(0xFFFFB800)
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun CategoriaItem(categoria: Categoria, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.height(90.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = categoria.icono, fontSize = 24.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = categoria.nombre,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.DarkGray
-            )
         }
     }
 }
