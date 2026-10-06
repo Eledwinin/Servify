@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
@@ -44,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.data.SessionManager
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,28 +75,30 @@ fun PerfilScreen(
     val fondoDoradoClaro = Color(0xFFFEF3C7)
 
     var mostrarDialogoCancelar by remember { mutableStateOf(false) }
-    val listaFotosPortafolio = remember { mutableStateListOf<Uri>() }
+    var mostrarDialogoEliminarCuenta by remember { mutableStateOf(false) }
 
+    // Launcher que conecta con el ViewModel para enviar la foto al servidor
     val fotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            listaFotosPortafolio.add(uri)
-            Toast.makeText(context, "Foto agregada al portafolio", Toast.LENGTH_SHORT).show()
+            viewModel.subirFotoPortafolio(context, uri)
+            Toast.makeText(context, "Subiendo foto al portafolio...", Toast.LENGTH_SHORT).show()
         }
     }
 
     LaunchedEffect(token) {
         if (token.isNotBlank()) {
             viewModel.cargarPerfil(token)
+            viewModel.cargarPortafolio()
         }
     }
 
     val user = uiState.usuario
     val esTecnico = user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")
-    // Estado unificado: lee tanto memoria local como persistencia de backend
     val esVipActivo = SessionManager.esVip || (user?.esVip == true)
 
+    // Diálogo: Cancelar Membresía VIP
     if (mostrarDialogoCancelar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCancelar = false },
@@ -122,6 +129,55 @@ fun PerfilScreen(
             dismissButton = {
                 OutlinedButton(onClick = { mostrarDialogoCancelar = false }) {
                     Text("Mantener plan")
+                }
+            }
+        )
+    }
+
+    // Diálogo: Eliminar Cuenta Permanentemente
+    if (mostrarDialogoEliminarCuenta) {
+        AlertDialog(
+            onDismissRequest = { if (!uiState.isLoading) mostrarDialogoEliminarCuenta = false },
+            title = {
+                Text("¿Eliminar tu cuenta?", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Esta acción es definitiva. Se eliminarán permanentemente tus datos personales, evidencias fotográficas, historial y servicios asociados.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (uiState.isLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color = rojoAlerta
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.eliminarCuenta {
+                            mostrarDialogoEliminarCuenta = false
+                            Toast.makeText(context, "Cuenta eliminada permanentemente", Toast.LENGTH_LONG).show()
+                            onCerrarSesion()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = rojoAlerta),
+                    enabled = !uiState.isLoading
+                ) {
+                    Text("Sí, eliminar cuenta", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { mostrarDialogoEliminarCuenta = false },
+                    enabled = !uiState.isLoading
+                ) {
+                    Text("Cancelar")
                 }
             }
         )
@@ -187,9 +243,7 @@ fun PerfilScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
                 windowInsets = WindowInsets(0.dp)
             )
         }
@@ -300,48 +354,46 @@ fun PerfilScreen(
                 }
 
                 // TARJETA VIP (Si es técnico)
-                if (esTecnico) {
-                    if (esVipActivo) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = fondoDoradoClaro),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, doradoVip.copy(alpha = 0.4f)),
-                            modifier = Modifier.fillMaxWidth()
+                if (esTecnico && esVipActivo) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = fondoDoradoClaro),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, doradoVip.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = doradoVip)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Plan Servify PRO Activo",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            color = Color(0xFF78350F)
-                                        )
-                                    }
-
-                                    TextButton(
-                                        onClick = { mostrarDialogoCancelar = true },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                                    ) {
-                                        Text("Cancelar Plan", color = rojoAlerta, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.WorkspacePremium, contentDescription = null, tint = doradoVip)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Plan Servify PRO Activo",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = Color(0xFF78350F)
+                                    )
                                 }
 
-                                Text(
-                                    text = "Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF92400E)
-                                )
+                                TextButton(
+                                    onClick = { mostrarDialogoCancelar = true },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Cancelar Plan", color = rojoAlerta, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
+
+                            Text(
+                                text = "Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF92400E)
+                            )
                         }
                     }
                 }
@@ -388,7 +440,7 @@ fun PerfilScreen(
                     }
                 }
 
-                // PORTAFOLIO DE TRABAJOS (Solo visible si es técnico)
+                // PORTAFOLIO DE TRABAJOS (Persistente con el Backend)
                 if (esTecnico) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = fondoTarjeta),
@@ -418,25 +470,34 @@ fun PerfilScreen(
                                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                         )
                                     },
+                                    enabled = !uiState.isUploadingFoto,
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AddPhotoAlternate,
-                                        contentDescription = "Agregar foto",
-                                        tint = verdePrincipal,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Subir foto",
-                                        color = verdePrincipal,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    if (uiState.isUploadingFoto) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            color = verdePrincipal,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.AddPhotoAlternate,
+                                            contentDescription = "Agregar foto",
+                                            tint = verdePrincipal,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Subir foto",
+                                            color = verdePrincipal,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
 
-                            if (listaFotosPortafolio.isEmpty()) {
+                            if (uiState.fotosPortafolio.isEmpty()) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
                                     color = Color(0xFFF8FAFC),
@@ -466,7 +527,7 @@ fun PerfilScreen(
                                             fontSize = 12.sp
                                         )
                                         Text(
-                                            text = "Toca aquí para subir fotos de evidencias.",
+                                            text = "Toca aquí para subir evidencias fotográficas.",
                                             color = verdePrincipal,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -477,27 +538,71 @@ fun PerfilScreen(
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    items(listaFotosPortafolio) { uriFoto ->
-                                        val bitmap = remember(uriFoto) {
-                                            try {
-                                                context.contentResolver.openInputStream(uriFoto)?.use { stream ->
-                                                    BitmapFactory.decodeStream(stream)
-                                                }
-                                            } catch (e: Exception) {
-                                                null
-                                            }
-                                        }
+                                    items(uiState.fotosPortafolio, key = { it.id }) { foto ->
+                                        Box(
+                                            modifier = Modifier
+                                                .size(90.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .border(1.dp, bordeSuave, RoundedCornerShape(12.dp))
+                                        ) {
+                                            // Cargador de imagen simple y nativo
+                                            var imagenBitmap by remember(foto.foto_url) { mutableStateOf<android.graphics.Bitmap?>(null) }
 
-                                        if (bitmap != null) {
-                                            Image(
-                                                bitmap = bitmap.asImageBitmap(),
-                                                contentDescription = "Trabajo técnico",
+                                            LaunchedEffect(foto.foto_url) {
+                                                withContext(Dispatchers.IO) {
+                                                    try {
+                                                        val urlStr = if (foto.foto_url.startsWith("http")) {
+                                                            foto.foto_url
+                                                        } else {
+                                                            // Ajusta con tu host base si devuelve rutas relativas
+                                                            "https://servify-backend.onrender.com" + foto.foto_url
+                                                        }
+                                                        val input = URL(urlStr).openStream()
+                                                        imagenBitmap = BitmapFactory.decodeStream(input)
+                                                    } catch (e: Exception) {
+                                                        // En caso de fallo de red
+                                                    }
+                                                }
+                                            }
+
+                                            if (imagenBitmap != null) {
+                                                Image(
+                                                    bitmap = imagenBitmap!!.asImageBitmap(),
+                                                    contentDescription = "Trabajo técnico",
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(Color(0xFFE2E8F0)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(20.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = verdePrincipal
+                                                    )
+                                                }
+                                            }
+
+                                            // Botón superpuesto para eliminar la foto
+                                            IconButton(
+                                                onClick = { viewModel.eliminarFotoPortafolio(foto.id) },
                                                 modifier = Modifier
-                                                    .size(90.dp)
-                                                    .clip(RoundedCornerShape(12.dp))
-                                                    .border(1.dp, bordeSuave, RoundedCornerShape(12.dp)),
-                                                contentScale = ContentScale.Crop
-                                            )
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(2.dp)
+                                                    .size(24.dp)
+                                                    .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Eliminar foto",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -593,7 +698,32 @@ fun PerfilScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // BOTÓN ELIMINAR CUENTA (Acción Destructiva / Google Play Compliance)
+                TextButton(
+                    onClick = { mostrarDialogoEliminarCuenta = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteForever,
+                            contentDescription = null,
+                            tint = rojoAlerta.copy(alpha = 0.8f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Eliminar cuenta permanentemente",
+                            color = rojoAlerta.copy(alpha = 0.8f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
             }
         }
     }
