@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.data.SessionManager
 import com.example.servify.ui.navigation.Rutas
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -59,6 +60,7 @@ fun HomeScreen(
             .addOnSuccessListener { location ->
                 if (location != null) {
                     viewModel.actualizarUbicacionCliente(location.latitude, location.longitude)
+                    SessionManager.actualizarUbicacion(location.latitude, location.longitude)
                     textoUbicacion = "GPS: %.2f, %.2f".format(location.latitude, location.longitude)
                 } else {
                     textoUbicacion = "GPS sin señal"

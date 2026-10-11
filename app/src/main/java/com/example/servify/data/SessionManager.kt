@@ -9,6 +9,10 @@ object SessionManager {
     var token: String? = null
         private set
 
+    // Ubicación actual del usuario (se llena desde HomeScreen)
+    var latitud: Double? = null
+    var longitud: Double? = null
+
     val esTecnico: Boolean
         get() = usuarioActual?.rol?.lowercase() in listOf("tecnico", "trabajador")
 
@@ -23,6 +27,11 @@ object SessionManager {
         esVip = usuario?.esVip ?: false
     }
 
+    fun actualizarUbicacion(lat: Double, lng: Double) {
+        latitud = lat
+        longitud = lng
+    }
+
     fun activarSuscripcionVip() {
         esVip = true
     }
@@ -35,6 +44,8 @@ object SessionManager {
         token = null
         usuarioActual = null
         esVip = false
+        latitud = null
+        longitud = null
     }
 
     fun estaAutenticado(): Boolean = !token.isNullOrBlank()

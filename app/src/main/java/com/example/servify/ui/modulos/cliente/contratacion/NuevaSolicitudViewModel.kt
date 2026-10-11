@@ -20,6 +20,9 @@ class NuevaSolicitudViewModel : ViewModel() {
     var mensajeError by mutableStateOf<String?>(null)
     var solicitudExitosa by mutableStateOf(false)
 
+    val lat = SessionManager.latitud
+    val lng = SessionManager.longitud
+
     fun enviarSolicitud(tokenParam: String) {
         val tokenValido = if (tokenParam.isNotBlank()) tokenParam else SessionManager.token ?: ""
 
@@ -30,6 +33,11 @@ class NuevaSolicitudViewModel : ViewModel() {
 
         if (titulo.isBlank() || descripcion.isBlank() || categoria.isBlank()) {
             mensajeError = "Por favor llena la categoría, el título y la descripción."
+            return
+        }
+
+        if (lat == null || lng == null) {
+            mensajeError = "No se pudo obtener tu ubicación. Activa el GPS e inténtalo de nuevo."
             return
         }
 
@@ -49,7 +57,14 @@ class NuevaSolicitudViewModel : ViewModel() {
             isLoading = true
             mensajeError = null
             try {
-                val request = CrearSolicitudRequest(categoriaId, titulo, descripcion, presupuestoDouble)
+                val request = CrearSolicitudRequest(
+                    categoriaId = categoriaId,
+                    titulo = titulo,
+                    descripcion = descripcion,
+                    presupuesto = presupuestoDouble,
+                    latitud = lat,
+                    longitud = lng
+                )
                 val authHeader = if (tokenValido.startsWith("Bearer ")) tokenValido else "Bearer $tokenValido"
 
                 val respuesta = RetrofitClient.instance.crearSolicitud(authHeader, request)
