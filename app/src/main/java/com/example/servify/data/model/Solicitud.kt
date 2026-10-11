@@ -35,3 +35,14 @@ data class RespuestaVipDto(
     val mensaje: String,
     @SerializedName("es_vip") val esVip: Boolean
 )
+
+// DTO para enviar los datos de la solicitud al servidor
+data class CrearSolicitudRequest(
+    @SerializedName("categoria_id") val categoriaId: Int,
+    @SerializedName("titulo") val titulo: String,
+    @SerializedName("descripcion") val descripcion: String,
+    @SerializedName("presupuesto") val presupuesto: Double?,
+    @SerializedName("latitud") val latitud: Double? = null,
+    @SerializedName("longitud") val longitud: Double? = null,
+    @SerializedName("direccion_texto") val direccionTexto: String? = null
+)

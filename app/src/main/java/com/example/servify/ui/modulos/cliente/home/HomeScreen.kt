@@ -133,6 +133,19 @@ fun HomeScreen(
                     }
                 }
             }
+        },
+        // Botón flotante para crear una nueva solicitud
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { navController.navigate(Rutas.NuevaSolicitud.ruta) },
+                containerColor = verdeServify,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Crear Solicitud")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Publicar Solicitud", fontWeight = FontWeight.Bold)
+            }
         }
     ) { paddingValues ->
         LazyColumn(

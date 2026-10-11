@@ -4,6 +4,7 @@ import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.Categoria
+import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
@@ -122,6 +123,13 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("fotoId") fotoId: Int
     ): Response<MensajeResponse>
+
+    // Endpoint para crear una solicitud
+    @POST("api/solicitudes")
+    suspend fun crearSolicitud(
+        @Header("Authorization") token: String,
+        @Body request: CrearSolicitudRequest
+    ): Response<MensajeResponse>
 }
 
 // ==========================================
@@ -138,3 +146,4 @@ data class SubirFotoResponse(
     val mensaje: String,
     val foto: FotoPortafolioResponse
 )
+

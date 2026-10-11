@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
+import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
@@ -272,6 +273,14 @@ fun AppNavigation() {
                     onNavigateBack = {
                         navController.popBackStack()
                     }
+                )
+            }
+
+            //pantalla para crear nueva solicitud
+            composable(Rutas.NuevaSolicitud.ruta){
+                NuevaSolicitudScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onContinuarClick = { navController.navigate(Rutas.Home.ruta) }
                 )
             }
         }
