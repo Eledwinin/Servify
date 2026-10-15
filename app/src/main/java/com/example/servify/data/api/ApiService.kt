@@ -1,17 +1,24 @@
 package com.example.servify.data.api
 
+import com.example.servify.data.model.AceptarRespuesta
 import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.Categoria
+import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
+import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
+import com.example.servify.data.model.MiPostulacion
+import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
 import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
+import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.UsuarioModel
 import okhttp3.MultipartBody
@@ -25,6 +32,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
     @GET("api/categories")
@@ -129,6 +137,59 @@ interface ApiService {
     suspend fun crearSolicitud(
         @Header("Authorization") token: String,
         @Body request: CrearSolicitudRequest
+    ): Response<MensajeResponse>
+
+
+    //para obtener las solicitudes de los clientes
+    // Solicitudes
+    @GET("api/solicitudes")
+    suspend fun obtenerSolicitudes(
+        @Header("Authorization") token: String,
+        @Query("lat") lat: Double?,
+        @Query("lng") lng: Double?
+    ): Response<List<SolicitudItemTecnico>>
+
+    @GET("api/solicitudes/mias")
+    suspend fun obtenerMisSolicitudes(@Header("Authorization") token: String): Response<List<MiSolicitud>>
+
+    @GET("api/solicitudes/{id}")
+    suspend fun obtenerDetalleSolicitud(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<DetalleSolicitud>
+
+    // Postulaciones
+    @POST("api/postulaciones")
+    suspend fun crearPostulacion(
+        @Header("Authorization") token: String,
+        @Body request: CrearPostulacionRequest
+    ): Response<MensajeResponse>
+
+    @GET("api/postulaciones/mias")
+    suspend fun obtenerMisPostulaciones(@Header("Authorization") token: String): Response<List<MiPostulacion>>
+
+    @GET("api/postulaciones/solicitud/{id}")
+    suspend fun obtenerPropuestas(
+        @Header("Authorization") token: String,
+        @Path("id") solicitudId: Int
+    ): Response<List<PropuestaItem>>
+
+    @PUT("api/postulaciones/{id}/aceptar")
+    suspend fun aceptarPropuesta(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<AceptarRespuesta>
+
+    @PUT("api/postulaciones/{id}/rechazar")
+    suspend fun rechazarPropuesta(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<MensajeResponse>
+
+    @PUT("api/postulaciones/{id}/cancelar-acuerdo")
+    suspend fun cancelarAcuerdo(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
     ): Response<MensajeResponse>
 }
 

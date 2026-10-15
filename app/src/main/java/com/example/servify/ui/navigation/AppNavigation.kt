@@ -11,6 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.servify.ui.modulos.cliente.propuestas.PropuestasScreen
 
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
@@ -277,10 +280,25 @@ fun AppNavigation() {
             }
 
             //pantalla para crear nueva solicitud
-            composable(Rutas.NuevaSolicitud.ruta){
+            composable(Rutas.NuevaSolicitud.ruta) {
                 NuevaSolicitudScreen(
                     onBackClick = { navController.popBackStack() },
-                    onContinuarClick = { navController.navigate(Rutas.Home.ruta) }
+                    onContinuarClick = {
+                        navController.navigate(Rutas.Actividad.ruta) {
+                            popUpTo(Rutas.Home.ruta)
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Rutas.PropuestasSolicitud.ruta,
+                arguments = listOf(navArgument("solicitudId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
+                PropuestasScreen(
+                    solicitudId = solicitudId,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
         }

@@ -24,6 +24,10 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(tecnicoId: String) = "detalle_tecnico/$tecnicoId"
     }
 
+    object PropuestasSolicitud : Rutas("propuestas_solicitud/{solicitudId}") {
+        fun crearRuta(solicitudId: Int) = "propuestas_solicitud/$solicitudId"
+    }
+
     object PlanesMembresia : Rutas("planes_membresia")
     object MetodosPago : Rutas("metodos_pago")
     object PagoExitoso : Rutas("pago_exitoso")

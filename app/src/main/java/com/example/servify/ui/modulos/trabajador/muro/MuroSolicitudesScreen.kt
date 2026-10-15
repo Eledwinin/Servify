@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,59 +17,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.ui.navigation.Rutas
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MuroSolicitudesScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: MuroSolicitudesViewModel = viewModel()
 ) {
     val verdeServify = Color(0xFF1B7B61)
-
-    // Leemos el estado global de la sesión VIP
     val esVip = SessionManager.esVip
+    val context = LocalContext.current
+    val listaSolicitudes = viewModel.solicitudes
 
     var solicitudSeleccionadaParaPostular by remember { mutableStateOf<SolicitudItemTecnico?>(null) }
 
-    var listaSolicitudes by remember {
-        mutableStateOf(
-            listOf(
-                SolicitudItemTecnico(
-                    id = 1,
-                    clienteId = 101,
-                    clienteNombre = "Ana M.",
-                    categoriaNombre = "REPARACIÓN DE PC",
-                    titulo = "Pantalla rota en Laptop",
-                    descripcion = "Se me cayó la laptop (HP Pavilion) y la pantalla está estrellada pero el equipo enciende y se escuchan...",
-                    distanciaKm = 3.5
-                ),
-                SolicitudItemTecnico(
-                    id = 2,
-                    clienteId = 102,
-                    clienteNombre = "Carlos J.",
-                    categoriaNombre = "REPARACIÓN DE PC",
-                    titulo = "Pantalla rota en Laptop",
-                    descripcion = "Se me cayó la laptop (HP Pavilion) y la pantalla está estrellada pero el equipo enciende y se escuchan...",
-                    distanciaKm = 3.5
-                ),
-                SolicitudItemTecnico(
-                    id = 3,
-                    clienteId = 103,
-                    clienteNombre = "Rosa P.",
-                    categoriaNombre = "REPARACIÓN DE PC",
-                    titulo = "Pantalla rota en Laptop",
-                    descripcion = "Se me cayó la laptop (HP Pavilion) y la pantalla está estrellada pero el equipo enciende y se escuchan...",
-                    distanciaKm = 3.5
-                )
-            )
-        )
+    LaunchedEffect(Unit) { viewModel.cargarSolicitudes() }
+
+    LaunchedEffect(viewModel.mensajeError) {
+        viewModel.mensajeError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.mensajeError = null
+        }
+    }
+    LaunchedEffect(viewModel.mensajeExito) {
+        viewModel.mensajeExito?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.mensajeExito = null
+        }
     }
 
     Scaffold(
@@ -88,7 +74,6 @@ fun MuroSolicitudesScreen(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Botón superior condicionado al estado VIP real
                     Surface(
                         onClick = {
                             if (!esVip) {
@@ -171,7 +156,16 @@ fun MuroSolicitudesScreen(
                 }
             }
 
-            if (listaSolicitudes.isEmpty()) {
+            if (viewModel.isLoading) {
+                item {
+                    Box(
+                        Modifier.fillMaxWidth().padding(top = 60.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = verdeServify)
+                    }
+                }
+            } else if (listaSolicitudes.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
@@ -240,7 +234,9 @@ fun MuroSolicitudesScreen(
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Text(
-                                            text = "A ${solicitud.distanciaKm} km de ti",
+                                            text = solicitud.distanciaKm
+                                                ?.let { "A %.1f km de ti".format(it) }
+                                                ?: "Distancia no disponible",
                                             fontSize = 11.sp,
                                             color = Color.Gray
                                         )
@@ -286,9 +282,7 @@ fun MuroSolicitudesScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = {
-                                        listaSolicitudes = listaSolicitudes.filter { it.id != solicitud.id }
-                                    },
+                                    onClick = { viewModel.ignorar(solicitud.id) },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(44.dp),
@@ -303,9 +297,7 @@ fun MuroSolicitudesScreen(
                                 }
 
                                 Button(
-                                    onClick = {
-                                        solicitudSeleccionadaParaPostular = solicitud
-                                    },
+                                    onClick = { solicitudSeleccionadaParaPostular = solicitud },
                                     modifier = Modifier
                                         .weight(1.3f)
                                         .height(44.dp),
@@ -331,6 +323,7 @@ fun MuroSolicitudesScreen(
                 tituloTrabajo = solicitud.titulo,
                 onDismiss = { solicitudSeleccionadaParaPostular = null },
                 onEnviarPostulacion = { precio, tiempo, mensaje ->
+                    viewModel.postular(solicitud.id, precio, tiempo, mensaje)
                     solicitudSeleccionadaParaPostular = null
                 }
             )

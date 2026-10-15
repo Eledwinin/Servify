@@ -20,8 +20,6 @@ class NuevaSolicitudViewModel : ViewModel() {
     var mensajeError by mutableStateOf<String?>(null)
     var solicitudExitosa by mutableStateOf(false)
 
-    val lat = SessionManager.latitud
-    val lng = SessionManager.longitud
 
     fun enviarSolicitud(tokenParam: String) {
         val tokenValido = if (tokenParam.isNotBlank()) tokenParam else SessionManager.token ?: ""
@@ -36,6 +34,8 @@ class NuevaSolicitudViewModel : ViewModel() {
             return
         }
 
+        val lat = SessionManager.latitud
+        val lng = SessionManager.longitud
         if (lat == null || lng == null) {
             mensajeError = "No se pudo obtener tu ubicación. Activa el GPS e inténtalo de nuevo."
             return

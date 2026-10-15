@@ -20,6 +20,7 @@ import com.example.servify.ui.componentes.cards.TarjetaFormulario
 import com.example.servify.ui.componentes.cards.TarjetaFotos
 import com.example.servify.ui.theme.*
 import com.example.servify.data.SessionManager
+import com.example.servify.ui.navigation.Rutas
 
 @Composable
 fun NuevaSolicitudScreen(
@@ -33,7 +34,7 @@ fun NuevaSolicitudScreen(
     LaunchedEffect(viewModel.solicitudExitosa) {
         if (viewModel.solicitudExitosa) {
             Toast.makeText(context, "Solicitud creada correctamente", Toast.LENGTH_SHORT).show()
-            onContinuarClick() // Navega a la siguiente pantalla
+            onContinuarClick()
         }
     }
 
@@ -41,6 +42,7 @@ fun NuevaSolicitudScreen(
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.mensajeError = null
         }
     }
 
