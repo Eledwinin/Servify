@@ -25,6 +25,7 @@ import com.example.servify.data.model.PropuestaItem
 fun PropuestasScreen(
     solicitudId: Int,
     onBackClick: () -> Unit,
+    onChatClick: (Int, String) -> Unit,
     viewModel: PropuestasViewModel = viewModel()
 ) {
     val verdeServify = Color(0xFF1B7B61)
@@ -132,6 +133,17 @@ fun PropuestasScreen(
                                         fontSize = 11.sp, fontWeight = FontWeight.Bold, color = verdeServify
                                     )
                                 }
+
+                                if (p.conversacionId != null) {
+                                    Spacer(Modifier.height(10.dp))
+                                    Button(
+                                        onClick = { onChatClick(p.conversacionId, p.tecnicoNombre) },
+                                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = verdeServify)
+                                    ) { Text("Ir al chat", fontWeight = FontWeight.Bold, color = Color.White) }
+                                }
+
                                 Spacer(Modifier.height(10.dp))
                                 OutlinedButton(
                                     onClick = { propuestaACancelar = p },

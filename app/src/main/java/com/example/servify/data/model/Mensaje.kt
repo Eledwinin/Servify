@@ -7,6 +7,6 @@ data class Mensaje(
     @SerializedName("conversacion_id") val conversacionId: Int,
     @SerializedName("emisor_id") val emisorId: Int,
     @SerializedName("contenido") val contenido: String,
-    @SerializedName("leido") val leido: Boolean = false,
+    @SerializedName("leido") val leido: Int = 0,
     @SerializedName("enviado_en") val enviadoEn: String? = null
 )

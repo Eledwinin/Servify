@@ -30,6 +30,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteSc
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
+import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
@@ -194,9 +195,6 @@ fun AppNavigation() {
                 ActividadScreen(navController = navController)
             }
 
-            composable(Rutas.Mensajes.ruta) {
-                ChatScreen()
-            }
 
             composable("detalle_averia/{idSolicitud}") { backStackEntry ->
                 val idString = backStackEntry.arguments?.getString("idSolicitud") ?: "1"
@@ -298,8 +296,29 @@ fun AppNavigation() {
                 val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
                 PropuestasScreen(
                     solicitudId = solicitudId,
+                    onBackClick = { navController.popBackStack() },
+                    onChatClick = { convId, nombre ->
+                        navController.navigate(Rutas.Chat.crearRuta(convId, nombre))
+                    }
+                )
+            }
+
+            composable(
+                route = Rutas.Chat.ruta,
+                arguments = listOf(
+                    navArgument("conversacionId") { type = NavType.IntType },
+                    navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                ChatScreen(
+                    conversacionId = backStackEntry.arguments?.getInt("conversacionId") ?: 0,
+                    nombreOtro = backStackEntry.arguments?.getString("nombre") ?: "",
                     onBackClick = { navController.popBackStack() }
                 )
+            }
+
+            composable(Rutas.Mensajes.ruta) {
+                ConversacionesScreen(navController = navController)
             }
         }
     }

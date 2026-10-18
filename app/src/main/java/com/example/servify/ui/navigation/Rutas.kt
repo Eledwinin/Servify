@@ -28,6 +28,12 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(solicitudId: Int) = "propuestas_solicitud/$solicitudId"
     }
 
+    // Subflujo mensajes
+    object Chat : Rutas("chat/{conversacionId}?nombre={nombre}") {
+        fun crearRuta(conversacionId: Int, nombre: String) =
+            "chat/$conversacionId?nombre=${android.net.Uri.encode(nombre)}"
+    }
+
     object PlanesMembresia : Rutas("planes_membresia")
     object MetodosPago : Rutas("metodos_pago")
     object PagoExitoso : Rutas("pago_exitoso")

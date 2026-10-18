@@ -5,12 +5,14 @@ import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.Categoria
+import com.example.servify.data.model.ConversacionItem
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
+import com.example.servify.data.model.MensajesRespuesta
 import com.example.servify.data.model.MiPostulacion
 import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.ProfesionalPerfil
@@ -188,6 +190,27 @@ interface ApiService {
 
     @PUT("api/postulaciones/{id}/cancelar-acuerdo")
     suspend fun cancelarAcuerdo(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<MensajeResponse>
+
+
+    //---------------------------mensajes-----------------
+
+    @GET("api/chat/conversaciones")
+    suspend fun obtenerConversaciones(
+        @Header("Authorization") token: String
+    ): Response<List<ConversacionItem>>
+
+    @GET("api/chat/conversaciones/{id}/mensajes")
+    suspend fun obtenerMensajes(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Query("despues_de") despuesDe: Int?
+    ): Response<MensajesRespuesta>
+
+    @PUT("api/chat/conversaciones/{id}/leidos")
+    suspend fun marcarLeidos(
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MensajeResponse>

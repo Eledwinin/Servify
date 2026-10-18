@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.modulos.cliente.contratacion.MisSolicitudesContenido
+import com.example.servify.ui.navigation.Rutas
 
 @Composable
 fun ActividadScreen(
@@ -144,11 +145,13 @@ private fun PostulacionesTecnico(
                             fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray
                         )
                         if (p.estado == "aceptada" && p.conversacionId != null) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                "El cliente te aceptó. El chat estará disponible pronto.",
-                                fontSize = 12.sp, color = verdeServify
-                            )
+                            Spacer(Modifier.height(10.dp))
+                            Button(
+                                onClick = { navController.navigate(Rutas.Chat.crearRuta(p.conversacionId, "Cliente")) },
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = verdeServify)
+                            ) { Text("Ir al chat", fontWeight = FontWeight.Bold, color = Color.White) }
                         }
                     }
                 }
