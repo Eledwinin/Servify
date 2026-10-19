@@ -2,12 +2,16 @@ package com.example.servify.data.api
 
 import com.example.servify.data.model.AceptarRespuesta
 import com.example.servify.data.model.ActualizarPerfilRequest
+import com.example.servify.data.model.AdminSolicitudesResponse
+import com.example.servify.data.model.AdminUsuariosResponse
 import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
+import com.example.servify.data.model.CambiarRolRequest
 import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.ConversacionItem
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
+import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
@@ -103,7 +107,6 @@ interface ApiService {
     // 1. ELIMINACIÓN DE CUENTA (Cliente y Técnico)
     // ==========================================
 
-    // Endpoint para eliminar permanentemente la cuenta del usuario autenticado
     @DELETE("api/users/perfil/eliminar")
     suspend fun eliminarCuenta(
         @Header("Authorization") token: String
@@ -113,13 +116,11 @@ interface ApiService {
     // 2. PORTAFOLIO DE TRABAJOS (Exclusivo Técnicos)
     // ==========================================
 
-    // Endpoint para obtener las fotos del portafolio del técnico
     @GET("api/users/portafolio")
     suspend fun obtenerPortafolio(
         @Header("Authorization") token: String
     ): Response<List<FotoPortafolioResponse>>
 
-    // Endpoint para subir una foto nueva al portafolio
     @Multipart
     @POST("api/users/portafolio")
     suspend fun subirFotoPortafolio(
@@ -127,23 +128,19 @@ interface ApiService {
         @Part foto: MultipartBody.Part
     ): Response<SubirFotoResponse>
 
-    // Endpoint para eliminar una foto del portafolio por su ID
     @DELETE("api/users/portafolio/{fotoId}")
     suspend fun eliminarFotoPortafolio(
         @Header("Authorization") token: String,
         @Path("fotoId") fotoId: Int
     ): Response<MensajeResponse>
 
-    // Endpoint para crear una solicitud
+    // Solicitudes
     @POST("api/solicitudes")
     suspend fun crearSolicitud(
         @Header("Authorization") token: String,
         @Body request: CrearSolicitudRequest
     ): Response<MensajeResponse>
 
-
-    //para obtener las solicitudes de los clientes
-    // Solicitudes
     @GET("api/solicitudes")
     suspend fun obtenerSolicitudes(
         @Header("Authorization") token: String,
@@ -194,9 +191,7 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<MensajeResponse>
 
-
-    //---------------------------mensajes-----------------
-
+    // Chat / Mensajes
     @GET("api/chat/conversaciones")
     suspend fun obtenerConversaciones(
         @Header("Authorization") token: String
@@ -214,6 +209,40 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MensajeResponse>
+
+    // ==========================================
+    // 3. MÓDULO ADMINISTRADOR
+    // ==========================================
+
+    @GET("api/admin/dashboard")
+    suspend fun getDashboardStats(
+        @Header("Authorization") token: String
+    ): Response<DashboardStatsResponse>
+
+    @GET("api/admin/usuarios")
+    suspend fun getUsuariosAdmin(
+        @Header("Authorization") token: String,
+        @Query("busqueda") busqueda: String? = null,
+        @Query("rol") rol: String? = null
+    ): Response<AdminUsuariosResponse>
+
+    @PUT("api/admin/usuarios/{id}/rol")
+    suspend fun cambiarRolUsuario(
+        @Header("Authorization") token: String,
+        @Path("id") idUsuario: Int,
+        @Body body: CambiarRolRequest
+    ): Response<MensajeResponse>
+
+    @GET("api/admin/solicitudes")
+    suspend fun getSolicitudesAdmin(
+        @Header("Authorization") token: String
+    ): Response<AdminSolicitudesResponse>
+
+    @PUT("api/admin/solicitudes/{id}/cancelar")
+    suspend fun cancelarSolicitudAdmin(
+        @Header("Authorization") token: String,
+        @Path("id") idSolicitud: Int
+    ): Response<MensajeResponse>
 }
 
 // ==========================================
@@ -230,4 +259,3 @@ data class SubirFotoResponse(
     val mensaje: String,
     val foto: FotoPortafolioResponse
 )
-

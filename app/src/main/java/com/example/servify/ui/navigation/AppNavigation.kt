@@ -7,32 +7,35 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.servify.ui.modulos.cliente.propuestas.PropuestasScreen
 
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
+import com.example.servify.ui.modulos.admin.AdminDashboardScreen
+import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
+import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
+import com.example.servify.ui.modulos.cliente.propuestas.PropuestasScreen
 import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScreen
-import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
-import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.LoginScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.OlvidePasswordScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
+import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
@@ -57,7 +60,6 @@ fun AppNavigation() {
                 BarraNavegacion(
                     rutaActual = rutaActual,
                     onItemClick = { destino ->
-                        // Si presiona el primer botón (Home o Muro), decidimos según el rol
                         val destinoFinal = if (destino == Rutas.Home.ruta || destino == Rutas.MuroSolicitudes.ruta) {
                             if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
                         } else {
@@ -84,13 +86,12 @@ fun AppNavigation() {
             composable(route = Rutas.Login.ruta) {
                 LoginScreen(
                     onLoginExitoso = { usuario ->
-                        // Guardamos el token actual
                         SessionManager.guardarSesion(SessionManager.token, usuario)
 
-                        val rutaDestino = if (SessionManager.esTecnico) {
-                            Rutas.MuroSolicitudes.ruta
-                        } else {
-                            Rutas.Home.ruta
+                        val rutaDestino = when {
+                            usuario.rol.equals("admin", ignoreCase = true) -> Rutas.AdminDashboard.ruta
+                            SessionManager.esTecnico -> Rutas.MuroSolicitudes.ruta
+                            else -> Rutas.Home.ruta
                         }
                         navController.navigate(rutaDestino) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
@@ -105,7 +106,6 @@ fun AppNavigation() {
                 )
             }
 
-            // Selección de Rol
             composable(Rutas.SeleccionRol.ruta) {
                 SeleccionRolScreen(
                     onContinuar = { rol ->
@@ -122,7 +122,6 @@ fun AppNavigation() {
                 )
             }
 
-            // Recuperación de Contraseña
             composable(Rutas.RecuperarPassword.ruta) {
                 OlvidePasswordScreen(
                     onPasswordRestablecido = {
@@ -136,7 +135,6 @@ fun AppNavigation() {
                 )
             }
 
-            // Registro Cliente
             composable(Rutas.RegistroCliente.ruta) {
                 RegistroClienteScreen(
                     onRegistroExitoso = {
@@ -152,7 +150,6 @@ fun AppNavigation() {
                 )
             }
 
-            // Registro Trabajador
             composable(Rutas.RegistroTrabajador.ruta) {
                 RegistroTrabajadorScreen(
                     onRegistroExitoso = {
@@ -186,15 +183,12 @@ fun AppNavigation() {
             }
 
             composable(Rutas.Home.ruta) {
-                HomeScreen(
-                    navController = navController
-                )
+                HomeScreen(navController = navController)
             }
 
             composable(Rutas.Actividad.ruta) {
                 ActividadScreen(navController = navController)
             }
-
 
             composable("detalle_averia/{idSolicitud}") { backStackEntry ->
                 val idString = backStackEntry.arguments?.getString("idSolicitud") ?: "1"
@@ -204,20 +198,16 @@ fun AppNavigation() {
                     idSolicitud = idSolicitud,
                     navController = navController,
                     onBackClick = { navController.popBackStack() },
-                    onPostularseClick = {
-                        // Abre el modal o flujo de postulación
-                    }
+                    onPostularseClick = {}
                 )
             }
 
-            // Planes de Membresía
-            // Planes de Membresía
             composable(Rutas.PlanesMembresia.ruta) {
                 val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
                 PlanesMembresiaScreen(
                     navController = navController,
                     onPlanAdquirido = {
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) { exito ->
+                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
                             SessionManager.activarSuscripcionVip()
                             navController.navigate(Rutas.PagoExitoso.ruta)
                         }
@@ -225,16 +215,12 @@ fun AppNavigation() {
                 )
             }
 
-
-            // Selección de Tarjeta / Metodo de Pago
             composable(Rutas.MetodosPago.ruta) {
                 val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
-
                 MetodosPagoScreen(
                     navController = navController,
                     onPagoConfirmado = {
-
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) { exito ->
+                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
                             SessionManager.activarSuscripcionVip()
                             navController.navigate(Rutas.PagoExitoso.ruta) {
                                 popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
@@ -244,17 +230,13 @@ fun AppNavigation() {
                 )
             }
 
-            // Pantalla de Recibo / Confirmación
             composable(Rutas.PagoExitoso.ruta) {
-                PagoExitosoScreen(
-                    navController = navController
-                )
+                PagoExitosoScreen(navController = navController)
             }
 
-            // Pantalla Perfil con datos reales
             composable(Rutas.Perfil.ruta) {
                 PerfilScreen(
-                    token = SessionManager.token ?: "", // el token generado
+                    token = SessionManager.token ?: "",
                     onIrAEditarPerfil = {
                         navController.navigate(Rutas.EditarPerfil.ruta)
                     },
@@ -267,7 +249,6 @@ fun AppNavigation() {
                 )
             }
 
-            // Pantalla Editar Perfil
             composable(Rutas.EditarPerfil.ruta) {
                 EditarPerfilClienteScreen(
                     token = SessionManager.token ?: "",
@@ -277,7 +258,6 @@ fun AppNavigation() {
                 )
             }
 
-            //pantalla para crear nueva solicitud
             composable(Rutas.NuevaSolicitud.ruta) {
                 NuevaSolicitudScreen(
                     onBackClick = { navController.popBackStack() },
@@ -319,6 +299,44 @@ fun AppNavigation() {
 
             composable(Rutas.Mensajes.ruta) {
                 ConversacionesScreen(navController = navController)
+            }
+
+            // Administrador destinos
+            composable(Rutas.AdminDashboard.ruta) {
+                AdminDashboardScreen(
+                    onIrAUsuarios = { rolFiltro ->
+                        navController.navigate(Rutas.AdminUsuarios.crearRuta(rolFiltro))
+                    },
+                    onIrASolicitudes = {
+                        navController.navigate(Rutas.AdminSolicitudes.ruta)
+                    },
+                    onCerrarSesion = {
+                        SessionManager.cerrarSesion()
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Rutas.AdminUsuarios.ruta,
+                arguments = listOf(navArgument("rol") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                })
+            ) { backStackEntry ->
+                val rol = backStackEntry.arguments?.getString("rol") ?: ""
+                AdminUsuariosScreen(
+                    filtroInicial = rol,
+                    onVolver = { navController.popBackStack() }
+                )
+            }
+
+            composable(Rutas.AdminSolicitudes.ruta) {
+                AdminSolicitudesScreen(
+                    onVolver = { navController.popBackStack() }
+                )
             }
         }
     }
