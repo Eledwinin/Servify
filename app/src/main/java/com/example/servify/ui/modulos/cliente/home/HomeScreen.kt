@@ -228,9 +228,35 @@ fun HomeScreen(
                 }
             }
 
-            // Sección Técnicos
+            // Sección Técnicos con Botón de Ver Mapa
             item {
-                Text("Más Cercanos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Más Cercanos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+                    FilterChip(
+                        selected = false,
+                        onClick = { navController.navigate(Rutas.Mapa.ruta) },
+                        label = { Text("Ver en Mapa", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Ver Mapa",
+                                tint = verdeServify,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFE2F3EE),
+                            labelColor = verdeServify
+                        ),
+                        border = null,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                }
             }
 
             if (estaCargando) {

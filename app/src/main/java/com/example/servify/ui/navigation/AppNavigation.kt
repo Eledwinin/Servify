@@ -22,6 +22,7 @@ import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
+import com.example.servify.ui.modulos.cliente.home.MapaScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
 import com.example.servify.ui.modulos.cliente.propuestas.PropuestasScreen
 import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScreen
@@ -184,6 +185,11 @@ fun AppNavigation() {
 
             composable(Rutas.Home.ruta) {
                 HomeScreen(navController = navController)
+            }
+
+            // Destino del Mapa de Mapbox
+            composable(Rutas.Mapa.ruta) {
+                MapaScreen(navController = navController)
             }
 
             composable(Rutas.Actividad.ruta) {

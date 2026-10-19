@@ -37,6 +37,9 @@ android {
 
 dependencies {
 
+    //sdk de mapa
+    implementation("org.maplibre.gl:android-sdk:11.5.1")
+
     //dependencia para la localizacion
     implementation("com.google.android.gms:play-services-location:21.1.0")
     //dependencias para la api retrofit

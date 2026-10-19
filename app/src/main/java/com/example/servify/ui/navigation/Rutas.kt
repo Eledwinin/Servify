@@ -42,4 +42,5 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(rol: String = "") = "admin_usuarios?rol=$rol"
     }
     object AdminSolicitudes : Rutas("admin_solicitudes")
+    object Mapa : Rutas(ruta = "mapa_screen")
 }
