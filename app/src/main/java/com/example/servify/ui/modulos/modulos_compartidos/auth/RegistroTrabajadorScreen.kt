@@ -31,12 +31,19 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,9 +67,12 @@ import com.example.servify.ui.theme.ServifyBorder
 import com.example.servify.ui.theme.ServifyGreenLight
 import com.example.servify.ui.theme.ServifyGreenPrimary
 import com.example.servify.ui.theme.ServifySurface
+import com.example.servify.ui.theme.ServifyTextBody
 import com.example.servify.ui.theme.ServifyTextMuted
+import com.example.servify.ui.theme.ServifyTextPlaceholder
 import com.example.servify.ui.theme.ServifyTextTitle
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroTrabajadorScreen(
     onRegistroExitoso: () -> Unit = {},
@@ -71,12 +81,22 @@ fun RegistroTrabajadorScreen(
 ) {
     val context = LocalContext.current
     val estadoRegistro by viewModel.estadoRegistro.collectAsState()
+    val categoriasDisponibles by viewModel.categorias.collectAsState()
+    val cargandoCategorias by viewModel.cargandoCategorias.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var especialidad by remember { mutableStateOf("") }
+    var menuCategoriasExpandido by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
+
+    // Asegurar la carga de categorías al entrar a la pantalla
+    LaunchedEffect(Unit) {
+        if (categoriasDisponibles.isEmpty()) {
+            viewModel.cargarCategorias()
+        }
+    }
 
     // Estado para el archivo PDF
     var pdfUri by remember { mutableStateOf<Uri?>(null) }
@@ -177,13 +197,116 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            CampoTexto(
-                etiqueta = "Oficio o Especialidad",
-                valor = especialidad,
-                onValorCambiado = { especialidad = it },
-                placeholder = "Ej. Plomero, Electricista, Soporte PC",
-                iconoInicio = Icons.Outlined.Build
+            // Selector Desplegable de Categorías desde la Base de Datos
+            Text(
+                text = "Oficio o Especialidad",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ServifyTextTitle
             )
+            Spacer(modifier = Modifier.height(6.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = menuCategoriasExpandido,
+                onExpandedChange = {
+                    if (!cargandoCategorias) {
+                        menuCategoriasExpandido = !menuCategoriasExpandido
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val textoVisual = when {
+                    especialidad.isNotBlank() -> especialidad
+                    cargandoCategorias -> "Cargando especialidades..."
+                    else -> ""
+                }
+
+                OutlinedTextField(
+                    value = textoVisual,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = {
+                        Text(
+                            text = "Selecciona tu especialidad",
+                            color = ServifyTextPlaceholder,
+                            fontSize = 14.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Build,
+                            contentDescription = null,
+                            tint = ServifyTextMuted
+                        )
+                    },
+                    trailingIcon = {
+                        if (cargandoCategorias) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = ServifyGreenPrimary
+                            )
+                        } else {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuCategoriasExpandido)
+                        }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = ServifySurface,
+                        unfocusedContainerColor = ServifySurface,
+                        focusedBorderColor = ServifyGreenPrimary,
+                        unfocusedBorderColor = ServifyBorder,
+                        focusedTextColor = ServifyTextTitle,
+                        unfocusedTextColor = ServifyTextBody
+                    ),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = menuCategoriasExpandido,
+                    onDismissRequest = { menuCategoriasExpandido = false },
+                    modifier = Modifier.background(ServifySurface)
+                ) {
+                    if (categoriasDisponibles.isEmpty() && !cargandoCategorias) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Refresh,
+                                        contentDescription = null,
+                                        tint = ServifyGreenPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Reintentar cargar", color = ServifyGreenPrimary, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                viewModel.cargarCategorias()
+                            }
+                        )
+                    } else {
+                        categoriasDisponibles.forEach { cat ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = cat.nombre,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = ServifyTextBody
+                                    )
+                                },
+                                onClick = {
+                                    especialidad = cat.nombre
+                                    menuCategoriasExpandido = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 

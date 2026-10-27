@@ -1,8 +1,10 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -17,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -27,6 +28,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.data.SessionManager
+import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.feedback.MensajeFeedback
 import com.example.servify.ui.theme.*
@@ -227,4 +230,98 @@ fun LoginScreen(
             }
         }
     }
+
+    if (viewModel.mostrarDialogoCategorias) {
+        DialogoSeleccionCategoria(
+            categorias = viewModel.categoriasDisponibles,
+            cargando = viewModel.cargandoCategorias,
+            onCategoriaSeleccionada = { categoria ->
+                viewModel.confirmarCategoriaTecnico(categoria) { usuario, _ ->
+                    onLoginExitoso(usuario)
+                }
+            },
+            onDismiss = {
+                viewModel.cerrarDialogoCategorias()
+            }
+        )
+    }
+}
+
+@Composable
+fun DialogoSeleccionCategoria(
+    categorias: List<Categoria>,
+    cargando: Boolean,
+    onCategoriaSeleccionada: (Categoria) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Selecciona tu Especialidad",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = ServifyTextTitle
+            )
+        },
+        text = {
+            if (cargando) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = ServifyGreenPrimary)
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Elige la categoría con la que trabajarás:",
+                        fontSize = 13.sp,
+                        color = ServifyTextMuted,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 280.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categorias) { cat ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onCategoriaSeleccionada(cat) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = ServifySurface,
+                                border = BorderStroke(1.dp, ServifyBorder)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = cat.nombre,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ServifyTextBody
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = ServifyRed)
+            }
+        },
+        containerColor = ServifySurface,
+        shape = RoundedCornerShape(16.dp)
+    )
 }

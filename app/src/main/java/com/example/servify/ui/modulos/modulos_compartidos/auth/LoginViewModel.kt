@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.servify.data.api.RetrofitClient
+import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.data.repository.AuthRepository
 import kotlinx.coroutines.launch
@@ -24,6 +26,19 @@ class LoginViewModel(
         private set
 
     var mensajeError by mutableStateOf<String?>(null)
+        private set
+
+    // --- Estados para selección de categoría (Técnico) ---
+    var mostrarDialogoCategorias by mutableStateOf(false)
+        private set
+
+    var categoriasDisponibles by mutableStateOf<List<Categoria>>(emptyList())
+        private set
+
+    var cargandoCategorias by mutableStateOf(false)
+        private set
+
+    var usuarioPendienteTecnico by mutableStateOf<UsuarioModel?>(null)
         private set
 
     fun onCorreoChange(nuevoCorreo: String) {
@@ -69,12 +84,53 @@ class LoginViewModel(
 
             resultado.fold(
                 onSuccess = { usuario ->
-                    onSuccess(usuario)
+                    val esRolTecnico = usuario.rol.equals("tecnico", ignoreCase = true) ||
+                            usuario.rol.equals("trabajador", ignoreCase = true)
+
+                    if (esRolTecnico) {
+                        // Guardamos temporalmente el usuario y cargamos las categorías
+                        usuarioPendienteTecnico = usuario
+                        cargarCategoriasParaTecnico()
+                    } else {
+                        // Admin o Cliente entran directamente
+                        onSuccess(usuario)
+                    }
                 },
                 onFailure = { error ->
                     mensajeError = error.message ?: "Ocurrió un error inesperado al conectar"
                 }
             )
         }
+    }
+
+    private fun cargarCategoriasParaTecnico() {
+        cargandoCategorias = true
+        viewModelScope.launch {
+            try {
+                val respuesta = RetrofitClient.instance.getCategories()
+                if (respuesta.isSuccessful && !respuesta.body().isNullOrEmpty()) {
+                    categoriasDisponibles = respuesta.body()!!
+                    mostrarDialogoCategorias = true
+                } else {
+                    mensajeError = "No se pudieron obtener las categorías disponibles"
+                }
+            } catch (e: Exception) {
+                mensajeError = "Error de conexión al cargar categorías: ${e.localizedMessage}"
+            } finally {
+                cargandoCategorias = false
+            }
+        }
+    }
+
+    fun cerrarDialogoCategorias() {
+        mostrarDialogoCategorias = false
+        usuarioPendienteTecnico = null
+    }
+
+    fun confirmarCategoriaTecnico(categoria: Categoria, onCompletado: (UsuarioModel, Categoria) -> Unit) {
+        val usuario = usuarioPendienteTecnico ?: return
+        mostrarDialogoCategorias = false
+        usuarioPendienteTecnico = null
+        onCompletado(usuario, categoria)
     }
 }

@@ -29,7 +29,8 @@ val ServifyStarYellow = Color(0xFFFBBF24)         // Estrellas de calificación 
 val ServifyOnlineGreen = Color(0xFF10B981)        // textos "En línea"
 
 //Acciones Críticas
-val ServifyDanger = Color(0xFFEF4444)             // textos/ícono "Cerrar Sesión"
+val ServifyDanger = Color(0xFFEF4444)             // textos/ícono "Cerrar Sesión
+val ServifyRed = Color(0xFFEF4444)                // Alias para acciones de cancelación y errores
 val ServifyDangerBg = Color(0xFFFEF2F2)           // fondo botón "Cerrar Sesión"
 
 // Elementos Flotantes / Botones Secundarios
