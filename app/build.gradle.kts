@@ -82,6 +82,8 @@ dependencies {
     // Para cargar fotos de perfil y averías desde URLs
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
     implementation("io.socket:socket.io-client:2.1.0") {
         exclude(group = "org.json", module = "json")
     }

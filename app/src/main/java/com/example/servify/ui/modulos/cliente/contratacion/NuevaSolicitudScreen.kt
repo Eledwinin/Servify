@@ -20,6 +20,9 @@ import com.example.servify.ui.componentes.cards.TarjetaFormulario
 import com.example.servify.ui.componentes.cards.TarjetaFotos
 import com.example.servify.ui.theme.*
 import com.example.servify.data.SessionManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.servify.ui.navigation.Rutas
 
 @Composable
@@ -29,6 +32,10 @@ fun NuevaSolicitudScreen(
     viewModel: NuevaSolicitudViewModel = viewModel()
 ) {
     val context = LocalContext.current
+
+    val selectorFotos = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(NuevaSolicitudViewModel.MAX_FOTOS)
+    ) { uris -> viewModel.agregarFotos(uris) }
 
     // Escucha si la solicitud fue un éxito
     LaunchedEffect(viewModel.solicitudExitosa) {
@@ -73,7 +80,7 @@ fun NuevaSolicitudScreen(
                 Button(
                     onClick = {
                         val token = SessionManager.token ?: ""
-                        viewModel.enviarSolicitud(token)
+                        viewModel.enviarSolicitud(token, context.contentResolver)
                     },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
@@ -110,9 +117,13 @@ fun NuevaSolicitudScreen(
             }
 
             item {
-                // Tarjeta de fotos de referencia
                 TarjetaFotos(
-                    onAñadirFotoClick = { }
+                    fotos = viewModel.fotos,
+                    maxFotos = NuevaSolicitudViewModel.MAX_FOTOS,
+                    onAñadirFotoClick = {
+                        selectorFotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    onQuitarFoto = { viewModel.quitarFoto(it) }
                 )
             }
 

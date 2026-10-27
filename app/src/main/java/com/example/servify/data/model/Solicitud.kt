@@ -110,3 +110,8 @@ data class DetalleSolicitud(
     @SerializedName("ya_postulado") val yaPostulado: Boolean = false,
     @SerializedName("fotos") val fotos: List<String> = emptyList()
 )
+
+data class CrearSolicitudRespuesta(
+    @SerializedName("mensaje") val mensaje: String?,
+    @SerializedName(value = "id", alternate = ["insertId"]) val id: Int?
+)

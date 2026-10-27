@@ -11,6 +11,7 @@ import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.ConversacionItem
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
+import com.example.servify.data.model.CrearSolicitudRespuesta
 import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.LoginRequest
@@ -134,11 +135,20 @@ interface ApiService {
         @Path("fotoId") fotoId: Int
     ): Response<MensajeResponse>
 
+
     // Solicitudes
     @POST("api/solicitudes")
     suspend fun crearSolicitud(
         @Header("Authorization") token: String,
         @Body request: CrearSolicitudRequest
+    ): Response<CrearSolicitudRespuesta>
+
+    @Multipart
+    @POST("api/solicitudes/{id}/fotos")
+    suspend fun subirFotos(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Part fotos: List<MultipartBody.Part>
     ): Response<MensajeResponse>
 
     @GET("api/solicitudes")
@@ -243,6 +253,16 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") idSolicitud: Int
     ): Response<MensajeResponse>
+
+
+
+
+    //eliminar una conversasion en cascada
+//    @DELETE("conversaciones/{id}")
+//    suspend fun eliminarConversacion(
+//        @Header("Authorization") token: String,
+//        @Path("id") conversacionId: Int
+//    ): Response<MensajeRespuesta>
 }
 
 // ==========================================

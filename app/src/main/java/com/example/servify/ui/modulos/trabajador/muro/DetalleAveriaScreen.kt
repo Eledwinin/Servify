@@ -2,6 +2,7 @@ package com.example.servify.ui.modulos.trabajador.muro
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -24,6 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +46,9 @@ fun DetalleAveriaScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     var mostrarModal by remember { mutableStateOf(false) }
+
+    // Estado para controlar la foto seleccionada que se abrirá en pantalla completa
+    var fotoExpandidaUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(idSolicitud) { viewModel.cargar(idSolicitud) }
 
@@ -177,9 +188,25 @@ fun DetalleAveriaScreen(
                     }
                 }
 
-                // La galería de fotos se agrega cuando hagamos el paso de fotos
+                // Galería de fotos con soporte de clic para ampliar
                 if (detalle.fotos.isNotEmpty()) {
                     Text("Fotos del problema (${detalle.fotos.size})", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(detalle.fotos) { url ->
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Foto del problema",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(150.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        // Asignamos la URL para abrir el visor en grande
+                                        fotoExpandidaUrl = url
+                                    }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -194,5 +221,44 @@ fun DetalleAveriaScreen(
                 viewModel.postular(precio, tiempo, mensaje)
             }
         )
+    }
+
+    // Visor de imagen en pantalla completa (Dialog emergente)
+    fotoExpandidaUrl?.let { url ->
+        Dialog(
+            onDismissRequest = { fotoExpandidaUrl = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.95f))
+                    .clickable { fotoExpandidaUrl = null }, // Tocar el fondo oscuro cierra el visor
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = url,
+                    contentDescription = "Imagen ampliada",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                // Botón superior derecho para cerrar con comodidad
+                IconButton(
+                    onClick = { fotoExpandidaUrl = null },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Cerrar",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
     }
 }
