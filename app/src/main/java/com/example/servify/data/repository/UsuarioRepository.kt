@@ -10,11 +10,14 @@ import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.UsuarioModel
+import com.example.servify.data.uriAJpegBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
 
@@ -41,15 +44,19 @@ class UsuarioRepository(
         token: String,
         nombre: String,
         telefono: String?,
-        direccion: String?
+        direccion: String?,
+        biografia: String? = null,
+        anosExperiencia: Int? = null
     ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                val req = ActualizarPerfilRequest(nombre, telefono, direccion)
+                val req = ActualizarPerfilRequest(nombre, telefono, direccion, biografia, anosExperiencia)
                 val respuesta = apiService.actualizarPerfil("Bearer $token", req)
                 if (respuesta.isSuccessful) {
                     Result.success(respuesta.body()?.mensaje ?: "Perfil actualizado correctamente")
                 } else {
+                    val detalle = respuesta.errorBody()?.string()
+                    android.util.Log.e("PERFIL", "Código ${respuesta.code()} - $detalle")
                     Result.failure(Exception("Error al guardar cambios (${respuesta.code()})"))
                 }
             } catch (e: Exception) {
@@ -143,16 +150,19 @@ class UsuarioRepository(
     ): Result<SubirFotoResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val file = uriToFile(context, uri)
+                val bytes = uriAJpegBytes(context.contentResolver, uri)
                     ?: return@withContext Result.failure(Exception("No se pudo procesar la imagen seleccionada"))
 
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                val body = MultipartBody.Part.createFormData("foto", file.name, requestFile)
+                val body = MultipartBody.Part.createFormData(
+                    "foto", "portafolio.jpg",
+                    bytes.toRequestBody("image/jpeg".toMediaType())
+                )
 
                 val respuesta = apiService.subirFotoPortafolio("Bearer $token", body)
                 if (respuesta.isSuccessful && respuesta.body() != null) {
                     Result.success(respuesta.body()!!)
                 } else {
+                    android.util.Log.e("PORTAFOLIO", "Código ${respuesta.code()} - ${respuesta.errorBody()?.string()}")
                     Result.failure(Exception("Error al subir foto (${respuesta.code()})"))
                 }
             } catch (e: Exception) {

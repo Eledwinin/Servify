@@ -40,7 +40,9 @@ data class UsuarioModel(
     val creadoEn: String? = null,
 
     @SerializedName("actualizado_en")
-    val actualizadoEn: String? = null
+    val actualizadoEn: String? = null,
+    @SerializedName("biografia") val biografia: String? = null,
+    @SerializedName("anos_experiencia") val anosExperiencia: Int? = null
 )
 
 typealias Usuario = UsuarioModel

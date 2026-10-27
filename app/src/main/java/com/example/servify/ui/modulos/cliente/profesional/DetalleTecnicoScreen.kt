@@ -1,8 +1,9 @@
 package com.example.servify.ui.modulos.cliente.profesional
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -26,7 +27,6 @@ fun DetalleTecnicoScreen(
     onContratarClick: (Int) -> Unit,
     viewModel: DetalleTecnicoViewModel = viewModel()
 ) {
-    // cuando entra a la pantalla pide los datos al backend
     LaunchedEffect(idTecnico) {
         viewModel.cargarDetalleTecnico(idTecnico)
     }
@@ -103,47 +103,13 @@ fun DetalleTecnicoScreen(
                 }
 
                 state.tecnico != null -> {
-                    val tecnico = state.tecnico!!
-
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
                     ) {
-                        item {
-                            Text(
-                                text = tecnico.nombreCompleto,
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${tecnico.oficio} • ${tecnico.anosExperiencia} años de exp.",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "★ ${tecnico.calificacionPromedio} (${tecnico.totalResenas} reseñas)",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        item {
-                            HorizontalDivider()
-                        }
-
-                        item {
-                            Text(
-                                text = "Sobre mí",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (tecnico.biografia.isNullOrBlank()) "Sin descripción disponible." else tecnico.biografia,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        PerfilTecnicoContenido(state.tecnico!!)
                     }
                 }
             }

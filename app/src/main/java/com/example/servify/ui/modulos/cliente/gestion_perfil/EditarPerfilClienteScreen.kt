@@ -59,6 +59,7 @@ fun EditarPerfilClienteScreen(
     LaunchedEffect(uiState.error) {
         uiState.error?.let { mensaje ->
             Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+            viewModel.limpiarError()
         }
     }
 
@@ -197,6 +198,49 @@ fun EditarPerfilClienteScreen(
                         unfocusedContainerColor = fondoPantalla
                     )
                 )
+
+                if (uiState.esTecnico) {
+                    OutlinedTextField(
+                        value = uiState.anosExperiencia,
+                        onValueChange = { viewModel.onAnosChange(it) },
+                        label = { Text("Años de experiencia") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = verdePrincipal,
+                            unfocusedBorderColor = bordeInput,
+                            focusedLabelColor = verdePrincipal
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.biografia,
+                        onValueChange = { viewModel.onBiografiaChange(it) },
+                        label = { Text("Sobre mí") },
+                        placeholder = { Text("Cuéntales a los clientes quién eres y qué trabajos haces...") },
+                        minLines = 4,
+                        maxLines = 8,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        supportingText = {
+                            Text(
+                                "${uiState.biografia.length}/${EditarPerfilClienteViewModel.MAX_BIO}",
+                                fontSize = 11.sp,
+                                color = textoSecundario,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.End
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = verdePrincipal,
+                            unfocusedBorderColor = bordeInput,
+                            focusedLabelColor = verdePrincipal
+                        )
+                    )
+                }
+
 
                 Spacer(modifier = Modifier.height(10.dp))
 

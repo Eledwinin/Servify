@@ -69,6 +69,10 @@ class PerfilViewModel(
         }
     }
 
+    fun limpiarError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
     // ==========================================
     // PORTAFOLIO DE TRABAJOS (TÉCNICOS)
     // ==========================================

@@ -41,6 +41,7 @@ import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
 
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
