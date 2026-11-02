@@ -48,6 +48,15 @@ class ChatViewModel : ViewModel() {
                 if (m.emisorId != miId) marcarLeidos()
             }
         }
+        s.onOfertaActualizada = { mensajeId, nuevoEstado ->
+            viewModelScope.launch {
+                val index = mensajes.indexOfFirst { it.id == mensajeId }
+                if (index != -1) {
+                    val actual = mensajes[index]
+                    mensajes[index] = actual.copy(estadoOferta = nuevoEstado)
+                }
+            }
+        }
         s.conectar()
         socket = s
     }
@@ -102,4 +111,19 @@ class ChatViewModel : ViewModel() {
         socket?.desconectar()
         super.onCleared()
     }
+
+    fun enviarOferta(monto: Double) {
+        android.util.Log.d("OFERTA_DEBUG", "Intentando enviar oferta de: $monto para conv: $conversacionId")
+        if (monto <= 0) {
+            mensajeError = "Ingresa un monto válido"
+            return
+        }
+        socket?.enviarOferta(conversacionId, monto)
+    }
+
+    fun responderOferta(mensajeId: Int, accion: String) {
+        socket?.responderOferta(mensajeId, conversacionId, accion)
+    }
+
+
 }

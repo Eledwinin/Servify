@@ -18,6 +18,7 @@ class ChatSocket(private val token: String) {
 
     var onConectado: (() -> Unit)? = null
     var onMensaje: ((Mensaje) -> Unit)? = null
+    var onOfertaActualizada: ((Int, String) -> Unit)? = null // mensajeId, nuevoEstado
 
     fun conectar() {
         val opts = IO.Options().apply {
@@ -28,9 +29,17 @@ class ChatSocket(private val token: String) {
 
         s.on(Socket.EVENT_CONNECT) { onConectado?.invoke() }
         s.on(Socket.EVENT_CONNECT_ERROR) { args -> Log.e("CHAT_SOCKET", "Error: ${args.firstOrNull()}") }
+
         s.on("mensaje_nuevo") { args ->
             val json = args.firstOrNull() as? JSONObject ?: return@on
             onMensaje?.invoke(gson.fromJson(json.toString(), Mensaje::class.java))
+        }
+
+        s.on("oferta_actualizada") { args ->
+            val json = args.firstOrNull() as? JSONObject ?: return@on
+            val mensajeId = json.optInt("mensaje_id")
+            val estado = json.optString("estado_oferta")
+            onOfertaActualizada?.invoke(mensajeId, estado)
         }
 
         s.connect()
@@ -50,6 +59,27 @@ class ChatSocket(private val token: String) {
             val r = args.firstOrNull() as? JSONObject
             resultado(r?.optBoolean("ok") ?: false, r?.optString("error"))
         }) ?: resultado(false, "Sin conexión")
+    }
+
+    fun enviarOferta(conversacionId: Int, monto: Double) {
+        val datos = JSONObject()
+            .put("conversacion_id", conversacionId)
+            .put("monto", monto)
+
+        if (socket == null) {
+            android.util.Log.e("OFERTA_DEBUG", "¡Error! El socket es NULL al intentar enviar la oferta.")
+        } else {
+            android.util.Log.d("OFERTA_DEBUG", "Socket activo, emitiendo evento enviar_oferta...")
+            socket?.emit("enviar_oferta", datos)
+        }
+    }
+
+    fun responderOferta(mensajeId: Int, conversacionId: Int, accion: String) {
+        val datos = JSONObject()
+            .put("mensaje_id", mensajeId)
+            .put("conversacion_id", conversacionId)
+            .put("accion", accion) // "aceptar" o "rechazar"
+        socket?.emit("responder_oferta", datos)
     }
 
     fun desconectar() {
