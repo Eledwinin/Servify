@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,8 +43,9 @@ fun HomeScreen(
     val context = LocalContext.current
     val verdeServify = Color(0xFF1B7B61)
 
-    var busqueda by remember { mutableStateOf("") }
-
+    // Estados observados desde el ViewModel
+    val busqueda by viewModel.queryBusqueda.collectAsState()
+    val categoriaSeleccionada by viewModel.categoriaSeleccionada.collectAsState()
     val listaProfesionales by viewModel.listaProfesionales.collectAsState()
     val estaCargando by viewModel.estaCargando.collectAsState()
     val mensajeError by viewModel.mensajeError.collectAsState()
@@ -61,7 +63,7 @@ fun HomeScreen(
                 if (location != null) {
                     viewModel.actualizarUbicacionCliente(location.latitude, location.longitude)
                     SessionManager.actualizarUbicacion(location.latitude, location.longitude)
-                    textoUbicacion = "GPS: %.2f, %.2f".format(location.latitude, location.longitude)
+                    textoUbicacion = "Ubicación activa"
                 } else {
                     textoUbicacion = "GPS sin señal"
                 }
@@ -136,7 +138,6 @@ fun HomeScreen(
                 }
             }
         },
-        // Botón flotante para crear una nueva solicitud
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate(Rutas.NuevaSolicitud.ruta) },
@@ -157,7 +158,7 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Ubicación GPS
+            // Estado Ubicación GPS
             item {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     Button(
@@ -189,7 +190,7 @@ fun HomeScreen(
                 }
             }
 
-            // Banner
+            // Banner + Buscador Dinámico
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -212,9 +213,16 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         TextField(
                             value = busqueda,
-                            onValueChange = { busqueda = it },
+                            onValueChange = { viewModel.onQueryBusquedaChange(it) },
                             placeholder = { Text("¿Qué servicio buscas hoy?", fontSize = 13.sp, color = Color.Gray) },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                            trailingIcon = {
+                                if (busqueda.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.onQueryBusquedaChange("") }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Limpiar", tint = Color.Gray)
+                                    }
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(24.dp),
                             colors = TextFieldDefaults.colors(
@@ -228,7 +236,49 @@ fun HomeScreen(
                 }
             }
 
-            // Sección Técnicos con Botón de Ver Mapa
+            // Carrusel Horizontal de Categorías (FilterChips)
+            item {
+                val categoriasDisponibles = remember {
+                    listOf("Plomería", "Electricidad", "Carpintería", "Jardinería", "Pintura", "Climatización")
+                }
+
+                Column {
+                    Text("Categorías", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = categoriaSeleccionada == null,
+                                onClick = { viewModel.seleccionarCategoria(null) },
+                                label = { Text("Todas", fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = verdeServify,
+                                    selectedLabelColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        }
+
+                        items(categoriasDisponibles) { cat ->
+                            val estaSeleccionada = categoriaSeleccionada == cat
+                            FilterChip(
+                                selected = estaSeleccionada,
+                                onClick = { viewModel.seleccionarCategoria(cat) },
+                                label = { Text(cat, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = verdeServify,
+                                    selectedLabelColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Encabezado "Más Cercanos" con Botón al Mapa
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -259,6 +309,7 @@ fun HomeScreen(
                 }
             }
 
+            // Lista de Técnicos / Estados de Carga
             if (estaCargando) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -277,7 +328,10 @@ fun HomeScreen(
             } else if (listaProfesionales.isEmpty()) {
                 item {
                     Text(
-                        text = "No hay técnicos registrados aún.",
+                        text = if (busqueda.isNotEmpty() || categoriaSeleccionada != null)
+                            "No se encontraron técnicos para esta búsqueda."
+                        else
+                            "No hay técnicos registrados aún.",
                         color = Color.Gray,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(vertical = 16.dp)

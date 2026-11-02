@@ -25,6 +25,13 @@ class HomeViewModel(
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
+    // Estados para Búsqueda y Filtro de Categoría
+    private val _queryBusqueda = MutableStateFlow("")
+    val queryBusqueda: StateFlow<String> = _queryBusqueda.asStateFlow()
+
+    private val _categoriaSeleccionada = MutableStateFlow<String?>(null)
+    val categoriaSeleccionada: StateFlow<String?> = _categoriaSeleccionada.asStateFlow()
+
     var latCliente: Double = 0.0
         private set
     var lngCliente: Double = 0.0
@@ -41,7 +48,7 @@ class HomeViewModel(
             val resultado = repository.obtenerProfesionales()
             resultado.onSuccess { data ->
                 listaOriginal = data
-                ordenarPorDistancia()
+                aplicarFiltrosYOrden()
                 _estaCargando.value = false
             }.onFailure { error ->
                 _mensajeError.value = error.localizedMessage
@@ -53,18 +60,48 @@ class HomeViewModel(
     fun actualizarUbicacionCliente(lat: Double, lng: Double) {
         latCliente = lat
         lngCliente = lng
-        ordenarPorDistancia()
+        aplicarFiltrosYOrden()
     }
 
-    private fun ordenarPorDistancia() {
-        if (latCliente == 0.0 || lngCliente == 0.0 || listaOriginal.isEmpty()) {
-            _listaProfesionales.value = listaOriginal
-            return
+    // Funciones de actualización del buscador y categorías
+    fun onQueryBusquedaChange(nuevaQuery: String) {
+        _queryBusqueda.value = nuevaQuery
+        aplicarFiltrosYOrden()
+    }
+
+    fun seleccionarCategoria(categoria: String?) {
+        _categoriaSeleccionada.value = if (_categoriaSeleccionada.value == categoria) null else categoria
+        aplicarFiltrosYOrden()
+    }
+
+    private fun aplicarFiltrosYOrden() {
+        var listaFiltrada = listaOriginal
+
+        // 1. Filtrar por texto de búsqueda (nombre u oficio)
+        val query = _queryBusqueda.value.trim()
+        if (query.isNotEmpty()) {
+            listaFiltrada = listaFiltrada.filter { tecnico ->
+                tecnico.nombreCompleto.contains(query, ignoreCase = true) ||
+                        tecnico.oficio.contains(query, ignoreCase = true)
+            }
         }
 
-        _listaProfesionales.value = listaOriginal.sortedBy { tecnico ->
-            calcularDistanciaMetros(tecnico.latitud, tecnico.longitud)
+        // 2. Filtrar por categoría / oficio seleccionado
+        val cat = _categoriaSeleccionada.value
+        if (cat != null) {
+            listaFiltrada = listaFiltrada.filter { tecnico ->
+                tecnico.oficio.equals(cat, ignoreCase = true)
+            }
         }
+
+        // 3. Ordenar por distancia si hay coordenadas GPS activas
+        if (latCliente != 0.0 && lngCliente != 0.0) {
+            listaFiltrada = listaFiltrada.sortedBy { tecnico ->
+                calcularDistanciaMetros(tecnico.latitud, tecnico.longitud)
+            }
+        }
+
+        _listaProfesionales.value = listaFiltrada
     }
 
     fun calcularDistanciaMetros(latTecnico: Double?, lngTecnico: Double?): Float {
