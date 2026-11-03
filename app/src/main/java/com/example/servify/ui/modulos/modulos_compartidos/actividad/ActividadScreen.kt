@@ -1,6 +1,11 @@
 package com.example.servify.ui.modulos.modulos_compartidos.actividad
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
@@ -30,8 +36,26 @@ fun ActividadScreen(
     val esTecnico = SessionManager.esTecnico
     val context = LocalContext.current
 
+    // Launcher para solicitar el permiso de notificaciones dinámicamente en Android 13+
+    val launcherPermisos = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { /* Permiso otorgado o denegado por el usuario */ }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val tienePermiso = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!tienePermiso) {
+                launcherPermisos.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
     LaunchedEffect(esTecnico) {
-        if (esTecnico) viewModel.cargarPostulaciones()
+        if (esTecnico) viewModel.cargarPostulaciones(context)
     }
 
     LaunchedEffect(viewModel.mensajeError) {
