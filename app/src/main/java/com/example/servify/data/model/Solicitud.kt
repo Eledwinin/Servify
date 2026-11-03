@@ -15,6 +15,7 @@ data class Solicitud(
     @SerializedName("estado") val estado: String, // "PENDIENTE", "EN_PROCESO", "COMPLETADA", "CANCELADA"
     @SerializedName("creado_en") val creadoEn: String? = null
 )
+
 // DTO con los datos combinados (JOIN de SQL) para pintar la tarjeta del técnico
 data class SolicitudItemTecnico(
     @SerializedName("id") val id: Int,
@@ -25,6 +26,8 @@ data class SolicitudItemTecnico(
     @SerializedName("descripcion") val descripcion: String,
     @SerializedName("presupuesto_estimado") val presupuestoEstimado: Double? = null,
     @SerializedName("distancia_km") val distanciaKm: Double? = null,
+    @SerializedName("latitud") val latitud: Double? = null,
+    @SerializedName("longitud") val longitud: Double? = null,
     @SerializedName("creado_en") val creadoEn: String? = null
 )
 

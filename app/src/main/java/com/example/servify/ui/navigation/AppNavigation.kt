@@ -39,8 +39,8 @@ import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScree
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
+import com.example.servify.ui.modulos.trabajador.muro.MapaSolicitudesScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
-
 
 @Composable
 fun AppNavigation() {
@@ -182,6 +182,10 @@ fun AppNavigation() {
 
             composable(Rutas.MuroSolicitudes.ruta) {
                 MuroSolicitudesScreen(navController = navController)
+            }
+
+            composable(Rutas.MapaSolicitudes.ruta) {
+                MapaSolicitudesScreen(navController = navController)
             }
 
             composable(Rutas.Home.ruta) {

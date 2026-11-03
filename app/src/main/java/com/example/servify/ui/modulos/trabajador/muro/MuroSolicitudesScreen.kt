@@ -28,7 +28,6 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.ui.navigation.Rutas
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MuroSolicitudesScreen(
@@ -140,18 +139,47 @@ fun MuroSolicitudesScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Column(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)) {
-                    Text(
-                        text = "Solicitudes de Clientes",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Nuevos trabajos en tu zona",
-                        fontSize = 13.sp,
-                        color = Color.Gray
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Solicitudes de Clientes",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Nuevos trabajos en tu zona",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                    }
+
+                    // Botón / Chip "Ver en Mapa"
+                    FilterChip(
+                        selected = false,
+                        onClick = { navController.navigate(Rutas.MapaSolicitudes.ruta) },
+                        label = { Text("Ver en Mapa", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Ver Mapa",
+                                tint = verdeServify,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFE2F3EE),
+                            labelColor = verdeServify
+                        ),
+                        border = null,
+                        shape = RoundedCornerShape(16.dp)
                     )
                 }
             }

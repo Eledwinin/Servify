@@ -43,4 +43,7 @@ sealed class Rutas(val ruta: String) {
     }
     object AdminSolicitudes : Rutas("admin_solicitudes")
     object Mapa : Rutas(ruta = "mapa_screen")
+
+    // Mapa de Solicitudes (Trabajador)
+    object MapaSolicitudes : Rutas("mapa_solicitudes")
 }
