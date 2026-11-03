@@ -1,12 +1,18 @@
 package com.example.servify.ui.navigation
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,314 +47,320 @@ import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MapaSolicitudesScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val rutaActual = navBackStackEntry?.destination?.route
+fun MainTabScreen(navController: NavController) {
+    val pagerState = rememberPagerState(pageCount = { 4 })
+    val coroutineScope = rememberCoroutineScope()
 
-    val rutasConBarraInferior = listOf(
-        Rutas.Home.ruta,
-        Rutas.MuroSolicitudes.ruta,
+    val rutaInicio = if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
+    val listaRutas = listOf(
+        rutaInicio,
         Rutas.Actividad.ruta,
         Rutas.Mensajes.ruta,
         Rutas.Perfil.ruta
     )
 
+    val rutaActual = listaRutas.getOrElse(pagerState.currentPage) { rutaInicio }
+
     Scaffold(
         bottomBar = {
-            if (rutaActual in rutasConBarraInferior) {
-                BarraNavegacion(
-                    rutaActual = rutaActual,
-                    onItemClick = { destino ->
-                        val destinoFinal = if (destino == Rutas.Home.ruta || destino == Rutas.MuroSolicitudes.ruta) {
-                            if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
-                        } else {
-                            destino
-                        }
-
-                        navController.navigate(destinoFinal) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+            BarraNavegacion(
+                rutaActual = rutaActual,
+                onItemClick = { destino ->
+                    val nuevoIndice = when (destino) {
+                        Rutas.Home.ruta, Rutas.MuroSolicitudes.ruta -> 0
+                        Rutas.Actividad.ruta -> 1
+                        Rutas.Mensajes.ruta -> 2
+                        Rutas.Perfil.ruta -> 3
+                        else -> 0
+                    }
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(nuevoIndice)
+                    }
+                }
+            )
+        }
+    ) { paddingValores ->
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValores)
+        ) { pagina ->
+            when (pagina) {
+                0 -> {
+                    if (SessionManager.esTecnico) {
+                        MuroSolicitudesScreen(navController = navController)
+                    } else {
+                        HomeScreen(navController = navController)
+                    }
+                }
+                1 -> ActividadScreen(navController = navController)
+                2 -> ConversacionesScreen(navController = navController)
+                3 -> PerfilScreen(
+                    token = SessionManager.token ?: "",
+                    onIrAEditarPerfil = { navController.navigate(Rutas.EditarPerfil.ruta) },
+                    onCerrarSesion = {
+                        SessionManager.cerrarSesion()
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 )
             }
         }
-    ) { paddingValores ->
-        NavHost(
-            navController = navController,
-            startDestination = Rutas.Login.ruta,
-            modifier = Modifier.padding(paddingValores)
-        ) {
-            composable(route = Rutas.Login.ruta) {
-                LoginScreen(
-                    onLoginExitoso = { usuario ->
-                        SessionManager.guardarSesion(SessionManager.token, usuario)
+    }
+}
 
-                        val rutaDestino = when {
-                            usuario.rol.equals("admin", ignoreCase = true) -> Rutas.AdminDashboard.ruta
-                            SessionManager.esTecnico -> Rutas.MuroSolicitudes.ruta
-                            else -> Rutas.Home.ruta
-                        }
-                        navController.navigate(rutaDestino) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
-                    },
-                    onIrARegistro = {
-                        navController.navigate(Rutas.SeleccionRol.ruta)
-                    },
-                    onOlvidastePassword = {
-                        navController.navigate(Rutas.RecuperarPassword.ruta)
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = Rutas.Login.ruta
+    ) {
+        composable(route = Rutas.Login.ruta) {
+            LoginScreen(
+                onLoginExitoso = { usuario ->
+                    SessionManager.guardarSesion(SessionManager.token, usuario)
+
+                    val rutaDestino = when {
+                        usuario.rol.equals("admin", ignoreCase = true) -> Rutas.AdminDashboard.ruta
+                        else -> Rutas.Home.ruta
                     }
-                )
-            }
-
-            composable(Rutas.SeleccionRol.ruta) {
-                SeleccionRolScreen(
-                    onContinuar = { rol ->
-                        when (rol) {
-                            TipoRol.CLIENTE -> navController.navigate(Rutas.RegistroCliente.ruta)
-                            TipoRol.TRABAJADOR -> navController.navigate(Rutas.RegistroTrabajador.ruta)
-                        }
-                    },
-                    onIrALogin = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
+                    navController.navigate(rutaDestino) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
+                },
+                onIrARegistro = { navController.navigate(Rutas.SeleccionRol.ruta) },
+                onOlvidastePassword = { navController.navigate(Rutas.RecuperarPassword.ruta) }
+            )
+        }
 
-            composable(Rutas.RecuperarPassword.ruta) {
-                OlvidePasswordScreen(
-                    onPasswordRestablecido = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
-                    },
-                    onVolverALogin = {
-                        navController.popBackStack()
+        composable(Rutas.SeleccionRol.ruta) {
+            SeleccionRolScreen(
+                onContinuar = { rol ->
+                    when (rol) {
+                        TipoRol.CLIENTE -> navController.navigate(Rutas.RegistroCliente.ruta)
+                        TipoRol.TRABAJADOR -> navController.navigate(Rutas.RegistroTrabajador.ruta)
                     }
-                )
-            }
-
-            composable(Rutas.RegistroCliente.ruta) {
-                RegistroClienteScreen(
-                    onRegistroExitoso = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
-                    },
-                    onIrALogin = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
+                },
+                onIrALogin = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
+                }
+            )
+        }
 
-            composable(Rutas.RegistroTrabajador.ruta) {
-                RegistroTrabajadorScreen(
-                    onRegistroExitoso = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
-                    },
-                    onIrALogin = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(Rutas.Login.ruta) { inclusive = true }
-                        }
+        composable(Rutas.RecuperarPassword.ruta) {
+            OlvidePasswordScreen(
+                onPasswordRestablecido = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
+                },
+                onVolverALogin = { navController.popBackStack() }
+            )
+        }
 
-            composable("detalle_tecnico/{idTecnico}") { backStackEntry ->
-                val idString = backStackEntry.arguments?.getString("idTecnico") ?: "1"
-                val idTecnico = idString.toIntOrNull() ?: 1
-
-                DetalleTecnicoScreen(
-                    idTecnico = idTecnico,
-                    onBackClick = { navController.popBackStack() },
-                    onContratarClick = { idContratado ->
-                        navController.navigate("contratacion/$idContratado")
+        composable(Rutas.RegistroCliente.ruta) {
+            RegistroClienteScreen(
+                onRegistroExitoso = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
-
-            composable(Rutas.MuroSolicitudes.ruta) {
-                MuroSolicitudesScreen(navController = navController)
-            }
-
-            composable(Rutas.MapaSolicitudes.ruta) {
-                MapaSolicitudesScreen(navController = navController)
-            }
-
-            composable(Rutas.Home.ruta) {
-                HomeScreen(navController = navController)
-            }
-
-            // Destino del Mapa de Mapbox
-            composable(Rutas.Mapa.ruta) {
-                MapaScreen(navController = navController)
-            }
-
-            composable(Rutas.Actividad.ruta) {
-                ActividadScreen(navController = navController)
-            }
-
-            composable("detalle_averia/{idSolicitud}") { backStackEntry ->
-                val idString = backStackEntry.arguments?.getString("idSolicitud") ?: "1"
-                val idSolicitud = idString.toIntOrNull() ?: 1
-
-                DetalleAveriaScreen(
-                    idSolicitud = idSolicitud,
-                    navController = navController,
-                    onBackClick = { navController.popBackStack() },
-                    onPostularseClick = {}
-                )
-            }
-
-            composable(Rutas.PlanesMembresia.ruta) {
-                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
-                PlanesMembresiaScreen(
-                    navController = navController,
-                    onPlanAdquirido = {
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
-                            SessionManager.activarSuscripcionVip()
-                            navController.navigate(Rutas.PagoExitoso.ruta)
-                        }
+                },
+                onIrALogin = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
+                }
+            )
+        }
 
-            composable(Rutas.MetodosPago.ruta) {
-                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
-                MetodosPagoScreen(
-                    navController = navController,
-                    onPagoConfirmado = {
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
-                            SessionManager.activarSuscripcionVip()
-                            navController.navigate(Rutas.PagoExitoso.ruta) {
-                                popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
-                            }
-                        }
+        composable(Rutas.RegistroTrabajador.ruta) {
+            RegistroTrabajadorScreen(
+                onRegistroExitoso = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                )
-            }
+                },
+                onIrALogin = {
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(Rutas.Login.ruta) { inclusive = true }
+                    }
+                }
+            )
+        }
 
-            composable(Rutas.PagoExitoso.ruta) {
-                PagoExitosoScreen(navController = navController)
-            }
+        // Pestañas Principales con Swipe (Home, Muro, Actividad, Mensajes, Perfil)
+        composable(Rutas.Home.ruta) {
+            MainTabScreen(navController = navController)
+        }
+        composable(Rutas.MuroSolicitudes.ruta) {
+            MainTabScreen(navController = navController)
+        }
+        composable(Rutas.Actividad.ruta) {
+            MainTabScreen(navController = navController)
+        }
+        composable(Rutas.Mensajes.ruta) {
+            MainTabScreen(navController = navController)
+        }
+        composable(Rutas.Perfil.ruta) {
+            MainTabScreen(navController = navController)
+        }
 
-            composable(Rutas.Perfil.ruta) {
-                PerfilScreen(
-                    token = SessionManager.token ?: "",
-                    onIrAEditarPerfil = {
-                        navController.navigate(Rutas.EditarPerfil.ruta)
-                    },
-                    onCerrarSesion = {
-                        SessionManager.cerrarSesion()
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(0) { inclusive = true }
+        // Subflujos y Pantallas secundarias
+        composable(Rutas.MapaSolicitudes.ruta) {
+            MapaSolicitudesScreen(navController = navController)
+        }
+
+        composable(Rutas.Mapa.ruta) {
+            MapaScreen(navController = navController)
+        }
+
+        composable("detalle_tecnico/{idTecnico}") { backStackEntry ->
+            val idString = backStackEntry.arguments?.getString("idTecnico") ?: "1"
+            val idTecnico = idString.toIntOrNull() ?: 1
+
+            DetalleTecnicoScreen(
+                idTecnico = idTecnico,
+                onBackClick = { navController.popBackStack() },
+                onContratarClick = { idContratado ->
+                    navController.navigate("contratacion/$idContratado")
+                }
+            )
+        }
+
+        composable("detalle_averia/{idSolicitud}") { backStackEntry ->
+            val idString = backStackEntry.arguments?.getString("idSolicitud") ?: "1"
+            val idSolicitud = idString.toIntOrNull() ?: 1
+
+            DetalleAveriaScreen(
+                idSolicitud = idSolicitud,
+                navController = navController,
+                onBackClick = { navController.popBackStack() },
+                onPostularseClick = {}
+            )
+        }
+
+        composable(Rutas.PlanesMembresia.ruta) {
+            val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
+            PlanesMembresiaScreen(
+                navController = navController,
+                onPlanAdquirido = {
+                    perfilViewModel.cambiarMembresiaVip(esVip = true) {
+                        SessionManager.activarSuscripcionVip()
+                        navController.navigate(Rutas.PagoExitoso.ruta)
+                    }
+                }
+            )
+        }
+
+        composable(Rutas.MetodosPago.ruta) {
+            val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
+            MetodosPagoScreen(
+                navController = navController,
+                onPagoConfirmado = {
+                    perfilViewModel.cambiarMembresiaVip(esVip = true) {
+                        SessionManager.activarSuscripcionVip()
+                        navController.navigate(Rutas.PagoExitoso.ruta) {
+                            popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
                         }
                     }
-                )
-            }
+                }
+            )
+        }
 
-            composable(Rutas.EditarPerfil.ruta) {
-                EditarPerfilClienteScreen(
-                    token = SessionManager.token ?: "",
-                    onNavigateBack = {
-                        navController.popBackStack()
+        composable(Rutas.PagoExitoso.ruta) {
+            PagoExitosoScreen(navController = navController)
+        }
+
+        composable(Rutas.EditarPerfil.ruta) {
+            EditarPerfilClienteScreen(
+                token = SessionManager.token ?: "",
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.NuevaSolicitud.ruta) {
+            NuevaSolicitudScreen(
+                onBackClick = { navController.popBackStack() },
+                onContinuarClick = {
+                    navController.navigate(Rutas.Actividad.ruta) {
+                        popUpTo(Rutas.Home.ruta)
                     }
-                )
-            }
+                }
+            )
+        }
 
-            composable(Rutas.NuevaSolicitud.ruta) {
-                NuevaSolicitudScreen(
-                    onBackClick = { navController.popBackStack() },
-                    onContinuarClick = {
-                        navController.navigate(Rutas.Actividad.ruta) {
-                            popUpTo(Rutas.Home.ruta)
-                        }
+        composable(
+            route = Rutas.PropuestasSolicitud.ruta,
+            arguments = listOf(navArgument("solicitudId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
+            PropuestasScreen(
+                solicitudId = solicitudId,
+                onBackClick = { navController.popBackStack() },
+                onChatClick = { convId, nombre ->
+                    navController.navigate(Rutas.Chat.crearRuta(convId, nombre))
+                }
+            )
+        }
+
+        composable(
+            route = Rutas.Chat.ruta,
+            arguments = listOf(
+                navArgument("conversacionId") { type = NavType.IntType },
+                navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            ChatScreen(
+                conversacionId = backStackEntry.arguments?.getInt("conversacionId") ?: 0,
+                nombreOtro = backStackEntry.arguments?.getString("nombre") ?: "",
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Administrador
+        composable(Rutas.AdminDashboard.ruta) {
+            AdminDashboardScreen(
+                onIrAUsuarios = { rolFiltro ->
+                    navController.navigate(Rutas.AdminUsuarios.crearRuta(rolFiltro))
+                },
+                onIrASolicitudes = { navController.navigate(Rutas.AdminSolicitudes.ruta) },
+                onCerrarSesion = {
+                    SessionManager.cerrarSesion()
+                    navController.navigate(Rutas.Login.ruta) {
+                        popUpTo(0) { inclusive = true }
                     }
-                )
-            }
+                }
+            )
+        }
 
-            composable(
-                route = Rutas.PropuestasSolicitud.ruta,
-                arguments = listOf(navArgument("solicitudId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
-                PropuestasScreen(
-                    solicitudId = solicitudId,
-                    onBackClick = { navController.popBackStack() },
-                    onChatClick = { convId, nombre ->
-                        navController.navigate(Rutas.Chat.crearRuta(convId, nombre))
-                    }
-                )
-            }
+        composable(
+            route = Rutas.AdminUsuarios.ruta,
+            arguments = listOf(navArgument("rol") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
+        ) { backStackEntry ->
+            val rol = backStackEntry.arguments?.getString("rol") ?: ""
+            AdminUsuariosScreen(
+                filtroInicial = rol,
+                onVolver = { navController.popBackStack() }
+            )
+        }
 
-            composable(
-                route = Rutas.Chat.ruta,
-                arguments = listOf(
-                    navArgument("conversacionId") { type = NavType.IntType },
-                    navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
-                )
-            ) { backStackEntry ->
-                ChatScreen(
-                    conversacionId = backStackEntry.arguments?.getInt("conversacionId") ?: 0,
-                    nombreOtro = backStackEntry.arguments?.getString("nombre") ?: "",
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-
-            composable(Rutas.Mensajes.ruta) {
-                ConversacionesScreen(navController = navController)
-            }
-
-            // Administrador destinos
-            composable(Rutas.AdminDashboard.ruta) {
-                AdminDashboardScreen(
-                    onIrAUsuarios = { rolFiltro ->
-                        navController.navigate(Rutas.AdminUsuarios.crearRuta(rolFiltro))
-                    },
-                    onIrASolicitudes = {
-                        navController.navigate(Rutas.AdminSolicitudes.ruta)
-                    },
-                    onCerrarSesion = {
-                        SessionManager.cerrarSesion()
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(
-                route = Rutas.AdminUsuarios.ruta,
-                arguments = listOf(navArgument("rol") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                })
-            ) { backStackEntry ->
-                val rol = backStackEntry.arguments?.getString("rol") ?: ""
-                AdminUsuariosScreen(
-                    filtroInicial = rol,
-                    onVolver = { navController.popBackStack() }
-                )
-            }
-
-            composable(Rutas.AdminSolicitudes.ruta) {
-                AdminSolicitudesScreen(
-                    onVolver = { navController.popBackStack() }
-                )
-            }
+        composable(Rutas.AdminSolicitudes.ruta) {
+            AdminSolicitudesScreen(
+                onVolver = { navController.popBackStack() }
+            )
         }
     }
 }
