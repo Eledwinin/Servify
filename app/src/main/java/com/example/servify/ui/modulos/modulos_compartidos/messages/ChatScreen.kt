@@ -12,7 +12,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +26,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.servify.data.model.Mensaje
+import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.ServifyBluePrimary
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -44,6 +49,7 @@ fun ChatScreen(
     conversacionId: Int,
     nombreOtro: String,
     onBackClick: () -> Unit,
+    navController: NavController,
     viewModel: ChatViewModel = viewModel()
 ) {
     val verde = Color(0xFF1B7B61)
@@ -82,6 +88,30 @@ fun ChatScreen(
                         }
                         Spacer(Modifier.width(10.dp))
                         Text(nombreOtro, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Botón de Llamada de Voz
+                            IconButton(onClick = {
+                                navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", false))
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Llamar",
+                                    tint = ServifyBluePrimary
+                                )
+                            }
+
+                            // Botón de Videollamada
+                            IconButton(onClick = {
+                                navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", true))
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Videocam,
+                                    contentDescription = "Videollamada",
+                                    tint = ServifyBluePrimary
+                                )
+                            }
+                        }
                     }
                 },
                 navigationIcon = {

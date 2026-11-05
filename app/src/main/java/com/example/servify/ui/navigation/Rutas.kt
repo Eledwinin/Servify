@@ -46,4 +46,11 @@ sealed class Rutas(val ruta: String) {
 
     // Mapa de Solicitudes (Trabajador)
     object MapaSolicitudes : Rutas("mapa_solicitudes")
+
+    //para llamadas y videollamadas
+
+    object Call : Rutas("call_screen/{channelName}/{esVideo}") {
+        fun crearRuta(channelName: String, esVideo: Boolean) = "call_screen/$channelName/$esVideo"
+    }
+
 }

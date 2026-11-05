@@ -38,6 +38,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteSc
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
+import com.example.servify.ui.modulos.modulos_compartidos.messages.CallScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
@@ -325,6 +326,7 @@ fun AppNavigation() {
             ChatScreen(
                 conversacionId = backStackEntry.arguments?.getInt("conversacionId") ?: 0,
                 nombreOtro = backStackEntry.arguments?.getString("nombre") ?: "",
+                navController = navController,
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -362,6 +364,24 @@ fun AppNavigation() {
         composable(Rutas.AdminSolicitudes.ruta) {
             AdminSolicitudesScreen(
                 onVolver = { navController.popBackStack() }
+            )
+        }
+
+        // Pantalla de Llamada y Videollamada con Agora.io
+        composable(
+            route = "call_screen/{channelName}/{esVideo}",
+            arguments = listOf(
+                navArgument("channelName") { type = NavType.StringType },
+                navArgument("esVideo") { type = NavType.BoolType }
+            )
+        ) { backStackEntry ->
+            val channelName = backStackEntry.arguments?.getString("channelName") ?: "default_channel"
+            val esVideo = backStackEntry.arguments?.getBoolean("esVideo") ?: false
+
+            CallScreen(
+                navController = navController,
+                channelName = channelName,
+                esVideo = esVideo
             )
         }
     }

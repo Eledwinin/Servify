@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -15,6 +16,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProps = Properties()
+        val localFile = rootProject.file("local.properties")
+        if (localFile.exists()) {
+            localFile.inputStream().use { localProps.load(it) }
+        }
+        val agoraAppId = localProps.getProperty("AGORA_APP_ID") ?: ""
+        buildConfigField("String", "AGORA_APP_ID", "\"$agoraAppId\"")
     }
 
     buildTypes {
@@ -32,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -87,4 +97,6 @@ dependencies {
     implementation("io.socket:socket.io-client:2.1.0") {
         exclude(group = "org.json", module = "json")
     }
+
+    implementation("io.agora.rtc:full-sdk:4.3.0")
 }
