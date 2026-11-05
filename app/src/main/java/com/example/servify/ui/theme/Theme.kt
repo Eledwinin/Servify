@@ -12,10 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColorScheme = lightColorScheme(
-    primary = ServifyGreenPrimary,
+    primary = ServifyBluePrimary,
     onPrimary = Color.White,
-    primaryContainer = ServifyGreenLight,
-    onPrimaryContainer = ServifyGreenDark,
+    primaryContainer = ServifyCianSoft,
+    onPrimaryContainer = ServifyDarkNavy,
+    secondary = ServifyTealAccent,
     background = ServifyBackground,
     surface = ServifySurface,
     onBackground = ServifyTextTitle,
@@ -24,15 +25,16 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = ServifyGreenPrimary,
+    primary = ServifyBluePrimary,
     onPrimary = Color.White,
-    primaryContainer = ServifyGreenDark,
-    onPrimaryContainer = ServifyGreenLight,
-    background = Color(0xFF0F172A),
-    surface = Color(0xFF1E293B),
+    primaryContainer = ServifyDarkNavy,
+    onPrimaryContainer = ServifyCianSoft,
+    secondary = ServifyTealAccent,
+    background = Color(0xFF021024),
+    surface = Color(0xFF052659),
     onBackground = Color.White,
     onSurface = Color.White,
-    outline = Color(0xFF334155)
+    outline = Color(0xFF548383)
 )
 
 @Composable

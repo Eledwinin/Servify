@@ -179,7 +179,8 @@ fun AppNavigation() {
                     navController.navigate(Rutas.Login.ruta) {
                         popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                }
+                },
+                onVolver = { navController.popBackStack() }
             )
         }
 
@@ -194,7 +195,8 @@ fun AppNavigation() {
                     navController.navigate(Rutas.Login.ruta) {
                         popUpTo(Rutas.Login.ruta) { inclusive = true }
                     }
-                }
+                },
+                onVolver = { navController.popBackStack() }
             )
         }
 

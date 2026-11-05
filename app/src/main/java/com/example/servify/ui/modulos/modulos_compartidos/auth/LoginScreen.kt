@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +20,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -44,189 +48,249 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     var passwordVisible by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = ServifyBackground
-    ) { paddingValues ->
-        Column(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ServifyBackground) // Fondo celeste pastel (#DAFBFF)
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .fillMaxWidth()
+                .height(280.dp)
+                .background(ServifyDarkNavy)
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .align(Alignment.Center)
+                .shadow(elevation = 20.dp, shape = RoundedCornerShape(32.dp)),
+            shape = RoundedCornerShape(32.dp),
+            colors = CardDefaults.cardColors(containerColor = ServifySurface)
         ) {
-            Text(
-                text = "Servify",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = ServifyGreenPrimary
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Bienvenido de vuelta",
-                style = MaterialTheme.typography.bodyLarge,
-                color = ServifyTextMuted
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            MensajeFeedback(
-                mensaje = viewModel.mensajeError,
-                esError = true
-            )
-
-            OutlinedTextField(
-                value = viewModel.correo,
-                onValueChange = { viewModel.onCorreoChange(it) },
-                label = { Text("Correo electrónico", color = ServifyTextPlaceholder) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        tint = ServifyTextMuted
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally // <-- Aquí estaba el error (Decía CenterHost)
+            ) {
+                // Ícono Superior dentro de contenedor celeste suave
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(ServifyCianSoft),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🏠",
+                        fontSize = 30.sp
                     )
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                ),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ServifySurface,
-                    unfocusedContainerColor = ServifySurface,
-                    focusedBorderColor = ServifyGreenPrimary,
-                    unfocusedBorderColor = ServifyBorder,
-                    focusedTextColor = ServifyTextTitle,
-                    unfocusedTextColor = ServifyTextBody
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !viewModel.cargando
-            )
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = viewModel.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
-                label = { Text("Contraseña", color = ServifyTextPlaceholder) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = ServifyTextMuted
+                // Títulos con jerarquía fuerte
+                Text(
+                    text = "Bienvenido de nuevo",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = ServifyTextTitle
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Inicia sesión para continuar en Servify.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ServifyTextMuted
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Mensaje de feedback de error (si existe)
+                MensajeFeedback(
+                    mensaje = viewModel.mensajeError,
+                    esError = true
+                )
+
+                // Campo de Correo Electrónico
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "CORREO ELECTRÓNICO",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyBluePrimary
                     )
-                },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = null,
-                            tint = ServifyTextMuted
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = viewModel.correo,
+                        onValueChange = { viewModel.onCorreoChange(it) },
+                        placeholder = { Text("tu@correo.com", color = ServifyTextPlaceholder) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                tint = ServifyBluePrimary
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = ServifyInputBackground,
+                            unfocusedContainerColor = ServifyInputBackground,
+                            focusedBorderColor = ServifyBluePrimary,
+                            unfocusedBorderColor = ServifyBorder,
+                            focusedTextColor = ServifyTextTitle,
+                            unfocusedTextColor = ServifyTextBody
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !viewModel.cargando
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Campo de Contraseña
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "CONTRASEÑA",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyBluePrimary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = viewModel.password,
+                        onValueChange = { viewModel.onPasswordChange(it) },
+                        placeholder = { Text("••••••••", color = ServifyTextPlaceholder) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = ServifyBluePrimary
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null,
+                                    tint = ServifyBluePrimary
+                                )
+                            }
+                        },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                viewModel.iniciarSesion { usuario ->
+                                    onLoginExitoso(usuario)
+                                }
+                            }
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = ServifyInputBackground,
+                            unfocusedContainerColor = ServifyInputBackground,
+                            focusedBorderColor = ServifyBluePrimary,
+                            unfocusedBorderColor = ServifyBorder,
+                            focusedTextColor = ServifyTextTitle,
+                            unfocusedTextColor = ServifyTextBody
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !viewModel.cargando
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // ¿Olvidaste tu contraseña?
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    TextButton(
+                        onClick = onOlvidastePassword,
+                        enabled = !viewModel.cargando,
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ServifyBluePrimary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Botón Iniciar Sesión
+                Button(
+                    onClick = {
                         focusManager.clearFocus()
                         viewModel.iniciarSesion { usuario ->
                             onLoginExitoso(usuario)
                         }
-                    }
-                ),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ServifySurface,
-                    unfocusedContainerColor = ServifySurface,
-                    focusedBorderColor = ServifyGreenPrimary,
-                    unfocusedBorderColor = ServifyBorder,
-                    focusedTextColor = ServifyTextTitle,
-                    unfocusedTextColor = ServifyTextBody
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !viewModel.cargando
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Text(
-                    text = "¿Olvidaste tu contraseña?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = ServifyGreenPrimary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable(enabled = !viewModel.cargando) {
-                        onOlvidastePassword()
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    focusManager.clearFocus()
-                    viewModel.iniciarSesion { usuario ->
-                        onLoginExitoso(usuario)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                enabled = !viewModel.cargando,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ServifyGreenPrimary,
-                    contentColor = ServifySurface,
-                    disabledContainerColor = ServifyGreenPrimary.copy(alpha = 0.6f)
-                )
-            ) {
-                if (viewModel.cargando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = ServifySurface,
-                        strokeWidth = 2.dp
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    enabled = !viewModel.cargando,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ServifyBluePrimary,
+                        contentColor = ServifySurface,
+                        disabledContainerColor = ServifyBluePrimary.copy(alpha = 0.6f)
                     )
-                } else {
+                ) {
+                    if (viewModel.cargando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = ServifySurface,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Iniciar Sesión",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Enlace de Registro
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "Iniciar Sesión",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = "¿No tienes cuenta? ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ServifyTextMuted
+                    )
+                    Text(
+                        text = "Regístrate",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = ServifyBluePrimary,
+                        modifier = Modifier.clickable(enabled = !viewModel.cargando) {
+                            onIrARegistro()
+                        }
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "¿No tienes cuenta? ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ServifyTextMuted
-                )
-                Text(
-                    text = "Regístrate",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = ServifyGreenPrimary,
-                    modifier = Modifier.clickable(enabled = !viewModel.cargando) {
-                        onIrARegistro()
-                    }
-                )
             }
         }
     }
@@ -272,7 +336,7 @@ fun DialogoSeleccionCategoria(
                         .height(140.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = ServifyGreenPrimary)
+                    CircularProgressIndicator(color = ServifyBluePrimary)
                 }
             } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -294,7 +358,7 @@ fun DialogoSeleccionCategoria(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onCategoriaSeleccionada(cat) },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 color = ServifySurface,
                                 border = BorderStroke(1.dp, ServifyBorder)
                             ) {
@@ -322,6 +386,6 @@ fun DialogoSeleccionCategoria(
             }
         },
         containerColor = ServifySurface,
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp)
     )
 }

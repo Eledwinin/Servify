@@ -8,22 +8,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
@@ -33,27 +23,11 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.UploadFile
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -63,20 +37,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
 import com.example.servify.ui.componentes.inputs.CampoTexto
-import com.example.servify.ui.theme.ServifyBorder
-import com.example.servify.ui.theme.ServifyGreenLight
-import com.example.servify.ui.theme.ServifyGreenPrimary
-import com.example.servify.ui.theme.ServifySurface
-import com.example.servify.ui.theme.ServifyTextBody
-import com.example.servify.ui.theme.ServifyTextMuted
-import com.example.servify.ui.theme.ServifyTextPlaceholder
-import com.example.servify.ui.theme.ServifyTextTitle
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroTrabajadorScreen(
     onRegistroExitoso: () -> Unit = {},
     onIrALogin: () -> Unit = {},
+    onVolver: () -> Unit = {},
     viewModel: RegistroViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -91,18 +59,15 @@ fun RegistroTrabajadorScreen(
     var menuCategoriasExpandido by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
 
-    // Asegurar la carga de categorías al entrar a la pantalla
     LaunchedEffect(Unit) {
         if (categoriasDisponibles.isEmpty()) {
             viewModel.cargarCategorias()
         }
     }
 
-    // Estado para el archivo PDF
     var pdfUri by remember { mutableStateOf<Uri?>(null) }
     var pdfNombre by remember { mutableStateOf<String?>(null) }
 
-    // Manejo de respuestas del servidor
     LaunchedEffect(estadoRegistro) {
         when (val estado = estadoRegistro) {
             is RegistroState.Error -> {
@@ -115,7 +80,6 @@ fun RegistroTrabajadorScreen(
         }
     }
 
-    // Selector de archivos del sistema
     val selectorPdf = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -144,7 +108,7 @@ fun RegistroTrabajadorScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ServifySurface)
+            .background(ServifyBackground)
             .imePadding()
             .padding(horizontal = 24.dp)
     ) {
@@ -156,18 +120,43 @@ fun RegistroTrabajadorScreen(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .background(color = ServifyGreenPrimary, shape = RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Build,
-                    contentDescription = "Logo Servify",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
+                // Botón de Retroceder a la izquierda
+                IconButton(
+                    onClick = { onVolver() },
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(ServifySurface)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Regresar",
+                        tint = ServifyBluePrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                // Icono / Herramienta a la derecha
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(ServifyBluePrimary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Build,
+                        contentDescription = "Icono Profesional",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -175,20 +164,20 @@ fun RegistroTrabajadorScreen(
             Text(
                 text = "Perfil Profesional",
                 fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = ServifyTextTitle
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Regístrate para comenzar a recibir solicitudes.",
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 color = ServifyTextMuted
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             CampoTexto(
-                etiqueta = "Nombre Completo",
+                etiqueta = "NOMBRE COMPLETO",
                 valor = nombre,
                 onValorCambiado = { nombre = it },
                 placeholder = "Ej. Mario Ramírez",
@@ -197,12 +186,12 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Selector Desplegable de Categorías desde la Base de Datos
+            // Selector Desplegable de Categorías
             Text(
-                text = "Oficio o Especialidad",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = ServifyTextTitle
+                text = "OFICIO O ESPECIALIDAD",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = ServifyBluePrimary
             )
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -229,14 +218,14 @@ fun RegistroTrabajadorScreen(
                         Text(
                             text = "Selecciona tu especialidad",
                             color = ServifyTextPlaceholder,
-                            fontSize = 14.sp
+                            fontSize = 13.sp
                         )
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Outlined.Build,
                             contentDescription = null,
-                            tint = ServifyTextMuted
+                            tint = ServifyBluePrimary
                         )
                     },
                     trailingIcon = {
@@ -244,17 +233,17 @@ fun RegistroTrabajadorScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp,
-                                color = ServifyGreenPrimary
+                                color = ServifyBluePrimary
                             )
                         } else {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuCategoriasExpandido)
                         }
                     },
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = ServifySurface,
                         unfocusedContainerColor = ServifySurface,
-                        focusedBorderColor = ServifyGreenPrimary,
+                        focusedBorderColor = ServifyBluePrimary,
                         unfocusedBorderColor = ServifyBorder,
                         focusedTextColor = ServifyTextTitle,
                         unfocusedTextColor = ServifyTextBody
@@ -276,11 +265,11 @@ fun RegistroTrabajadorScreen(
                                     Icon(
                                         imageVector = Icons.Outlined.Refresh,
                                         contentDescription = null,
-                                        tint = ServifyGreenPrimary,
+                                        tint = ServifyBluePrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Reintentar cargar", color = ServifyGreenPrimary, fontSize = 14.sp)
+                                    Text("Reintentar cargar", color = ServifyBluePrimary, fontSize = 14.sp)
                                 }
                             },
                             onClick = {
@@ -311,7 +300,7 @@ fun RegistroTrabajadorScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             CampoTexto(
-                etiqueta = "Teléfono de Contacto",
+                etiqueta = "TELÉFONO DE CONTACTO",
                 valor = telefono,
                 onValorCambiado = { telefono = it },
                 placeholder = "7000-0000",
@@ -322,7 +311,7 @@ fun RegistroTrabajadorScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             CampoTexto(
-                etiqueta = "Correo Electrónico",
+                etiqueta = "CORREO ELECTRÓNICO",
                 valor = email,
                 onValorCambiado = { email = it },
                 placeholder = "tu@correo.com",
@@ -333,7 +322,7 @@ fun RegistroTrabajadorScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             CampoTexto(
-                etiqueta = "Contraseña",
+                etiqueta = "CONTRASEÑA",
                 valor = password,
                 onValorCambiado = { password = it },
                 placeholder = "••••••••",
@@ -344,12 +333,12 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Sección de curriculum
+            // Sección de Currículum
             Text(
-                text = "Currículum o Certificados (Opcional)",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = ServifyTextTitle
+                text = "CURRÍCULUM O CERTIFICADOS (OPCIONAL)",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = ServifyBluePrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -358,9 +347,9 @@ fun RegistroTrabajadorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectorPdf.launch("application/pdf") },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = ServifyGreenLight.copy(alpha = 0.4f)),
-                    border = BorderStroke(1.dp, ServifyGreenPrimary.copy(alpha = 0.6f))
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = ServifyCianSoft.copy(alpha = 0.4f)),
+                    border = BorderStroke(1.dp, ServifyBluePrimary.copy(alpha = 0.6f))
                 ) {
                     Row(
                         modifier = Modifier
@@ -372,7 +361,7 @@ fun RegistroTrabajadorScreen(
                         Icon(
                             imageVector = Icons.Outlined.UploadFile,
                             contentDescription = "Subir PDF",
-                            tint = ServifyGreenPrimary,
+                            tint = ServifyBluePrimary,
                             modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -380,14 +369,14 @@ fun RegistroTrabajadorScreen(
                             text = "Adjuntar CV en formato PDF",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = ServifyGreenPrimary
+                            color = ServifyBluePrimary
                         )
                     }
                 }
             } else {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = ServifySurface),
                     border = BorderStroke(1.dp, ServifyBorder)
                 ) {
@@ -400,7 +389,7 @@ fun RegistroTrabajadorScreen(
                         Icon(
                             imageVector = Icons.Outlined.Description,
                             contentDescription = "PDF adjunto",
-                            tint = ServifyGreenPrimary,
+                            tint = ServifyBluePrimary,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
@@ -436,7 +425,7 @@ fun RegistroTrabajadorScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = ServifyGreenPrimary)
+                    CircularProgressIndicator(color = ServifyBluePrimary)
                 }
             } else {
                 BotonPrincipal(
@@ -455,7 +444,7 @@ fun RegistroTrabajadorScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -467,7 +456,7 @@ fun RegistroTrabajadorScreen(
                     text = "Inicia Sesión",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ServifyGreenPrimary,
+                    color = ServifyBluePrimary,
                     modifier = Modifier.clickable { onIrALogin() }
                 )
             }
