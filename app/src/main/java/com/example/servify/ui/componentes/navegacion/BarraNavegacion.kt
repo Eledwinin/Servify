@@ -1,6 +1,9 @@
 package com.example.servify.ui.componentes.navegacion
 
-
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Chat
@@ -8,9 +11,16 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 
 sealed class ItemNav(val ruta: String, val titulo: String, val icono: ImageVector) {
     object Explorar : ItemNav(Rutas.Home.ruta, "Explorar", Icons.Default.Search)
@@ -31,22 +41,46 @@ fun BarraNavegacion(
         ItemNav.Perfil
     )
 
-    NavigationBar(containerColor = Color.White) {
-        items.forEach { item ->
-            val seleccionado = rutaActual == item.ruta
-            NavigationBarItem(
-                selected = seleccionado,
-                onClick = { onItemClick(item.ruta) },
-                icon = { Icon(imageVector = item.icono, contentDescription = item.titulo) },
-                label = { Text(item.titulo) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFF168067),
-                    selectedTextColor = Color(0xFF168067),
-                    indicatorColor = Color(0xFFE8F3F1),
-                    unselectedIconColor = Color(0xFF94A3B8),
-                    unselectedTextColor = Color(0xFF94A3B8)
-                )
-            )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = ServifyBackground,
+        tonalElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { item ->
+                val seleccionado = rutaActual == item.ruta
+
+                val colorIconoTexto = if (seleccionado) ServifyBluePrimary else ServifyTextMuted
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onItemClick(item.ruta) }
+                        .background(if (seleccionado) ServifyCianSoft else Color.Transparent)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = item.icono,
+                        contentDescription = item.titulo,
+                        tint = colorIconoTexto,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = item.titulo,
+                        fontSize = 11.sp,
+                        fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium,
+                        color = colorIconoTexto
+                    )
+                }
+            }
         }
     }
 }

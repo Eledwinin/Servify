@@ -3,7 +3,7 @@ package com.example.servify.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // --- Paleta Corporativa Principal (Azules y Celestes) ---
-val ServifyDarkNavy = Color(0xFF021024)       // Títulos principales, textos oscuros
+val ServifyDarkNavy = Color(0xFF052659)       // Títulos principales, textos oscuros
 val ServifyBluePrimary = Color(0xFF052659)    // Botones principales, elementos pesados
 val ServifyTealAccent = Color(0xFF548383)     // Elementos secundarios, acentos
 val ServifyBlueLight = Color(0xFF7DA0CA)      // Bordes, subtítulos, elementos de apoyo
@@ -18,7 +18,7 @@ val ServifyBorder = Color(0xFFCBD5E1)         // Bordes de tarjetas y separadore
 // --- Tipografía y Textos ---
 val ServifyTextTitle = Color(0xFF021024)      // Títulos principales en negrita
 val ServifyTextBody = Color(0xFF052659)       // Textos estándar
-val ServifyTextMuted = Color(0xFF548383)      // Subtítulos, fechas
+val ServifyTextMuted = Color(0xFF475569)      // Subtítulos, fechas
 val ServifyTextPlaceholder = Color(0xFF7DA0CA)// Placeholder en inputs
 
 // --- Estados y Tags (Badges) ---

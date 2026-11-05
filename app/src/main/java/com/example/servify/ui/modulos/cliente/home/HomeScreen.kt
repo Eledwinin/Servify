@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.delay
@@ -41,16 +43,13 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val verdeServify = Color(0xFF1B7B61)
 
-    // Estados observados desde el ViewModel
     val busqueda by viewModel.queryBusqueda.collectAsState()
     val categoriaSeleccionada by viewModel.categoriaSeleccionada.collectAsState()
     val listaProfesionales by viewModel.listaProfesionales.collectAsState()
     val estaCargando by viewModel.estaCargando.collectAsState()
     val mensajeError by viewModel.mensajeError.collectAsState()
 
-    // Ubicación GPS
     var tienePermisoUbicacion by remember { mutableStateOf(false) }
     var textoUbicacion by remember { mutableStateOf("Obteniendo ubicación...") }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -96,6 +95,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        containerColor = ServifyBackground,
         topBar = {
             Row(
                 modifier = Modifier
@@ -106,33 +106,33 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "Servify",
-                    color = verdeServify,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    color = ServifyBluePrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = Color(0xFFEEEEEE),
-                        shape = RoundedCornerShape(12.dp)
+                        color = ServifyCianSoft.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
-                            text = "CLIENTE",
+                            text = "MODO CLIENTE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Gray
+                            color = ServifyBluePrimary
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     IconButton(onClick = { navController.navigate(Rutas.Perfil.ruta) }) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFE0E0E0)),
+                                .background(ServifyCianSoft),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.Gray)
+                            Icon(Icons.Default.Person, contentDescription = "Perfil", tint = ServifyBluePrimary)
                         }
                     }
                 }
@@ -141,7 +141,7 @@ fun HomeScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate(Rutas.NuevaSolicitud.ruta) },
-                containerColor = verdeServify,
+                containerColor = ServifyBluePrimary,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -172,7 +172,7 @@ fun HomeScreen(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tienePermisoUbicacion) Color(0xFF1E1E1E) else Color(0xFFD32F2F)
+                            containerColor = if (tienePermisoUbicacion) ServifyDarkNavy else ServifyDanger
                         ),
                         shape = RoundedCornerShape(20.dp)
                     ) {
@@ -190,61 +190,63 @@ fun HomeScreen(
                 }
             }
 
-            // Banner + Buscador Dinámico
+            // Banner + Buscador Dinámico (Azul Profundo Corporativo)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = verdeServify)
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = ServifyDarkNavy)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
                             text = "Encuentra a tu\nexperto ideal",
                             color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Miles de profesionales locales listos para ayudarte.",
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = Color.White.copy(alpha = 0.7f),
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        TextField(
+                        OutlinedTextField(
                             value = busqueda,
                             onValueChange = { viewModel.onQueryBusquedaChange(it) },
-                            placeholder = { Text("¿Qué servicio buscas hoy?", fontSize = 13.sp, color = Color.Gray) },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                            placeholder = { Text("¿Qué servicio buscas hoy?", fontSize = 13.sp, color = ServifyTextPlaceholder) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = ServifyBluePrimary) },
                             trailingIcon = {
                                 if (busqueda.isNotEmpty()) {
                                     IconButton(onClick = { viewModel.onQueryBusquedaChange("") }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Limpiar", tint = Color.Gray)
+                                        Icon(Icons.Default.Clear, contentDescription = "Limpiar", tint = ServifyTextMuted)
                                     }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = ServifySurface,
+                                unfocusedContainerColor = ServifySurface,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedTextColor = ServifyTextTitle,
+                                unfocusedTextColor = ServifyTextBody
                             )
                         )
                     }
                 }
             }
 
-            // Carrusel Horizontal de Categorías (FilterChips)
+            // Carrusel Horizontal de Categorías
             item {
                 val categoriasDisponibles = remember {
                     listOf("Plomería", "Electricidad", "Carpintería", "Jardinería", "Pintura", "Climatización")
                 }
 
                 Column {
-                    Text("Categorías", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Categorías", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
+                    Spacer(modifier = Modifier.height(10.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -252,10 +254,18 @@ fun HomeScreen(
                             FilterChip(
                                 selected = categoriaSeleccionada == null,
                                 onClick = { viewModel.seleccionarCategoria(null) },
-                                label = { Text("Todas", fontSize = 12.sp) },
+                                label = { Text("Todas", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = verdeServify,
+                                    containerColor = ServifySurface,
+                                    selectedContainerColor = ServifyBluePrimary,
+                                    labelColor = ServifyTextBody,
                                     selectedLabelColor = Color.White
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = categoriaSeleccionada == null,
+                                    borderColor = ServifyBorder,
+                                    selectedBorderColor = ServifyBluePrimary
                                 ),
                                 shape = RoundedCornerShape(16.dp)
                             )
@@ -266,10 +276,18 @@ fun HomeScreen(
                             FilterChip(
                                 selected = estaSeleccionada,
                                 onClick = { viewModel.seleccionarCategoria(cat) },
-                                label = { Text(cat, fontSize = 12.sp) },
+                                label = { Text(cat, fontSize = 12.sp, fontWeight = FontWeight.Medium) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = verdeServify,
+                                    containerColor = ServifySurface,
+                                    selectedContainerColor = ServifyBluePrimary,
+                                    labelColor = ServifyTextBody,
                                     selectedLabelColor = Color.White
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = estaSeleccionada,
+                                    borderColor = ServifyBorder,
+                                    selectedBorderColor = ServifyBluePrimary
                                 ),
                                 shape = RoundedCornerShape(16.dp)
                             )
@@ -285,7 +303,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Más Cercanos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Más Cercanos", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
 
                     FilterChip(
                         selected = false,
@@ -295,13 +313,13 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = "Ver Mapa",
-                                tint = verdeServify,
+                                tint = ServifyBluePrimary,
                                 modifier = Modifier.size(16.dp)
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFFE2F3EE),
-                            labelColor = verdeServify
+                            containerColor = ServifyCianSoft.copy(alpha = 0.5f),
+                            labelColor = ServifyBluePrimary
                         ),
                         border = null,
                         shape = RoundedCornerShape(16.dp)
@@ -313,15 +331,15 @@ fun HomeScreen(
             if (estaCargando) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = verdeServify)
+                        CircularProgressIndicator(color = ServifyBluePrimary)
                     }
                 }
             } else if (mensajeError != null) {
                 item {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("No se pudieron cargar los técnicos", color = Color.Red, fontSize = 13.sp)
+                        Text("No se pudieron cargar los técnicos", color = ServifyDanger, fontSize = 13.sp)
                         TextButton(onClick = { viewModel.cargarTecnicos() }) {
-                            Text("Reintentar")
+                            Text("Reintentar", color = ServifyBluePrimary)
                         }
                     }
                 }
@@ -332,7 +350,7 @@ fun HomeScreen(
                             "No se encontraron técnicos para esta búsqueda."
                         else
                             "No hay técnicos registrados aún.",
-                        color = Color.Gray,
+                        color = ServifyTextMuted,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
@@ -358,61 +376,63 @@ fun HomeScreen(
                             .clickable {
                                 navController.navigate(Rutas.DetalleTecnico.crearRuta(prof.id.toString()))
                             },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        border = BorderStroke(1.dp, ServifyBorder)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(14.dp),
+                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(50.dp)
+                                    .size(52.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE2F3EE)),
+                                    .background(ServifyCianSoft),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = iniciales,
-                                    color = Color(0xFF1B7B61),
+                                    color = ServifyBluePrimary,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(14.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(prof.nombreCompleto, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                                Text("${prof.anosExperiencia} años de experiencia", fontSize = 11.sp, color = Color.Gray)
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(prof.nombreCompleto, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = ServifyTextTitle)
+                                Text("${prof.anosExperiencia} años de experiencia", fontSize = 12.sp, color = ServifyTextMuted)
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Surface(
-                                        color = Color(0xFFEEEEEE),
+                                        color = ServifyInputBackground,
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
                                             text = prof.oficio,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Medium
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = ServifyTextBody
                                         )
                                     }
 
                                     if (textoDistancia != null) {
                                         Surface(
-                                            color = Color(0xFFE2F3EE),
+                                            color = ServifyCianSoft,
                                             shape = RoundedCornerShape(8.dp)
                                         ) {
                                             Text(
                                                 text = "📍 $textoDistancia",
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                                fontSize = 10.sp,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = verdeServify
+                                                color = ServifyBluePrimary
                                             )
                                         }
                                     }
@@ -424,15 +444,15 @@ fun HomeScreen(
                                     Icon(
                                         imageVector = Icons.Default.Star,
                                         contentDescription = null,
-                                        tint = Color(0xFFFFB800),
+                                        tint = ServifyStarYellow,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
                                     Text(
                                         text = "%.1f".format(prof.calificacionPromedio),
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFFFFB800)
+                                        fontSize = 13.sp,
+                                        color = ServifyTextTitle
                                     )
                                 }
                             }
