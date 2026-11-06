@@ -446,7 +446,6 @@ fun MuroSolicitudesScreen(
 
                                 Button(
                                     onClick = {
-                                        // 🚀 Navegación directa a la nueva pantalla completa de propuesta
                                         val tituloCodificado = java.net.URLEncoder.encode(solicitud.titulo, "UTF-8")
                                         navController.navigate("enviar_propuesta/${solicitud.id}/$tituloCodificado")
                                     },
@@ -455,7 +454,7 @@ fun MuroSolicitudesScreen(
                                     colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
                                 ) {
                                     Text(
-                                        text = "Enviar Propuesta ›",
+                                        text = "Enviar Postulación ›",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White

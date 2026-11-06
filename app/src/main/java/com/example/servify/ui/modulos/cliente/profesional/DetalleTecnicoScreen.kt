@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,22 +37,31 @@ fun DetalleTecnicoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Perfil del Profesional") },
+                title = {
+                    Text(
+                        "Perfil del Profesional",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = ServifyTextTitle
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = "Volver",
+                            tint = ServifyBluePrimary
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
         },
         bottomBar = {
             state.tecnico?.let { prof ->
                 Surface(
                     shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface
+                    color = ServifySurface
                 ) {
                     Box(
                         modifier = Modifier
@@ -62,10 +72,10 @@ fun DetalleTecnicoScreen(
                             onClick = { onContratarClick(prof.id) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(12.dp),
+                                .height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1B7B61)
+                                containerColor = ServifyBluePrimary
                             )
                         ) {
                             Text(
@@ -78,7 +88,8 @@ fun DetalleTecnicoScreen(
                     }
                 }
             }
-        }
+        },
+        containerColor = ServifyBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -88,6 +99,7 @@ fun DetalleTecnicoScreen(
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
+                        color = ServifyBluePrimary,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -95,7 +107,7 @@ fun DetalleTecnicoScreen(
                 state.error != null -> {
                     Text(
                         text = state.error ?: "Error desconocido",
-                        color = MaterialTheme.colorScheme.error,
+                        color = ServifyDanger,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(16.dp)

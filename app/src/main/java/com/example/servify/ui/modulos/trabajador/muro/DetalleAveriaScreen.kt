@@ -40,12 +40,10 @@ fun DetalleAveriaScreen(
     idSolicitud: Int,
     navController: NavController,
     onBackClick: () -> Unit,
-    onPostularseClick: () -> Unit = {},
     viewModel: DetalleAveriaViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    var mostrarModal by remember { mutableStateOf(false) }
 
     // Estado para controlar la foto seleccionada que se abrirá en pantalla completa
     var fotoExpandidaUrl by remember { mutableStateOf<String?>(null) }
@@ -95,7 +93,12 @@ fun DetalleAveriaScreen(
             Surface(shadowElevation = 8.dp, color = ServifySurface) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                     Button(
-                        onClick = { mostrarModal = true },
+                        onClick = {
+                            detalle?.let { item ->
+                                val tituloCodificado = java.net.URLEncoder.encode(item.titulo, "UTF-8")
+                                navController.navigate("enviar_propuesta/${item.id}/$tituloCodificado")
+                            }
+                        },
                         enabled = detalle != null && !detalle.yaPostulado,
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -139,7 +142,7 @@ fun DetalleAveriaScreen(
                     letterSpacing = 0.5.sp
                 )
 
-                // Tarjeta de información del cliente (Inspirada en Figma)
+                // Tarjeta de información del cliente
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -300,17 +303,6 @@ fun DetalleAveriaScreen(
                 }
             }
         }
-    }
-
-    if (mostrarModal && detalle != null) {
-        ModalPostularseSheet(
-            tituloTrabajo = detalle.titulo,
-            onDismiss = { mostrarModal = false },
-            onEnviarPostulacion = { precio, tiempo, mensaje ->
-                mostrarModal = false
-                viewModel.postular(precio, tiempo, mensaje)
-            }
-        )
     }
 
     // Visor de imagen en pantalla completa (Dialog emergente)

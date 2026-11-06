@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.SolicitudItemTecnico
+import com.example.servify.ui.theme.*
 import com.google.android.gms.location.LocationServices
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.IconFactory
@@ -53,7 +54,6 @@ fun MapaSolicitudesScreen(
     muroViewModel: MuroSolicitudesViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val verdeServify = Color(0xFF1B7B61)
 
     remember {
         MapLibre.getInstance(context)
@@ -62,9 +62,7 @@ fun MapaSolicitudesScreen(
     val listaSolicitudes = muroViewModel.solicitudes
 
     var solicitudSeleccionada by remember { mutableStateOf<SolicitudItemTecnico?>(null) }
-    var solicitudParaPostular by remember { mutableStateOf<SolicitudItemTecnico?>(null) }
 
-    // Corregido: Coerción explícita a Double no nulo
     var userLat by remember { mutableStateOf(SessionManager.latitud ?: 13.6929) }
     var userLng by remember { mutableStateOf(SessionManager.longitud ?: -89.2182) }
 
@@ -126,7 +124,6 @@ fun MapaSolicitudesScreen(
         }
     }
 
-    // Ahora userLat y userLng son garantizados como Double
     val ubicacionTecnico = LatLng(userLat, userLng)
 
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
@@ -143,8 +140,7 @@ fun MapaSolicitudesScreen(
         val map = mapLibreInstance ?: return@LaunchedEffect
         map.clear()
 
-        // 1. Posición del Trabajador (Marcador Azul)
-        val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, Color.Blue.toArgb())
+        val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, ServifyBluePrimary.toArgb())
 
         map.addMarker(
             MarkerOptions()
@@ -158,7 +154,6 @@ fun MapaSolicitudesScreen(
             CameraUpdateFactory.newLatLngZoom(ubicacionTecnico, 13.0)
         )
 
-        // 2. Marcadores de las Solicitudes/Averías
         val mapaSolicitudesPorId = mutableMapOf<String, SolicitudItemTecnico>()
 
         listaSolicitudes.forEach { solicitud ->
@@ -198,15 +193,16 @@ fun MapaSolicitudesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mapa de Solicitudes", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Mapa de Solicitudes", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = ServifyBluePrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
-        }
+        },
+        containerColor = ServifyBackground
     ) { paddingValues ->
         Box(
             modifier = modifier
@@ -248,7 +244,7 @@ fun MapaSolicitudesScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -257,13 +253,13 @@ fun MapaSolicitudesScreen(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE2F3EE)),
+                                    .background(ServifyCianSoft),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Build,
                                     contentDescription = null,
-                                    tint = verdeServify
+                                    tint = ServifyBluePrimary
                                 )
                             }
 
@@ -274,25 +270,25 @@ fun MapaSolicitudesScreen(
                                     text = solicitudAMostrar.titulo,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
-                                    color = Color(0xFF212121)
+                                    color = ServifyTextTitle
                                 )
                                 Text(
                                     text = "Cliente: ${solicitudAMostrar.clienteNombre}",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = ServifyTextMuted
                                 )
                             }
 
                             Surface(
-                                color = Color(0xFFE2F3EE),
+                                color = ServifyInputBackground,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = solicitudAMostrar.categoriaNombre,
+                                    text = solicitudAMostrar.categoriaNombre.uppercase(),
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = verdeServify
+                                    color = ServifyTextMuted
                                 )
                             }
                         }
@@ -302,7 +298,7 @@ fun MapaSolicitudesScreen(
                         Text(
                             text = solicitudAMostrar.descripcion,
                             fontSize = 12.sp,
-                            color = Color.DarkGray,
+                            color = ServifyTextMuted,
                             maxLines = 2
                         )
 
@@ -315,36 +311,29 @@ fun MapaSolicitudesScreen(
                         ) {
                             solicitudAMostrar.distanciaKm?.let { dist ->
                                 Text(
-                                    text = "📍 A %.1f km de ti".format(dist),
+                                    text = "A %.1f km de ti".format(dist),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = verdeServify
+                                    color = ServifyBluePrimary
                                 )
                             }
 
+                            // Navegación directa a la pantalla completa de propuesta
                             Button(
-                                onClick = { solicitudParaPostular = solicitudAMostrar },
-                                colors = ButtonDefaults.buttonColors(containerColor = verdeServify),
+                                onClick = {
+                                    val tituloCodificado = java.net.URLEncoder.encode(solicitudAMostrar.titulo, "UTF-8")
+                                    navController.navigate("enviar_propuesta/${solicitudAMostrar.id}/$tituloCodificado")
+                                    solicitudSeleccionada = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Postularme")
+                                Text("Postularme ›")
                             }
                         }
                     }
                 }
             }
-        }
-
-        solicitudParaPostular?.let { solicitud ->
-            ModalPostularseSheet(
-                tituloTrabajo = solicitud.titulo,
-                onDismiss = { solicitudParaPostular = null },
-                onEnviarPostulacion = { precio, tiempo, mensaje ->
-                    muroViewModel.postular(solicitud.id, precio, tiempo, mensaje)
-                    solicitudParaPostular = null
-                    solicitudSeleccionada = null
-                }
-            )
         }
     }
 }

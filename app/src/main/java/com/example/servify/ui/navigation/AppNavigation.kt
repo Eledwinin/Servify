@@ -277,11 +277,6 @@ fun AppNavigation() {
                 idSolicitud = idSolicitud,
                 navController = navController,
                 onBackClick = { navController.popBackStack() },
-                onPostularseClick = {
-                    // Navegamos directo a la pantalla pasando un título genérico o el ID
-                    // (La pantalla de Enviar Propuesta ya maneja el ID para cargar lo necesario)
-                    navController.navigate("enviar_propuesta/$idSolicitud/Trabajo_%23$idSolicitud")
-                }
             )
         }
 

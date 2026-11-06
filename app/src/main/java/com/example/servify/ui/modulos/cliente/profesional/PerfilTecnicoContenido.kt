@@ -15,89 +15,84 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PerfilTecnicoContenido(perfil: ProfesionalPerfil) {
-    val verde = Color(0xFF1B7B61)
     val iniciales = perfil.nombreCompleto.split(" ").filter { it.isNotBlank() }.take(2)
         .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" }
 
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
 
-        // Cabecera
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(72.dp).background(Color(0xFFE2F3EE), CircleShape),
+                Modifier.size(72.dp).background(ServifyCianSoft, CircleShape),
                 contentAlignment = Alignment.Center
-            ) { Text(iniciales, color = verde, fontWeight = FontWeight.Bold, fontSize = 24.sp) }
+            ) { Text(iniciales, color = ServifyBluePrimary, fontWeight = FontWeight.Bold, fontSize = 24.sp) }
 
             Spacer(Modifier.width(14.dp))
 
             Column(Modifier.weight(1f)) {
-                Text(perfil.nombreCompleto, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text(perfil.oficio, color = verde, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(perfil.nombreCompleto, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
+                Text(perfil.oficio, color = ServifyBluePrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, null, tint = Color(0xFFFFB800), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(3.dp))
                     Text(
                         "%.1f (${perfil.totalResenas} reseñas)".format(perfil.calificacionPromedio),
-                        fontSize = 13.sp, color = Color.DarkGray
+                        fontSize = 13.sp, color = ServifyTextMuted
                     )
                 }
             }
         }
 
-        // Insignias
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Insignia("${perfil.anosExperiencia} años de experiencia", Color(0xFFE2F3EE), verde)
+            Insignia("${perfil.anosExperiencia} años de experiencia", ServifyCianSoft, ServifyBluePrimary)
             if (perfil.trabajosCompletados > 0)
                 Insignia("${perfil.trabajosCompletados} trabajos completados", Color(0xFFE0E7FF), Color(0xFF4338CA))
             if (perfil.esVip == 1)
-                Insignia("⭐ VIP", Color(0xFFFEF3C7), Color(0xFFD97706))
+                Insignia("⭐ VIP", ServifyPendingBg, ServifyPendingText)
         }
 
-        // Sobre mí
         Seccion("Sobre mí") {
             Text(
                 perfil.biografia?.takeIf { it.isNotBlank() }
                     ?: "Este profesional aún no ha escrito su descripción.",
-                fontSize = 14.sp, color = Color.DarkGray, lineHeight = 20.sp
+                fontSize = 14.sp, color = ServifyTextMuted, lineHeight = 20.sp
             )
         }
 
-        // Especialidades
         if (perfil.especialidades.isNotEmpty()) {
             Seccion("Especialidades") {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    perfil.especialidades.forEach { Insignia(it, Color(0xFFF1F5F9), Color(0xFF334155)) }
+                    perfil.especialidades.forEach { Insignia(it, ServifyInputBackground, ServifyTextTitle) }
                 }
             }
         }
 
-        // Reseñas
         Seccion("Reseñas y comentarios") {
             if (perfil.resenas.isEmpty()) {
                 Surface(
-                    color = Color(0xFFF8F9FA), shape = RoundedCornerShape(12.dp),
+                    color = ServifySurface, shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         "Aún sin reseñas. Las opiniones aparecerán aquí cuando termine sus primeros trabajos.",
-                        modifier = Modifier.padding(14.dp), fontSize = 13.sp, color = Color.Gray
+                        modifier = Modifier.padding(14.dp), fontSize = 13.sp, color = ServifyTextMuted
                     )
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     perfil.resenas.forEach { r ->
                         Surface(
-                            color = Color.White, shape = RoundedCornerShape(12.dp),
+                            color = ServifySurface, shape = RoundedCornerShape(12.dp),
                             shadowElevation = 1.dp, modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -106,14 +101,14 @@ fun PerfilTecnicoContenido(perfil: ProfesionalPerfil) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(r.autorNombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(r.autorNombre, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = ServifyTextTitle)
                                     Text(
                                         "★".repeat(r.calificacion.coerceIn(0, 5)),
-                                        color = Color(0xFFFFB800), fontSize = 14.sp
+                                        color = ServifyStarYellow, fontSize = 14.sp
                                     )
                                 }
                                 if (!r.comentario.isNullOrBlank()) {
-                                    Text(r.comentario, fontSize = 13.sp, color = Color.DarkGray, lineHeight = 18.sp)
+                                    Text(r.comentario, fontSize = 13.sp, color = ServifyTextMuted, lineHeight = 18.sp)
                                 }
                             }
                         }
@@ -127,7 +122,7 @@ fun PerfilTecnicoContenido(perfil: ProfesionalPerfil) {
 @Composable
 private fun Seccion(titulo: String, contenido: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(titulo, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(titulo, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
         contenido()
     }
 }

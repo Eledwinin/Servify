@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.cliente.contratacion
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -19,14 +21,17 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 
 @Composable
 fun MisSolicitudesContenido(
     navController: NavController,
     viewModel: MisSolicitudesViewModel = viewModel()
 ) {
-    val verdeServify = Color(0xFF1B7B61)
     val context = LocalContext.current
+
+    // Estado para manejar las pestañas superiores
+    var pestañaSeleccionada by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -37,78 +42,184 @@ fun MisSolicitudesContenido(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    // Clasificación de las solicitudes del cliente según el estado
+    val solicitudesEnCurso = viewModel.solicitudes.filter {
+        it.estado.equals("pendiente", ignoreCase = true) || it.estado.equals("en_proceso", ignoreCase = true)
+    }
+
+    val solicitudesHistorial = viewModel.solicitudes.filter {
+        it.estado.equals("completado", ignoreCase = true) || it.estado.equals("cancelado", ignoreCase = true) || it.estado.equals("rechazado", ignoreCase = true)
+    }
+
+    val listaActual = if (pestañaSeleccionada == 0) solicitudesEnCurso else solicitudesHistorial
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
-        item {
-            Column(modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) {
-                Text("Mis solicitudes", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text("Toca una para ver las propuestas", fontSize = 13.sp, color = Color.Gray)
-            }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Mis Trabajos",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = ServifyTextTitle
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Pestañas superiores tipo píldora corporativa
+        TabRow(
+            selectedTabIndex = pestañaSeleccionada,
+            containerColor = ServifyInputBackground,
+            contentColor = ServifyBluePrimary,
+            indicator = {},
+            divider = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(RoundedCornerShape(24.dp))
+        ) {
+            Tab(
+                selected = pestañaSeleccionada == 0,
+                onClick = { pestañaSeleccionada = 0 },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (pestañaSeleccionada == 0) ServifySurface else Color.Transparent),
+                text = {
+                    Text(
+                        "En Curso",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (pestañaSeleccionada == 0) ServifyBluePrimary else ServifyTextMuted
+                    )
+                }
+            )
+            Tab(
+                selected = pestañaSeleccionada == 1,
+                onClick = { pestañaSeleccionada = 1 },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (pestañaSeleccionada == 1) ServifySurface else Color.Transparent),
+                text = {
+                    Text(
+                        "Historial",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (pestañaSeleccionada == 1) ServifyBluePrimary else ServifyTextMuted
+                    )
+                }
+            )
         }
 
-        if (viewModel.isLoading && viewModel.solicitudes.isEmpty()) {
-            item {
-                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = verdeServify)
-                }
-            }
-        } else if (viewModel.solicitudes.isEmpty()) {
-            item {
-                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                    Text("Aún no has publicado solicitudes", color = Color.Gray, fontSize = 14.sp)
-                }
-            }
-        } else {
-            items(viewModel.solicitudes, key = { it.id }) { s ->
-                val (textoEstado, colorFondo, colorTexto) = when (s.estado) {
-                    "pendiente" -> Triple("PUBLICADA", Color(0xFFE0E7FF), Color(0xFF4338CA))
-                    "en_proceso" -> Triple("EN PROCESO", Color(0xFFFEF3C7), Color(0xFFD97706))
-                    "completado" -> Triple("COMPLETADA", Color(0xFFE2F3EE), verdeServify)
-                    else -> Triple(s.estado.uppercase(), Color(0xFFEEEEEE), Color.DarkGray)
-                }
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(s.categoriaNombre.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = verdeServify)
-                            Surface(color = colorFondo, shape = RoundedCornerShape(8.dp)) {
-                                Text(
-                                    textoEstado,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                    fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colorTexto
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Text(s.titulo, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            if (viewModel.isLoading && viewModel.solicitudes.isEmpty()) {
+                item {
+                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = ServifyBluePrimary)
+                    }
+                }
+            } else if (listaActual.isEmpty()) {
+                item {
+                    Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            s.descripcion, fontSize = 12.sp, color = Color.DarkGray,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis
+                            text = if (pestañaSeleccionada == 0) "No tienes solicitudes en curso" else "No hay historial de solicitudes",
+                            color = ServifyTextMuted,
+                            fontSize = 14.sp
                         )
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = when (s.totalPropuestas) {
-                                0 -> "Sin propuestas todavía"
-                                1 -> "1 propuesta recibida"
-                                else -> "${s.totalPropuestas} propuestas recibidas"
+                    }
+                }
+            } else {
+                items(listaActual, key = { it.id }) { s ->
+                    val (textoEstado, colorFondo, colorTexto) = when (s.estado.lowercase()) {
+                        "pendiente" -> Triple("PUBLICADA", ServifyCianSoft, ServifyBluePrimary)
+                        "en_proceso" -> Triple("EN PROCESO", ServifyPendingBg, ServifyPendingText)
+                        "completado" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
+                        else -> Triple(s.estado.uppercase(), ServifyInputBackground, ServifyTextMuted)
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
                             },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (s.totalPropuestas > 0) verdeServify else Color.Gray
-                        )
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    color = ServifyInputBackground,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = s.categoriaNombre.uppercase(),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = ServifyTextMuted
+                                    )
+                                }
+                                Surface(
+                                    color = colorFondo,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = textoEstado,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colorTexto
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = s.titulo,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ServifyTextTitle
+                            )
+
+                            Text(
+                                text = s.descripcion,
+                                fontSize = 13.sp,
+                                color = ServifyTextMuted,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                lineHeight = 18.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = when (s.totalPropuestas) {
+                                    0 -> "Sin propuestas todavía"
+                                    1 -> "1 propuesta recibida"
+                                    else -> "${s.totalPropuestas} propuestas recibidas"
+                                },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (s.totalPropuestas > 0) ServifyBluePrimary else ServifyTextMuted
+                            )
+                        }
                     }
                 }
             }
