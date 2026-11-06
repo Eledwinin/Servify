@@ -18,3 +18,8 @@ data class MensajesRespuesta(
     @SerializedName("activa") val activa: Boolean = true,
     @SerializedName("mensajes") val mensajes: List<Mensaje> = emptyList()
 )
+
+data class TokenLlamadaRespuesta(
+    @SerializedName("token") val token: String,
+    @SerializedName("canal") val canal: String
+)

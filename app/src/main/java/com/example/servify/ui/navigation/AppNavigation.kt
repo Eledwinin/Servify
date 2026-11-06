@@ -5,7 +5,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.servify.data.LlamadasManager
 
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
@@ -48,6 +53,7 @@ import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MapaSolicitudesScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
+import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen // 👈 Importamos la nueva pantalla de propuesta
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -55,6 +61,10 @@ import kotlinx.coroutines.launch
 fun MainTabScreen(navController: NavController) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        SessionManager.token?.let { LlamadasManager.conectar(it) }
+    }
 
     val rutaInicio = if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
     val listaRutas = listOf(
@@ -112,6 +122,25 @@ fun MainTabScreen(navController: NavController) {
                     }
                 )
             }
+        }
+
+        LlamadasManager.llamadaEntrante?.let { ll ->
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text(if (ll.esVideo) "Videollamada entrante" else "Llamada entrante") },
+                text = { Text("${ll.deNombre} te está llamando") },
+                confirmButton = {
+                    Button(onClick = {
+                        LlamadasManager.responder(ll.conversacionId, true)
+                        navController.navigate(Rutas.Call.crearRuta("chat_${ll.conversacionId}", ll.esVideo))
+                    }) { Text("Aceptar") }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = {
+                        LlamadasManager.responder(ll.conversacionId, false)
+                    }) { Text("Rechazar") }
+                }
+            )
         }
     }
 }
@@ -248,7 +277,30 @@ fun AppNavigation() {
                 idSolicitud = idSolicitud,
                 navController = navController,
                 onBackClick = { navController.popBackStack() },
-                onPostularseClick = {}
+                onPostularseClick = {
+                    // Navegamos directo a la pantalla pasando un título genérico o el ID
+                    // (La pantalla de Enviar Propuesta ya maneja el ID para cargar lo necesario)
+                    navController.navigate("enviar_propuesta/$idSolicitud/Trabajo_%23$idSolicitud")
+                }
+            )
+        }
+
+        // 🚀 NUEVA RUTA: Pantalla completa de Enviar Propuesta
+        composable(
+            route = "enviar_propuesta/{idSolicitud}/{titulo}",
+            arguments = listOf(
+                navArgument("idSolicitud") { type = NavType.IntType },
+                navArgument("titulo") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val idSolicitud = backStackEntry.arguments?.getInt("idSolicitud") ?: 0
+            val tituloCrudo = backStackEntry.arguments?.getString("titulo") ?: ""
+            val tituloTrabajo = java.net.URLDecoder.decode(tituloCrudo, "UTF-8")
+
+            EnviarPropuestaScreen(
+                idSolicitud = idSolicitud,
+                tituloTrabajo = tituloTrabajo,
+                navController = navController
             )
         }
 

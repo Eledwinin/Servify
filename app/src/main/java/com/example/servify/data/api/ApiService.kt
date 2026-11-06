@@ -27,6 +27,7 @@ import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.model.SolicitudVipDto
+import com.example.servify.data.model.TokenLlamadaRespuesta
 import com.example.servify.data.model.UsuarioModel
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -254,6 +255,12 @@ interface ApiService {
         @Path("id") idSolicitud: Int
     ): Response<MensajeResponse>
 
+    @GET("api/chat/conversaciones/{id}/token-llamada")
+    suspend fun obtenerTokenLlamada(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<TokenLlamadaRespuesta>
+
 
 
 
@@ -279,3 +286,4 @@ data class SubirFotoResponse(
     val mensaje: String,
     val foto: FotoPortafolioResponse
 )
+

@@ -21,6 +21,9 @@ class ChatViewModel : ViewModel() {
     var miId by mutableStateOf(0)
         private set
 
+    // Estado para notificar si hay una llamada entrante mientras estás dentro del chat
+    var llamadaEntrante by mutableStateOf<Pair<Int, Boolean>?>(null) // Pair<conversacionId, esVideo>
+
     private var socket: ChatSocket? = null
     private var conversacionId = 0
 
@@ -57,6 +60,16 @@ class ChatViewModel : ViewModel() {
                 }
             }
         }
+
+
+        s.onLlamadaEntrante = { convId, esVideo ->
+            if (convId == conversacionId) {
+                viewModelScope.launch {
+                    llamadaEntrante = Pair(convId, esVideo)
+                }
+            }
+        }
+
         s.conectar()
         socket = s
     }
@@ -73,7 +86,6 @@ class ChatViewModel : ViewModel() {
                 body?.mensajes?.forEach { agregar(it) }
                 marcarLeidos()
             } else {
-                android.util.Log.e("CHAT", "Código ${res.code()} - ${res.errorBody()?.string()}")
                 mensajeError = "Error ${res.code()} al cargar el chat"
             }
         } catch (e: Exception) {
@@ -125,5 +137,7 @@ class ChatViewModel : ViewModel() {
         socket?.responderOferta(mensajeId, conversacionId, accion)
     }
 
-
+    fun limpiarLlamadaEntrante() {
+        llamadaEntrante = null
+    }
 }

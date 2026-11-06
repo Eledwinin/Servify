@@ -19,6 +19,7 @@ class ChatSocket(private val token: String) {
     var onConectado: (() -> Unit)? = null
     var onMensaje: ((Mensaje) -> Unit)? = null
     var onOfertaActualizada: ((Int, String) -> Unit)? = null // mensajeId, nuevoEstado
+    var onLlamadaEntrante: ((Int, Boolean) -> Unit)? = null // 🔔 NUEVO: callback para la llamada (convId, esVideo)
 
     fun conectar() {
         val opts = IO.Options().apply {
@@ -40,6 +41,14 @@ class ChatSocket(private val token: String) {
             val mensajeId = json.optInt("mensaje_id")
             val estado = json.optString("estado_oferta")
             onOfertaActualizada?.invoke(mensajeId, estado)
+        }
+
+        // 🔔 NUEVO: Escuchar el evento de llamada entrante en el socket del chat
+        s.on("llamada_entrante") { args ->
+            val json = args.firstOrNull() as? JSONObject ?: return@on
+            val conversacionId = json.optInt("conversacionId")
+            val esVideo = json.optBoolean("esVideo")
+            onLlamadaEntrante?.invoke(conversacionId, esVideo)
         }
 
         s.connect()

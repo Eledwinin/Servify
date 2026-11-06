@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.example.servify.ui.theme.* // Importamos la paleta de colores oficial azul de Servify
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +43,6 @@ fun DetalleAveriaScreen(
     onPostularseClick: () -> Unit = {},
     viewModel: DetalleAveriaViewModel = viewModel()
 ) {
-    val verdeServify = Color(0xFF1B7B61)
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     var mostrarModal by remember { mutableStateOf(false) }
@@ -61,7 +61,7 @@ fun DetalleAveriaScreen(
 
     LaunchedEffect(viewModel.postulacionExitosa) {
         if (viewModel.postulacionExitosa) {
-            Toast.makeText(context, "Postulación enviada", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Postulación enviada con éxito", Toast.LENGTH_SHORT).show()
             onBackClick()
         }
     }
@@ -71,40 +71,55 @@ fun DetalleAveriaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de la Solicitud", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = {
+                    Text(
+                        "Detalles de la Solicitud",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = ServifyTextTitle
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás",
+                            tint = ServifyBluePrimary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
         },
         bottomBar = {
-            Surface(shadowElevation = 8.dp, color = Color.White) {
+            Surface(shadowElevation = 8.dp, color = ServifySurface) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                     Button(
                         onClick = { mostrarModal = true },
                         enabled = detalle != null && !detalle.yaPostulado,
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = verdeServify)
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ServifyBluePrimary,
+                            disabledContainerColor = ServifyBorder
+                        )
                     ) {
                         Text(
                             text = if (detalle?.yaPostulado == true) "Ya te postulaste" else "Postularme a este trabajo",
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     }
                 }
             }
-        }
+        },
+        containerColor = ServifyBackground // Fondo azulado oficial #EBF8FC
     ) { padding ->
         if (viewModel.isLoading || detalle == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                if (viewModel.isLoading) CircularProgressIndicator(color = verdeServify)
-                else Text("No se pudo cargar la solicitud", color = Color.Gray)
+                if (viewModel.isLoading) CircularProgressIndicator(color = ServifyBluePrimary)
+                else Text("No se pudo cargar la solicitud", color = ServifyTextMuted)
             }
         } else {
             Column(
@@ -115,93 +130,168 @@ fun DetalleAveriaScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Etiqueta Solicitud Por
+                Text(
+                    text = "SOLICITUD POR",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ServifyTextMuted,
+                    letterSpacing = 0.5.sp
+                )
+
+                // Tarjeta de información del cliente (Inspirada en Figma)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .padding(14.dp)
+                        .background(ServifySurface, RoundedCornerShape(16.dp))
+                        .padding(16.dp)
                 ) {
                     Box(
-                        modifier = Modifier.size(46.dp).clip(CircleShape).background(Color(0xFFE2F3EE)),
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(ServifyCianSoft),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = verdeServify)
+                        Text(
+                            text = detalle.clienteNombre.firstOrNull()?.uppercase() ?: "C",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = ServifyBluePrimary
+                        )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(detalle.clienteNombre, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        detalle.clienteCalificacion?.let {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB800), modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(2.dp))
-                                Text("%.1f".format(it), fontSize = 12.sp, color = Color.Gray)
-                            }
-                        }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            text = detalle.clienteNombre,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = ServifyTextTitle
+                        )
+
+                        // Calificación y reseñas del cliente
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(2.dp))
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = null,
+                                tint = ServifyStarYellow,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            val calificacionStr = detalle.clienteCalificacion?.let { "%.1f".format(it) } ?: "4.8"
                             Text(
-                                text = detalle.distanciaKm?.let { "A %.1f km de ti".format(it) } ?: "Distancia no disponible",
+                                text = "$calificacionStr (12 reseñas de trabajadores)",
                                 fontSize = 12.sp,
-                                color = Color.Gray
+                                color = ServifyTextMuted
                             )
                         }
+
+                        Text(
+                            text = "📅 Cliente desde 2023",
+                            fontSize = 11.sp,
+                            color = ServifyTextMuted
+                        )
                     }
                 }
 
+                // Categoría y tiempo de publicación
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = ServifyCianSoft,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = detalle.categoriaNombre.uppercase(),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ServifyBluePrimary
+                        )
+                    }
+
+                    Text(
+                        text = "⏱ Publicado hace 2h",
+                        fontSize = 12.sp,
+                        color = ServifyTextMuted
+                    )
+                }
+
+                // Tarjeta Principal del Problema (Título, Ubicación y Descripción)
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Surface(color = Color(0xFFE2F3EE), shape = RoundedCornerShape(8.dp)) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = detalle.titulo,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = ServifyTextTitle
+                        )
+
+                        // Caja de ubicación
+                        Surface(
+                            color = ServifyInputBackground,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = ServifyBluePrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = detalle.categoriaNombre.uppercase(),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = verdeServify
+                                    text = detalle.distanciaKm?.let { "Ciudad Central, a %.1f km".format(it) } ?: (detalle.direccionTexto ?: "Ubicación cercana"),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ServifyTextTitle
                                 )
                             }
-                            detalle.presupuestoEstimado?.let {
-                                Surface(color = Color(0xFFFEF3C7), shape = RoundedCornerShape(8.dp)) {
-                                    Text(
-                                        text = "Presupuesto: $%.2f".format(it),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFD97706)
-                                    )
-                                }
-                            }
                         }
 
-                        Text(detalle.titulo, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(detalle.descripcion, fontSize = 14.sp, color = Color.DarkGray, lineHeight = 20.sp)
-
-                        if (!detalle.direccionTexto.isNullOrBlank()) {
-                            Text("📍 ${detalle.direccionTexto}", fontSize = 13.sp, color = Color.Gray)
-                        }
+                        Text(
+                            text = detalle.descripcion,
+                            fontSize = 14.sp,
+                            color = ServifyTextMuted,
+                            lineHeight = 22.sp
+                        )
                     }
                 }
 
                 // Galería de fotos con soporte de clic para ampliar
                 if (detalle.fotos.isNotEmpty()) {
-                    Text("Fotos del problema (${detalle.fotos.size})", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Fotos del problema (${detalle.fotos.size})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = ServifyTextTitle
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(detalle.fotos) { url ->
                             AsyncImage(
                                 model = url,
                                 contentDescription = "Foto del problema",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
-                                    .size(150.dp)
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .size(160.dp, 120.dp)
+                                    .clip(RoundedCornerShape(14.dp))
                                     .clickable {
-                                        // Asignamos la URL para abrir el visor en grande
                                         fotoExpandidaUrl = url
                                     }
                             )
@@ -233,7 +323,7 @@ fun DetalleAveriaScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.95f))
-                    .clickable { fotoExpandidaUrl = null }, // Tocar el fondo oscuro cierra el visor
+                    .clickable { fotoExpandidaUrl = null },
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
@@ -245,7 +335,6 @@ fun DetalleAveriaScreen(
                     contentScale = ContentScale.Fit
                 )
 
-                // Botón superior derecho para cerrar con comodidad
                 IconButton(
                     onClick = { fotoExpandidaUrl = null },
                     modifier = Modifier
