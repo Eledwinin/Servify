@@ -2,6 +2,7 @@ package com.example.servify.ui.componentes.cards
 
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.servify.ui.theme.*
 
 @Composable
 fun TarjetaFotos(
@@ -30,63 +32,128 @@ fun TarjetaFotos(
     onAñadirFotoClick: () -> Unit,
     onQuitarFoto: (Uri) -> Unit
 ) {
-    val verde = Color(0xFF1B7B61)
-
-
-
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = ServifySurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(24.dp).background(Color(0xFFE2F3EE), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) { Text("2", fontSize = 12.sp, color = verde, fontWeight = FontWeight.Bold) }
-                Spacer(Modifier.width(8.dp))
-                Text("Fotos de Referencia", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(Modifier.weight(1f))
-                Text("${fotos.size}/$maxFotos", fontSize = 12.sp, color = Color.Gray)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(CircleShape)
+                            .background(ServifyBluePrimary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "2",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = "Fotos de Referencia",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyTextTitle
+                    )
+                }
+
+                Text(
+                    text = "${fotos.size}/$maxFotos",
+                    fontSize = 12.sp,
+                    color = ServifyTextMuted,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(fotos, key = { it.toString() }) { uri ->
-                    Box(Modifier.size(80.dp)) {
-                        AsyncImage(
-                            model = uri,
-                            contentDescription = "Foto seleccionada",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp))
-                        )
-                        IconButton(
-                            onClick = { onQuitarFoto(uri) },
+            // Fila de fotos seleccionadas y botón de añadir
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Botón para añadir foto (si no se ha alcanzado el límite)
+                if (fotos.size < maxFotos) {
+                    item {
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(22.dp)
-                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                .size(88.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(ServifyInputBackground)
+                                .border(1.dp, ServifyBorder, RoundedCornerShape(14.dp))
+                                .clickable { onAñadirFotoClick() },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Quitar", tint = Color.White, modifier = Modifier.size(14.dp))
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Añadir foto",
+                                    tint = ServifyBluePrimary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Añadir",
+                                    fontSize = 11.sp,
+                                    color = ServifyTextMuted,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 }
 
-                if (fotos.size < maxFotos) {
-                    item {
-                        Column(
+                // Lista de fotos cargadas
+                items(fotos) { uri ->
+                    Box(
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, ServifyBorder, RoundedCornerShape(14.dp))
+                    ) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = "Foto de referencia",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        // Botón de eliminar (X) sobre la foto
+                        IconButton(
+                            onClick = { onQuitarFoto(uri) },
                             modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFFF1F5F9))
-                                .clickable { onAñadirFotoClick() },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(22.dp)
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray)
-                            Text("Añadir", fontSize = 11.sp, color = Color.Gray)
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Eliminar foto",
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
                         }
                     }
                 }

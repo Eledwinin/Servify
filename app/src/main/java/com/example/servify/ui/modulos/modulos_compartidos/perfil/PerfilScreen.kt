@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,12 +25,14 @@ import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.botones.BotonAccion
 import com.example.servify.ui.componentes.cards.TarjetaBase
 import com.example.servify.ui.componentes.feedback.DialogoConfirmacion
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilScreen(
     token: String,
-    onIrAEditarPerfil: () -> Unit,
+    onIrAEditarCliente: () -> Unit,
+    onIrAEditarTrabajador: () -> Unit,
     onCerrarSesion: () -> Unit,
     viewModel: PerfilViewModel = viewModel()
 ) {
@@ -41,6 +42,7 @@ fun PerfilScreen(
 
     var dialogoVip by remember { mutableStateOf(false) }
     var dialogoEliminar by remember { mutableStateOf(false) }
+    var dialogoCerrarSesion by remember { mutableStateOf(false) }
 
     val selectorFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { viewModel.subirFotoPortafolio(context, it) }
@@ -63,10 +65,25 @@ fun PerfilScreen(
     }
 
     val user = ui.usuario
-    val esTecnico = user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")
+    val esTecnico = SessionManager.esTecnico || (user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos"))
     val esVip = SessionManager.esVip || (user?.esVip == true)
     val (porcentaje, faltantes) = remember(user, ui.fotosPortafolio.size, esTecnico) {
         calcularCompletitud(user, ui.fotosPortafolio.size, esTecnico)
+    }
+
+    // Diálogo de confirmación para Cerrar Sesión
+    if (dialogoCerrarSesion) {
+        DialogoConfirmacion(
+            titulo = "¿Cerrar sesión?",
+            mensaje = "¿Estás seguro de que deseas salir de tu cuenta?",
+            textoConfirmar = "Sí, salir",
+            textoCancelar = "Cancelar",
+            onConfirmar = {
+                dialogoCerrarSesion = false
+                onCerrarSesion()
+            },
+            onCancelar = { dialogoCerrarSesion = false }
+        )
     }
 
     if (dialogoVip) {
@@ -105,39 +122,43 @@ fun PerfilScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF8FAFC),
+        containerColor = ServifyBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Servify", color = c.verde, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp) },
+                title = { Text("Servify", color = ServifyBluePrimary, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp) },
                 actions = {
-                    user?.let {
-                        Surface(shape = RoundedCornerShape(16.dp), color = c.verdeClaro,
-                            modifier = Modifier.padding(end = 16.dp)) {
-                            Text(it.rol.uppercase(), color = c.verde, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
-                        }
+                    Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
+                        modifier = Modifier.padding(end = 16.dp)) {
+                        Text(
+                            text = if (esTecnico) "MODO TRABAJADOR" else "MODO CLIENTE",
+                            color = ServifyTextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface),
                 windowInsets = WindowInsets(0.dp)
             )
         }
     ) { padding ->
         if (ui.isLoading && user == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = c.verde)
+                CircularProgressIndicator(color = ServifyBluePrimary)
             }
         } else {
             Column(
                 Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 CabeceraPerfil(user, esTecnico, esVip)
 
-                if (porcentaje < 100) TarjetaCompletitud(porcentaje, faltantes, onIrAEditarPerfil)
+                if (porcentaje < 100 && esTecnico) {
+                    TarjetaCompletitud(porcentaje, faltantes, onIrAEditarTrabajador)
+                }
+
                 if (esTecnico && esVip) TarjetaVip(onCancelar = { dialogoVip = true })
-                if (esTecnico) TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarPerfil)
+                if (esTecnico) TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarTrabajador)
 
                 TarjetaContacto(user)
 
@@ -149,10 +170,20 @@ fun PerfilScreen(
                         Text("Mis Reseñas", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         Text("Aún no tienes reseñas registradas.", color = c.gris, fontSize = 13.sp)
                     }
+                } else {
+                    SeccionResenasCliente()
                 }
 
-                BotonAccion("Editar Perfil", Icons.Default.Settings, onIrAEditarPerfil, mostrarFlecha = true)
-                BotonAccion("Cerrar Sesión", Icons.AutoMirrored.Filled.ExitToApp, onCerrarSesion,
+                // Aquí validamos a qué pantalla de edición navegar dependiendo si es técnico o cliente
+                BotonAccion(
+                    texto = "Editar Perfil",
+                    icono = Icons.Default.Settings,
+                    onClick = {
+                        if (esTecnico) onIrAEditarTrabajador() else onIrAEditarCliente()
+                    }
+                )
+
+                BotonAccion("Cerrar Sesión", Icons.AutoMirrored.Filled.ExitToApp, { dialogoCerrarSesion = true },
                     colorFondo = c.rojoClaro, colorContenido = c.rojo, conBorde = false)
 
                 TextButton(onClick = { dialogoEliminar = true }, modifier = Modifier.fillMaxWidth()) {

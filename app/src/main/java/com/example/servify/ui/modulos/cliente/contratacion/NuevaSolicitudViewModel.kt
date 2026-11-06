@@ -39,6 +39,10 @@ class NuevaSolicitudViewModel : ViewModel() {
 
     fun quitarFoto(uri: Uri) { fotos.remove(uri) }
 
+    fun limpiarEstadoExito() {
+        solicitudExitosa = false
+    }
+
     fun enviarSolicitud(tokenParam: String, resolver: ContentResolver) {
         val tokenValido = if (tokenParam.isNotBlank()) tokenParam else SessionManager.token ?: ""
 

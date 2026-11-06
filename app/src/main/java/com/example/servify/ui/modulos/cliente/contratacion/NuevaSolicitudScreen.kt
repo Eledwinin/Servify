@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,8 +24,9 @@ import com.example.servify.data.SessionManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.servify.ui.navigation.Rutas
+import androidx.compose.ui.graphics.Color
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSolicitudScreen(
     onBackClick: () -> Unit = {},
@@ -41,6 +43,7 @@ fun NuevaSolicitudScreen(
     LaunchedEffect(viewModel.solicitudExitosa) {
         if (viewModel.solicitudExitosa) {
             Toast.makeText(context, "Solicitud creada correctamente", Toast.LENGTH_SHORT).show()
+            viewModel.limpiarEstadoExito() // Asegúrate de tener este método o similar en tu ViewModel
             onContinuarClick()
         }
     }
@@ -56,54 +59,101 @@ fun NuevaSolicitudScreen(
     Scaffold(
         containerColor = ServifyBackground,
         topBar = {
-            Column(modifier = Modifier.background(ServifySurface)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Servify", color = ServifyGreenPrimary, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                    Surface(color = ServifyInputBackground, shape = RoundedCornerShape(12.dp)) {
-                        Text("MODO CLIENTE", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = ServifyTextMuted)
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Servify",
+                        color = ServifyBluePrimary,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                },
+                actions = {
+                    Surface(
+                        color = ServifyInputBackground,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.padding(end = 16.dp)
+                    ) {
+                        Text(
+                            text = "MODO CLIENTE",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ServifyTextMuted
+                        )
                     }
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = ServifyTextTitle)
-                    }
-                    Text("Nueva Solicitud", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
-                }
-            }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface),
+                windowInsets = WindowInsets(0.dp)
+            )
         },
         bottomBar = {
-            Box(modifier = Modifier.fillMaxWidth().background(ServifySurface).padding(16.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(ServifySurface)
+                    .padding(16.dp)
+            ) {
                 Button(
                     onClick = {
                         val token = SessionManager.token ?: ""
                         viewModel.enviarSolicitud(token, context.contentResolver)
                     },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ServifyGreenPrimary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
                     enabled = !viewModel.isLoading
                 ) {
                     if (viewModel.isLoading) {
-                        CircularProgressIndicator(color = ServifySurface, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Publicar Solicitud", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ServifySurface)
+                        Text("Publicar Solicitud", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
         }
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+                // Cabecera interna con el botón de retroceso y el título de la vista
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier
+                            .background(ServifySurface, CircleShape)
+                            .size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás",
+                            tint = ServifyBluePrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Nueva Solicitud",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyTextTitle
+                    )
+                }
+            }
 
             item {
-                // Tarjeta de formulario de la solicitud
+                // Tarjeta de formulario de la solicitud (Categoría, Título, Descripción, Presupuesto)
                 TarjetaFormulario(
                     titulo = viewModel.titulo,
                     onTituloChange = { viewModel.titulo = it },
@@ -117,6 +167,7 @@ fun NuevaSolicitudScreen(
             }
 
             item {
+                // Tarjeta de selección de fotos de referencia
                 TarjetaFotos(
                     fotos = viewModel.fotos,
                     maxFotos = NuevaSolicitudViewModel.MAX_FOTOS,

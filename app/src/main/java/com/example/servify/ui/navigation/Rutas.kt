@@ -16,8 +16,10 @@ sealed class Rutas(val ruta: String) {
     object MuroSolicitudes : Rutas("muro_solicitudes")
     object NuevaSolicitud : Rutas("nueva_solicitud")
 
-    // Subflujos
-    object EditarPerfil : Rutas("editar_perfil")
+    // Subflujos de Perfil separados
+    object EditarPerfilCliente : Rutas("editar_perfil_cliente")
+    object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
+
     object CheckoutPago : Rutas("checkout_pago")
     object DetalleTecnico : Rutas("detalle_tecnico/{tecnicoId}") {
         fun crearRuta(tecnicoId: String) = "detalle_tecnico/$tecnicoId"
@@ -48,9 +50,7 @@ sealed class Rutas(val ruta: String) {
     object MapaSolicitudes : Rutas("mapa_solicitudes")
 
     //para llamadas y videollamadas
-
     object Call : Rutas("call_screen/{channelName}/{esVideo}") {
         fun crearRuta(channelName: String, esVideo: Boolean) = "call_screen/$channelName/$esVideo"
     }
-
 }

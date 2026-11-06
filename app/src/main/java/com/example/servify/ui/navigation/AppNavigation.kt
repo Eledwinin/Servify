@@ -32,6 +32,7 @@ import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
 import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
+import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen // 👈 Importación de la pantalla de trabajador
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
 import com.example.servify.ui.modulos.cliente.home.MapaScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
@@ -53,7 +54,7 @@ import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MapaSolicitudesScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
-import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen // 👈 Importamos la nueva pantalla de propuesta
+import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -113,7 +114,8 @@ fun MainTabScreen(navController: NavController) {
                 2 -> ConversacionesScreen(navController = navController)
                 3 -> PerfilScreen(
                     token = SessionManager.token ?: "",
-                    onIrAEditarPerfil = { navController.navigate(Rutas.EditarPerfil.ruta) },
+                    onIrAEditarCliente = { navController.navigate(Rutas.EditarPerfilCliente.ruta) },
+                    onIrAEditarTrabajador = { navController.navigate(Rutas.EditarPerfilTrabajador.ruta) },
                     onCerrarSesion = {
                         SessionManager.cerrarSesion()
                         navController.navigate(Rutas.Login.ruta) {
@@ -280,7 +282,6 @@ fun AppNavigation() {
             )
         }
 
-        // 🚀 NUEVA RUTA: Pantalla completa de Enviar Propuesta
         composable(
             route = "enviar_propuesta/{idSolicitud}/{titulo}",
             arguments = listOf(
@@ -331,8 +332,16 @@ fun AppNavigation() {
             PagoExitosoScreen(navController = navController)
         }
 
-        composable(Rutas.EditarPerfil.ruta) {
+        // Rutas de edicion deperfil
+        composable(Rutas.EditarPerfilCliente.ruta) {
             EditarPerfilClienteScreen(
+                token = SessionManager.token ?: "",
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.EditarPerfilTrabajador.ruta) {
+            EditarPerfilTrabajadorScreen(
                 token = SessionManager.token ?: "",
                 onNavigateBack = { navController.popBackStack() }
             )

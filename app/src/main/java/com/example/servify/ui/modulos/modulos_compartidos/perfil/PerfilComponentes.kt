@@ -28,22 +28,19 @@ import com.example.servify.data.api.FotoPortafolioResponse
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.cards.TarjetaBase
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatConfig
-
-
+import com.example.servify.ui.theme.*
 
 object PerfilColores {
-    val verde = Color(0xFF168067)
-    val verdeClaro = Color(0xFFE6F4F1)
-    val texto = Color(0xFF1E293B)
-    val gris = Color(0xFF64748B)
-    val borde = Color(0xFFE2E8F0)
-    val rojo = Color(0xFFDC2626)
-    val rojoClaro = Color(0xFFFEF2F2)
-    val dorado = Color(0xFFD97706)
-    val doradoClaro = Color(0xFFFEF3C7)
+    val verde = ServifyBluePrimary
+    val verdeClaro = ServifyCianSoft
+    val texto = ServifyTextTitle
+    val gris = ServifyTextMuted
+    val borde = ServifyBorder
+    val rojo = ServifyDanger
+    val rojoClaro = ServifyDangerBg
+    val dorado = ServifyStarYellow
+    val doradoClaro = ServifyPendingBg
 }
-
-// ---------- Utilidades ----------
 
 fun iniciales(nombre: String?): String {
     val partes = (nombre ?: "Usuario").trim().split(" ").filter { it.isNotBlank() }
@@ -53,7 +50,6 @@ fun iniciales(nombre: String?): String {
         else -> "US"
     }
 }
-
 
 fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boolean): Pair<Int, List<String>> {
     if (u == null) return 0 to emptyList()
@@ -70,10 +66,6 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
     return (hechos * 100 / pasos.size) to pasos.filter { !it.second }.map { it.first }
 }
 
-// ---------- Contenedor base de tarjetas ----------
-
-// ---------- Cabecera ----------
-
 @Composable
 fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
     val c = PerfilColores
@@ -81,7 +73,7 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(16.dp))
+            .background(ServifySurface, RoundedCornerShape(16.dp))
             .border(1.dp, if (esVip) c.dorado.copy(alpha = 0.5f) else c.borde, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
@@ -110,7 +102,7 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
             )
             if (esTecnico) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("%.1f".format(user?.calificacionPromedio ?: 0.0), color = c.texto,
                         fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -119,8 +111,6 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
         }
     }
 }
-
-// ---------- Barra de perfil completo ----------
 
 @Composable
 fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: () -> Unit) {
@@ -139,8 +129,6 @@ fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: ()
             fontSize = 12.sp, color = c.gris)
     }
 }
-
-// ---------- Plan PRO ----------
 
 @Composable
 fun TarjetaVip(onCancelar: () -> Unit) {
@@ -169,8 +157,6 @@ fun TarjetaVip(onCancelar: () -> Unit) {
     }
 }
 
-// ---------- Sobre mí (solo técnicos) ----------
-
 @Composable
 fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Unit) {
     val c = PerfilColores
@@ -198,35 +184,54 @@ fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Un
     }
 }
 
-// ---------- Contacto ----------
-
 @Composable
 fun TarjetaContacto(user: UsuarioModel?) {
     val c = PerfilColores
     TarjetaBase {
         Text("Información de contacto", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        DatoContacto(Icons.Default.Email, "Correo", user?.correo ?: "No registrado")
+        Spacer(Modifier.height(4.dp))
+        DatoContacto(Icons.Default.Email, "CORREO", user?.correo ?: "No registrado")
         HorizontalDivider(color = c.borde, thickness = 0.5.dp)
-        DatoContacto(Icons.Default.Phone, "Teléfono", user?.telefono?.ifBlank { null } ?: "No registrado")
+        DatoContacto(Icons.Default.Phone, "TELÉFONO", user?.telefono?.ifBlank { null } ?: "No registrado")
         HorizontalDivider(color = c.borde, thickness = 0.5.dp)
-        DatoContacto(Icons.Default.LocationOn, "Dirección", user?.direccionTexto?.ifBlank { null } ?: "No especificada")
+        DatoContacto(Icons.Default.LocationOn, "DIRECCIÓN", user?.direccionTexto?.ifBlank { null } ?: "No especificada")
     }
 }
 
 @Composable
 private fun DatoContacto(icono: ImageVector, titulo: String, valor: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Icon(icono, null, tint = PerfilColores.gris, modifier = Modifier.size(18.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Icon(icono, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(titulo, color = Color(0xFF94A3B8), fontSize = 11.sp)
-            Text(valor, color = PerfilColores.texto, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+            Text(titulo, color = PerfilColores.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(valor, color = PerfilColores.texto, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
-// ---------- Portafolio ----------
+@Composable
+fun SeccionResenasCliente() {
+    val c = PerfilColores
+    TarjetaBase {
+        Text("Mis Reseñas", color = c.texto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("4.8", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = c.texto)
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text("★★★★★", color = ServifyStarYellow, fontSize = 12.sp)
+                Text("Basado en 12 trabajos", fontSize = 11.sp, color = c.gris)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        HorizontalDivider(color = c.borde, thickness = 0.5.dp)
+        Spacer(Modifier.height(4.dp))
+        Text("Juan P. (Técnico)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = c.texto)
+        Text("Excelente cliente, muy amable, tenía todo preparado para que yo trabajara rápido y pagó sin problemas.", fontSize = 12.sp, color = c.gris, lineHeight = 16.sp)
+    }
+}
 
 @Composable
 fun TarjetaPortafolio(
@@ -252,7 +257,7 @@ fun TarjetaPortafolio(
         }
 
         if (fotos.isEmpty()) {
-            Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFF8FAFC),
+            Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
                 modifier = Modifier.fillMaxWidth().clickable { onSubir() }) {
                 Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.AddPhotoAlternate, null, tint = c.gris, modifier = Modifier.size(30.dp))
