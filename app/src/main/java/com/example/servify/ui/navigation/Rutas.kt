@@ -44,7 +44,12 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(rol: String = "") = "admin_usuarios?rol=$rol"
     }
     object AdminSolicitudes : Rutas("admin_solicitudes")
-    object Mapa : Rutas(ruta = "mapa_screen")
+
+    // Mapa con soporte de parámetros opcionales para solicitudes
+    object Mapa : Rutas("mapa_screen?lat={lat}&lng={lng}&titulo={titulo}") {
+        fun crearRuta(lat: Double, lng: Double, titulo: String) =
+            "mapa_screen?lat=$lat&lng=$lng&titulo=${android.net.Uri.encode(titulo)}"
+    }
 
     // Mapa de Solicitudes (Trabajador)
     object MapaSolicitudes : Rutas("mapa_solicitudes")

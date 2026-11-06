@@ -109,6 +109,8 @@ data class DetalleSolicitud(
     @SerializedName("presupuesto_estimado") val presupuestoEstimado: Double? = null,
     @SerializedName("direccion_texto") val direccionTexto: String? = null,
     @SerializedName("distancia_km") val distanciaKm: Double? = null,
+    @SerializedName("latitud") val latitud: Double? = null,
+    @SerializedName("longitud") val longitud: Double? = null,
     @SerializedName("estado") val estado: String? = null,
     @SerializedName("ya_postulado") val yaPostulado: Boolean = false,
     @SerializedName("fotos") val fotos: List<String> = emptyList()

@@ -12,7 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +32,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.example.servify.ui.theme.* // Importamos la paleta de colores oficial azul de Servify
+import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +46,6 @@ fun DetalleAveriaScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Estado para controlar la foto seleccionada que se abrirá en pantalla completa
     var fotoExpandidaUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(idSolicitud) { viewModel.cargar(idSolicitud) }
@@ -117,7 +117,7 @@ fun DetalleAveriaScreen(
                 }
             }
         },
-        containerColor = ServifyBackground // Fondo azulado oficial #EBF8FC
+        containerColor = ServifyBackground
     ) { padding ->
         if (viewModel.isLoading || detalle == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -133,7 +133,6 @@ fun DetalleAveriaScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Etiqueta Solicitud Por
                 Text(
                     text = "SOLICITUD POR",
                     fontSize = 11.sp,
@@ -142,7 +141,6 @@ fun DetalleAveriaScreen(
                     letterSpacing = 0.5.sp
                 )
 
-                // Tarjeta de información del cliente
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -173,7 +171,6 @@ fun DetalleAveriaScreen(
                             color = ServifyTextTitle
                         )
 
-                        // Calificación y reseñas del cliente
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 Icons.Default.Star,
@@ -198,7 +195,6 @@ fun DetalleAveriaScreen(
                     }
                 }
 
-                // Categoría y tiempo de publicación
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -224,7 +220,6 @@ fun DetalleAveriaScreen(
                     )
                 }
 
-                // Tarjeta Principal del Problema (Título, Ubicación y Descripción)
                 Card(
                     colors = CardDefaults.cardColors(containerColor = ServifySurface),
                     shape = RoundedCornerShape(16.dp),
@@ -242,29 +237,69 @@ fun DetalleAveriaScreen(
                             color = ServifyTextTitle
                         )
 
-                        // Caja de ubicación
+                        // Caja de ubicación con el botón interactivo hacia el Mapa interno
                         Surface(
                             color = ServifyInputBackground,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.padding(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.LocationOn,
-                                    contentDescription = null,
-                                    tint = ServifyBluePrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = detalle.distanciaKm?.let { "Ciudad Central, a %.1f km".format(it) } ?: (detalle.direccionTexto ?: "Ubicación cercana"),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = ServifyTextTitle
-                                )
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = null,
+                                        tint = ServifyBluePrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    val textoUbicacion = when {
+                                        !detalle.direccionTexto.isNullOrBlank() -> detalle.direccionTexto
+                                        detalle.distanciaKm != null -> "Ubicación a %.1f km".format(detalle.distanciaKm)
+                                        else -> "Ubicación exacta registrada"
+                                    }
+
+                                    Text(
+                                        text = textoUbicacion!!,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = ServifyTextTitle,
+                                        maxLines = 2
+                                    )
+                                }
+
+                                TextButton(
+                                    onClick = {
+                                        val lat = detalle.latitud ?: 13.6929
+                                        val lng = detalle.longitud ?: -89.2182
+                                        val titulo = detalle.titulo ?: "Solicitud"
+                                        navController.navigate(Rutas.Mapa.crearRuta(lat, lng, titulo))
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Map,
+                                        contentDescription = null,
+                                        tint = ServifyBluePrimary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Ver mapa",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = ServifyBluePrimary
+                                    )
+                                }
                             }
                         }
 
@@ -277,7 +312,6 @@ fun DetalleAveriaScreen(
                     }
                 }
 
-                // Galería de fotos con soporte de clic para ampliar
                 if (detalle.fotos.isNotEmpty()) {
                     Text(
                         text = "Fotos del problema (${detalle.fotos.size})",
@@ -294,9 +328,7 @@ fun DetalleAveriaScreen(
                                 modifier = Modifier
                                     .size(160.dp, 120.dp)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .clickable {
-                                        fotoExpandidaUrl = url
-                                    }
+                                    .clickable { fotoExpandidaUrl = url }
                             )
                         }
                     }
@@ -305,7 +337,6 @@ fun DetalleAveriaScreen(
         }
     }
 
-    // Visor de imagen en pantalla completa (Dialog emergente)
     fotoExpandidaUrl?.let { url ->
         Dialog(
             onDismissRequest = { fotoExpandidaUrl = null },
@@ -321,23 +352,15 @@ fun DetalleAveriaScreen(
                 AsyncImage(
                     model = url,
                     contentDescription = "Imagen ampliada",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentScale = ContentScale.Fit
                 )
 
                 IconButton(
                     onClick = { fotoExpandidaUrl = null },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Cerrar",
-                        tint = Color.White
-                    )
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
                 }
             }
         }

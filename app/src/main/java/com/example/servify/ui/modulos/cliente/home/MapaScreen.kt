@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.cliente.home
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -35,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 import com.google.android.gms.location.LocationServices
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.IconFactory
@@ -49,10 +51,12 @@ import org.maplibre.android.maps.MapView
 fun MapaScreen(
     navController: NavController,
     homeViewModel: HomeViewModel = viewModel(),
+    latDestino: Double? = null,
+    lngDestino: Double? = null,
+    tituloDestino: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val verdeServify = Color(0xFF1B7B61)
 
     remember {
         MapLibre.getInstance(context)
@@ -60,19 +64,22 @@ fun MapaScreen(
 
     val listaTecnicos by homeViewModel.listaProfesionales.collectAsState()
 
-    // La tarjeta inicia OCULTA (null) hasta presionar un pin
+    // La tarjeta inicia OCULTA (null) hasta presionar un pin de técnico (si estamos en modo normal)
     var tecnicoSeleccionado by remember { mutableStateOf<ProfesionalPerfil?>(null) }
 
-    // Ubicación GPS
-    var userLat by remember { mutableStateOf(if (homeViewModel.latCliente != 0.0) homeViewModel.latCliente else 13.6929) }
-    var userLng by remember { mutableStateOf(if (homeViewModel.lngCliente != 0.0) homeViewModel.lngCliente else -89.2182) }
+    // Definición de coordenadas iniciales (Si viene de una solicitud, usa eso; si no, usa el ViewModel o por defecto)
+    val initialLat = latDestino ?: if (homeViewModel.latCliente != 0.0) homeViewModel.latCliente else 13.6929
+    val initialLng = lngDestino ?: if (homeViewModel.lngCliente != 0.0) homeViewModel.lngCliente else -89.2182
+
+    var userLat by remember { mutableStateOf(initialLat) }
+    var userLng by remember { mutableStateOf(initialLng) }
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     val launcherPermisos = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { esConcedido ->
-        if (esConcedido) {
+        if (esConcedido && latDestino == null) {
             try {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
@@ -88,31 +95,33 @@ fun MapaScreen(
     }
 
     LaunchedEffect(Unit) {
-        homeViewModel.cargarTecnicos()
+        if (latDestino == null) {
+            homeViewModel.cargarTecnicos()
 
-        val tienePermiso = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+            val tienePermiso = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
 
-        if (tienePermiso) {
-            try {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    if (location != null) {
-                        userLat = location.latitude
-                        userLng = location.longitude
-                        homeViewModel.actualizarUbicacionCliente(location.latitude, location.longitude)
+            if (tienePermiso) {
+                try {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        if (location != null) {
+                            userLat = location.latitude
+                            userLng = location.longitude
+                            homeViewModel.actualizarUbicacionCliente(location.latitude, location.longitude)
+                        }
                     }
+                } catch (e: SecurityException) {
+                    e.printStackTrace()
                 }
-            } catch (e: SecurityException) {
-                e.printStackTrace()
+            } else {
+                launcherPermisos.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
-        } else {
-            launcherPermisos.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
-    val ubicacionCliente = LatLng(userLat, userLng)
+    val ubicacionPrincipal = LatLng(userLat, userLng)
 
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var mapLibreInstance by remember { mutableStateOf<MapLibreMap?>(null) }
@@ -124,72 +133,88 @@ fun MapaScreen(
         }
     }
 
-    LaunchedEffect(listaTecnicos, mapLibreInstance, userLat, userLng) {
+    LaunchedEffect(listaTecnicos, mapLibreInstance, userLat, userLng, latDestino, lngDestino) {
         val map = mapLibreInstance ?: return@LaunchedEffect
         map.clear()
 
-        // 1. Icono AZUL para la ubicación del usuario
-        val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, Color.Blue.toArgb())
+        if (latDestino != null && lngDestino != null) {
+            // CASO A: Venimos desde los detalles de una Solicitud -> Mostrar pin de la avería
+            // Cambia esta línea en tu MapaScreen.kt:
+            val iconoRojo = crearIconoTinte(context, android.R.drawable.ic_menu_mapmode, android.graphics.Color.RED)
+            map.addMarker(
+                MarkerOptions()
+                    .position(ubicacionPrincipal)
+                    .title(tituloDestino ?: "Ubicación del Trabajo")
+                    .icon(iconoRojo)
+                    .snippet("Punto exacto de la solicitud")
+            )
+        } else {
+            // CASO B: Modo normal (Home) -> Mostrar ubicación del usuario y técnicos cercanos
+            val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, Color.Blue.toArgb())
 
-        map.addMarker(
-            MarkerOptions()
-                .position(ubicacionCliente)
-                .title("CLIENTE_MI_UBICACION")
-                .icon(iconoAzul)
-                .snippet("Tu posición actual")
-        )
+            map.addMarker(
+                MarkerOptions()
+                    .position(ubicacionPrincipal)
+                    .title("CLIENTE_MI_UBICACION")
+                    .icon(iconoAzul)
+                    .snippet("Tu posición actual")
+            )
 
-        map.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(ubicacionCliente, 13.0)
-        )
+            val mapaTecnicosPorId = mutableMapOf<String, ProfesionalPerfil>()
 
-        // 2. Marcadores para los técnicos
-        val mapaTecnicosPorId = mutableMapOf<String, ProfesionalPerfil>()
+            listaTecnicos.forEach { tecnico ->
+                val lat = tecnico.latitud ?: 0.0
+                val lng = tecnico.longitud ?: 0.0
 
-        listaTecnicos.forEach { tecnico ->
-            val lat = tecnico.latitud ?: 0.0
-            val lng = tecnico.longitud ?: 0.0
+                if (lat != 0.0 && lng != 0.0) {
+                    val posTecnico = LatLng(lat, lng)
+                    val idTecnicoStr = tecnico.id.toString()
+                    mapaTecnicosPorId[idTecnicoStr] = tecnico
 
-            if (lat != 0.0 && lng != 0.0) {
-                val posTecnico = LatLng(lat, lng)
-                val idTecnicoStr = tecnico.id.toString()
-                mapaTecnicosPorId[idTecnicoStr] = tecnico
-
-                map.addMarker(
-                    MarkerOptions()
-                        .position(posTecnico)
-                        .title("TECNICO_$idTecnicoStr")
-                        .snippet("${tecnico.nombreCompleto} - ${tecnico.oficio}")
-                )
-            }
-        }
-
-        map.setOnMarkerClickListener { markerClicked ->
-            val titleMarker = markerClicked.title ?: ""
-
-            if (titleMarker.startsWith("TECNICO_")) {
-                val idExtraido = titleMarker.removePrefix("TECNICO_")
-                val tecnicoEncontrado = mapaTecnicosPorId[idExtraido]
-                if (tecnicoEncontrado != null) {
-                    tecnicoSeleccionado = tecnicoEncontrado
+                    map.addMarker(
+                        MarkerOptions()
+                            .position(posTecnico)
+                            .title("TECNICO_$idTecnicoStr")
+                            .snippet("${tecnico.nombreCompleto}\n${tecnico.oficio}")
+                    )
                 }
-            } else if (titleMarker == "CLIENTE_MI_UBICACION") {
-                tecnicoSeleccionado = null
             }
-            true
+
+            map.setOnMarkerClickListener { markerClicked ->
+                val titleMarker = markerClicked.title ?: ""
+
+                if (titleMarker.startsWith("TECNICO_")) {
+                    val idExtraido = titleMarker.removePrefix("TECNICO_")
+                    mapaTecnicosPorId[idExtraido]?.let { tecnicoEncontrado ->
+                        tecnicoSeleccionado = tecnicoEncontrado
+                    }
+                } else if (titleMarker == "CLIENTE_MI_UBICACION") {
+                    tecnicoSeleccionado = null
+                }
+                true
+            }
         }
+
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(ubicacionPrincipal, 15.0))
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Técnicos en el Mapa", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = if (latDestino != null) "Ubicación de la Solicitud" else "Técnicos en el Mapa",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyTextTitle
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = ServifyBluePrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
         }
     ) { paddingValues ->
@@ -224,10 +249,9 @@ fun MapaScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Tarjeta del técnico (Solo se muestra cuando tecnicoSeleccionado NO es null)
+            // Tarjeta flotante del técnico (Solo si estamos en modo normal y se seleccionó un pin)
             val tecnicoAMostrar = tecnicoSeleccionado
-
-            if (tecnicoAMostrar != null) {
+            if (latDestino == null && tecnicoAMostrar != null) {
                 val iniciales = tecnicoAMostrar.nombreCompleto
                     .split(" ")
                     .filter { it.isNotBlank() }
@@ -250,7 +274,7 @@ fun MapaScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -259,12 +283,12 @@ fun MapaScreen(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE2F3EE)),
+                                    .background(ServifyCianSoft),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = iniciales,
-                                    color = verdeServify,
+                                    color = ServifyBluePrimary,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp
                                 )
@@ -277,22 +301,23 @@ fun MapaScreen(
                                     text = tecnicoAMostrar.nombreCompleto,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
-                                    color = Color(0xFF212121)
+                                    color = ServifyTextTitle
                                 )
                                 Text(
                                     text = tecnicoAMostrar.oficio,
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = ServifyTextMuted
                                 )
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB800), modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Star, contentDescription = null, tint = ServifyStarYellow, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Text(
                                     text = "%.1f".format(tecnicoAMostrar.calificacionPromedio),
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
+                                    fontSize = 12.sp,
+                                    color = ServifyTextTitle
                                 )
                             }
                         }
@@ -309,7 +334,7 @@ fun MapaScreen(
                                     text = "📍 A $textoDistancia de ti",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = verdeServify
+                                    color = ServifyBluePrimary
                                 )
                             }
 
@@ -317,10 +342,10 @@ fun MapaScreen(
                                 onClick = {
                                     navController.navigate(Rutas.DetalleTecnico.crearRuta(tecnicoAMostrar.id.toString()))
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = verdeServify),
+                                colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Ver Perfil")
+                                Text("Ver Perfil", color = Color.White, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -330,7 +355,7 @@ fun MapaScreen(
     }
 }
 
-// Funciones auxiliares para crear el icono azul de MapLibre
+// Funciones auxiliares para crear iconos en MapLibre
 private fun crearIconoTinte(context: Context, resourceId: Int, tintColorARGB: Int): org.maplibre.android.annotations.Icon {
     val drawable = ContextCompat.getDrawable(context, resourceId)
         ?: throw IllegalArgumentException("No se pudo cargar el drawable")
