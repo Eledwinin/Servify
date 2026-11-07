@@ -8,6 +8,8 @@ import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.CambiarRolRequest
 import com.example.servify.data.model.Categoria
+import com.example.servify.data.model.ContratacionDirectaRequest
+import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.data.model.ConversacionItem
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
@@ -23,6 +25,7 @@ import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
+import com.example.servify.data.model.ResponderContratacionRequest
 import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
 import com.example.servify.data.model.SolicitudItemTecnico
@@ -36,6 +39,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -168,6 +172,28 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<DetalleSolicitud>
 
+    // ==========================================
+    // CONTRATACIÓN DIRECTA (Cliente -> Técnico)
+    // ==========================================
+
+    @POST("api/solicitudes/directas")
+    suspend fun crearContratacionDirecta(
+        @Header("Authorization") token: String,
+        @Body request: ContratacionDirectaRequest
+    ): Response<MensajeResponse>
+
+    @GET("api/solicitudes/directas/tecnico")
+    suspend fun obtenerContratacionesTecnico(
+        @Header("Authorization") token: String
+    ): Response<List<ContratacionDirectaResponse>>
+
+    @PATCH("api/solicitudes/directas/{id}/estado")
+    suspend fun responderContratacionDirecta(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: ResponderContratacionRequest
+    ): Response<MensajeResponse>
+
     // Postulaciones
     @POST("api/postulaciones")
     suspend fun crearPostulacion(
@@ -261,9 +287,6 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<TokenLlamadaRespuesta>
 
-
-
-
     //eliminar una conversasion en cascada
 //    @DELETE("conversaciones/{id}")
 //    suspend fun eliminarConversacion(
@@ -286,4 +309,3 @@ data class SubirFotoResponse(
     val mensaje: String,
     val foto: FotoPortafolioResponse
 )
-

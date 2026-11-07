@@ -11,11 +11,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
+import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -44,9 +46,11 @@ fun MuroSolicitudesScreen(
     val esVip = SessionManager.esVip
     val context = LocalContext.current
     val listaSolicitudes = viewModel.solicitudes
+    val contratacionesDirectas = viewModel.contratacionesDirectas
 
     var categoriaSeleccionada by remember { mutableStateOf("Todas") }
     var estaDisponible by remember { mutableStateOf(true) }
+    var mostrarModalDirectas by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { viewModel.cargarSolicitudes() }
 
@@ -79,7 +83,31 @@ fun MuroSolicitudesScreen(
                 navController = navController,
                 titulo = "Servify",
                 accionesDerecha = {
-                    // Botón de Membresía VIP / Plan Pro exclusivo del muro de trabajador
+                    // Botón de Sobrecito (Contrataciones Directas) ✉️
+                    BadgedBox(
+                        badge = {
+                            if (contratacionesDirectas.isNotEmpty()) {
+                                Badge(
+                                    containerColor = ServifyDanger,
+                                    contentColor = Color.White
+                                ) {
+                                    Text(contratacionesDirectas.size.toString())
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clickable { mostrarModalDirectas = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Solicitudes Directas",
+                            tint = ServifyBluePrimary,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    // Botón de Membresía VIP
                     Surface(
                         onClick = {
                             if (!esVip) {
@@ -182,7 +210,7 @@ fun MuroSolicitudesScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(Icons.Default.TrendingUp, null, tint = ServifyOnlineGreen, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = ServifyOnlineGreen, modifier = Modifier.size(14.dp))
                                     Text("14 Trabajos", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
                                 }
                             }
@@ -433,8 +461,48 @@ fun MuroSolicitudesScreen(
             }
         }
     }
+
+    // Modal para revisar Solicitudes Directas (Sobrecito ✉️)
+    if (mostrarModalDirectas) {
+        AlertDialog(
+            onDismissRequest = { mostrarModalDirectas = false },
+            title = {
+                Text(
+                    text = "Contrataciones Directas Recibidas ✉️",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                if (contratacionesDirectas.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Text("No tienes nuevas solicitudes directas de clientes.", fontSize = 13.sp, color = ServifyTextMuted)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(contratacionesDirectas, key = { it.id }) { item ->
+                            ItemContratacionDirecta(
+                                contratacion = item,
+                                onAceptar = { viewModel.responderContratacion(item.id, "aceptado") },
+                                onRechazar = { viewModel.responderContratacion(item.id, "rechazado") }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarModalDirectas = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    }
 }
 
+// Componentes Auxiliares
 @Composable
 fun BotonAccesoRapido(
     titulo: String,
@@ -476,6 +544,62 @@ fun BotonAccesoRapido(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+    }
+}
+
+@Composable
+fun ItemContratacionDirecta(
+    contratacion: ContratacionDirectaResponse,
+    onAceptar: () -> Unit,
+    onRechazar: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = ServifySurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(ServifyCianSoft),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = contratacion.cliente_nombre.firstOrNull()?.uppercase() ?: "C",
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyBluePrimary
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(text = contratacion.cliente_nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(text = contratacion.categoria_nombre, fontSize = 11.sp, color = ServifyTextMuted)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = contratacion.descripcion, fontSize = 13.sp, color = ServifyTextTitle)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onRechazar,
+                    modifier = Modifier.weight(1f).height(38.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Rechazar", fontSize = 12.sp, color = ServifyDanger)
+                }
+                Button(
+                    onClick = onAceptar,
+                    modifier = Modifier.weight(1f).height(38.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
+                ) {
+                    Text("Aceptar", fontSize = 12.sp, color = Color.White)
+                }
+            }
         }
     }
 }

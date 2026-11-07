@@ -21,8 +21,11 @@ sealed class Rutas(val ruta: String) {
     object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
 
     object CheckoutPago : Rutas("checkout_pago")
-    object DetalleTecnico : Rutas("detalle_tecnico/{tecnicoId}") {
-        fun crearRuta(tecnicoId: String) = "detalle_tecnico/$tecnicoId"
+
+    // Detalle Técnico con soporte para Int o String
+    object DetalleTecnico : Rutas("detalle_tecnico/{idTecnico}") {
+        fun crearRuta(idTecnico: Int) = "detalle_tecnico/$idTecnico"
+        fun crearRuta(idTecnico: String) = "detalle_tecnico/$idTecnico"
     }
 
     object PropuestasSolicitud : Rutas("propuestas_solicitud/{solicitudId}") {
@@ -54,7 +57,7 @@ sealed class Rutas(val ruta: String) {
     // Mapa de Solicitudes (Trabajador)
     object MapaSolicitudes : Rutas("mapa_solicitudes")
 
-    //para llamadas y videollamadas
+    // Para llamadas y videollamadas
     object Call : Rutas("call_screen/{channelName}/{esVideo}") {
         fun crearRuta(channelName: String, esVideo: Boolean) = "call_screen/$channelName/$esVideo"
     }

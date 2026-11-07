@@ -5,14 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,7 +25,6 @@ import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
 import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
-import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
 import com.example.servify.ui.modulos.cliente.home.MapaScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
@@ -49,16 +43,16 @@ import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScree
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
+import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
+import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen
 import com.example.servify.ui.modulos.trabajador.muro.MapaSolicitudesScreen
 import com.example.servify.ui.modulos.trabajador.muro.MuroSolicitudesScreen
-import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
-    // Configuramos el pager para que abra directamente en la página solicitada
     val pagerState = rememberPagerState(initialPage = paginaInicial, pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
 
@@ -169,7 +163,6 @@ fun AppNavigation() {
 
         composable(Rutas.MapaSolicitudes.ruta) { MapaSolicitudesScreen(navController = navController) }
 
-        // Ruta de Mapa mejorada para recibir destino opcional de una solicitud
         composable(
             route = Rutas.Mapa.ruta,
             arguments = listOf(
@@ -191,12 +184,16 @@ fun AppNavigation() {
             )
         }
 
-        composable("detalle_tecnico/{idTecnico}") { backStackEntry ->
-            val idTecnico = backStackEntry.arguments?.getString("idTecnico")?.toIntOrNull() ?: 1
+        composable(
+            route = Rutas.DetalleTecnico.ruta,
+            arguments = listOf(
+                navArgument("idTecnico") { type = NavType.IntType; defaultValue = 1 }
+            )
+        ) { backStackEntry ->
+            val idTecnico = backStackEntry.arguments?.getInt("idTecnico") ?: 1
             DetalleTecnicoScreen(
                 idTecnico = idTecnico,
-                onBackClick = { navController.popBackStack() },
-                onContratarClick = { idContratado -> navController.navigate("contratacion/$idContratado") }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
