@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
+import com.example.servify.ui.componentes.navegacion.TopBarConMenu
+import com.example.servify.ui.componentes.navegacion.TopBarPrincipal
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -62,33 +64,7 @@ fun ConversacionesScreen(
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(ServifySurface)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Servify",
-                    color = ServifyBluePrimary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Surface(
-                    color = ServifyInputBackground,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = if (SessionManager.esTecnico) "MODO TRABAJADOR" else "MODO CLIENTE",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ServifyTextMuted
-                    )
-                }
-            }
+            TopBarConMenu(navController = navController,titulo = "Mensajería")
         },
         containerColor = ServifyBackground
     ) { padding ->
@@ -98,17 +74,8 @@ fun ConversacionesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
+
             Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Mensajes",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = ServifyTextTitle
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Pestañas superiores estilo píldora corporativa
             TabRow(
                 selectedTabIndex = pestañaActiva,

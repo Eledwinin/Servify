@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingUp
@@ -32,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
-import com.example.servify.data.model.SolicitudItemTecnico
+import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -76,22 +75,11 @@ fun MuroSolicitudesScreen(
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(ServifySurface)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Servify",
-                    color = ServifyBluePrimary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            TopBarConMenu(
+                navController = navController,
+                titulo = "Servify",
+                accionesDerecha = {
+                    // Botón de Membresía VIP / Plan Pro exclusivo del muro de trabajador
                     Surface(
                         onClick = {
                             if (!esVip) {
@@ -111,30 +99,8 @@ fun MuroSolicitudesScreen(
                             color = if (esVip) ServifyPendingText else Color(0xFF4338CA)
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = { navController.navigate(Rutas.Perfil.ruta) },
-                        modifier = Modifier.size(38.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(ServifyInputBackground),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Perfil",
-                                tint = ServifyTextMuted,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
                 }
-            }
+            )
         },
         containerColor = ServifyBackground
     ) { paddingValues ->

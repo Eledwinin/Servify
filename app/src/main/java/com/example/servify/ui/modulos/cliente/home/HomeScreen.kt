@@ -30,6 +30,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
+import com.example.servify.ui.componentes.navegacion.TopBarConMenu
+import com.example.servify.ui.componentes.navegacion.TopBarPrincipal
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 import com.google.android.gms.location.LocationServices
@@ -97,47 +99,9 @@ fun HomeScreen(
     Scaffold(
         containerColor = ServifyBackground,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Servify",
-                    color = ServifyBluePrimary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = ServifyCianSoft.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            text = "MODO CLIENTE",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ServifyBluePrimary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = { navController.navigate(Rutas.Perfil.ruta) }) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(ServifyCianSoft),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Person, contentDescription = "Perfil", tint = ServifyBluePrimary)
-                        }
-                    }
-                }
-            }
+            TopBarConMenu(navController = navController, titulo = "Servify")
         },
+
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate(Rutas.NuevaSolicitud.ruta) },

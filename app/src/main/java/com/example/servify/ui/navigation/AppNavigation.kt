@@ -57,8 +57,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainTabScreen(navController: NavController) {
-    val pagerState = rememberPagerState(pageCount = { 4 })
+fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
+    // Configuramos el pager para que abra directamente en la página solicitada
+    val pagerState = rememberPagerState(initialPage = paginaInicial, pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -160,11 +161,11 @@ fun AppNavigation() {
             )
         }
 
-        composable(Rutas.Home.ruta) { MainTabScreen(navController = navController) }
-        composable(Rutas.MuroSolicitudes.ruta) { MainTabScreen(navController = navController) }
-        composable(Rutas.Actividad.ruta) { MainTabScreen(navController = navController) }
-        composable(Rutas.Mensajes.ruta) { MainTabScreen(navController = navController) }
-        composable(Rutas.Perfil.ruta) { MainTabScreen(navController = navController) }
+        composable(Rutas.Home.ruta) { MainTabScreen(navController = navController, paginaInicial = 0) }
+        composable(Rutas.MuroSolicitudes.ruta) { MainTabScreen(navController = navController, paginaInicial = 0) }
+        composable(Rutas.Actividad.ruta) { MainTabScreen(navController = navController, paginaInicial = 1) }
+        composable(Rutas.Mensajes.ruta) { MainTabScreen(navController = navController, paginaInicial = 2) }
+        composable(Rutas.Perfil.ruta) { MainTabScreen(navController = navController, paginaInicial = 3) }
 
         composable(Rutas.MapaSolicitudes.ruta) { MapaSolicitudesScreen(navController = navController) }
 

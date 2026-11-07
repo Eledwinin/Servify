@@ -125,18 +125,25 @@ fun PerfilScreen(
         containerColor = ServifyBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Servify", color = ServifyBluePrimary, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp) },
-                actions = {
-                    Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
-                        modifier = Modifier.padding(end = 16.dp)) {
+                title = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = if (esTecnico) "MODO TRABAJADOR" else "MODO CLIENTE",
-                            color = ServifyTextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            text = "Servify",
+                            color = ServifyBluePrimary,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface),
+                actions = {
+                    Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
+                        modifier = Modifier.padding(end = 16.dp)) {
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifyBackground),
                 windowInsets = WindowInsets(0.dp)
             )
         }

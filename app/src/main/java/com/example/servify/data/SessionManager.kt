@@ -49,4 +49,25 @@ object SessionManager {
     }
 
     fun estaAutenticado(): Boolean = !token.isNullOrBlank()
+
+    // Obtiene el nombre completo del usuario de forma segura
+    fun obtenerNombre(): String {
+        return usuarioActual?.nombre ?: "Usuario Servify"
+    }
+
+    // Obtiene la URL de la foto de perfil desde el modelo de usuario actual
+    fun obtenerFotoUrl(): String? {
+        return usuarioActual?.fotoUrl // Asegúrate de que en UsuarioModel tu variable de foto se llame asi (o fotoUrl)
+    }
+
+    // Genera las iniciales automáticamente a partir del nombre
+    fun obtenerIniciales(): String {
+        val nombre = obtenerNombre()
+        return nombre.split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercase() }
+            .joinToString("")
+            .ifEmpty { "SV" }
+    }
 }

@@ -60,15 +60,6 @@ fun MisSolicitudesContenido(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = "Mis Trabajos",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = ServifyTextTitle
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Pestañas superiores tipo píldora corporativa
         TabRow(
             selectedTabIndex = pestañaSeleccionada,
