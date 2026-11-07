@@ -66,6 +66,16 @@ fun ChatScreen(
     var mostrarDialogoLLamada by remember { mutableStateOf(false) }
     var tipoVideoLlamadaEntrante by remember { mutableStateOf(false) }
 
+    // Detectar si ya hay alguna oferta aceptada en la conversación
+    val hayAcuerdoCerrado by remember {
+        derivedStateOf {
+            viewModel.mensajes.any { m ->
+                m.estadoOferta.equals("aceptada", ignoreCase = true) ||
+                        (m.tipo == "sistema" && m.contenido.contains("acuerdo cerrado", ignoreCase = true))
+            }
+        }
+    }
+
     LaunchedEffect(conversacionId) { viewModel.iniciar(conversacionId) }
 
     LaunchedEffect(viewModel.mensajeError) {
@@ -141,9 +151,11 @@ fun ChatScreen(
                         Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = verdePrincipal)
                     }
 
-                    // Botón para abrir el modal de Proponer Precio
-                    IconButton(onClick = { mostrarModalOferta = true }) {
-                        Icon(Icons.Default.LocalOffer, contentDescription = "Proponer Precio", tint = verdePrincipal)
+                    // 🛑 ESTE ES EL FILTRO DEFINITIVO: Si hay acuerdo, el botón literal desaparece de la barra
+                    if (!hayAcuerdoCerrado) {
+                        IconButton(onClick = { mostrarModalOferta = true }) {
+                            Icon(Icons.Default.LocalOffer, contentDescription = "Proponer Precio", tint = verdePrincipal)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -157,6 +169,28 @@ fun ChatScreen(
                 .padding(padding)
                 .imePadding()
         ) {
+            // Banner superior indicador si ya llegaron a un acuerdo
+            if (hayAcuerdoCerrado) {
+                Surface(
+                    color = Color(0xFFCCFBF1),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Ya han llegado a un acuerdo económico",
+                            fontSize = 13.sp,
+                            color = Color(0xFF0F766E),
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (viewModel.isLoading && viewModel.mensajes.isEmpty()) {
                     CircularProgressIndicator(color = verdePrincipal, modifier = Modifier.align(Alignment.Center))
@@ -309,8 +343,8 @@ fun ChatScreen(
         }
     }
 
-    // Modal para proponer precio
-    if (mostrarModalOferta) {
+    // Modal para proponer precio (Solo si no hay acuerdo)
+    if (mostrarModalOferta && !hayAcuerdoCerrado) {
         ModalProponerPrecio(
             onDismiss = { mostrarModalOferta = false },
             onEnviar = { monto ->
@@ -323,7 +357,7 @@ fun ChatScreen(
     // Diálogo flotante de llamada entrante dentro del chat (Aceptar / Rechazar)
     if (mostrarDialogoLLamada) {
         AlertDialog(
-            onDismissRequest = { /* No hacer nada al tocar fuera */ },
+            onDismissRequest = { },
             icon = {
                 Icon(
                     imageVector = if (tipoVideoLlamadaEntrante) Icons.Default.Videocam else Icons.Default.Call,
@@ -351,7 +385,7 @@ fun ChatScreen(
                 Button(
                     onClick = {
                         mostrarDialogoLLamada = false
-                        viewModel.limpiarLlamadaEntrante() // Limpiar para evitar bucles
+                        viewModel.limpiarLlamadaEntrante()
                         navController.navigate(Rutas.Call.crearRuta("chat_$conversacionId", tipoVideoLlamadaEntrante))
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal),
@@ -363,13 +397,8 @@ fun ChatScreen(
             dismissButton = {
                 OutlinedButton(
                     onClick = {
-                        // 1. Ocultar modal localmente
                         mostrarDialogoLLamada = false
-
-                        // 2. Avisar al servidor y al otro usuario que se rechazó la llamada
                         LlamadasManager.responder(conversacionId, false)
-
-                        // 3. Limpiar el ViewModel
                         viewModel.limpiarLlamadaEntrante()
                     },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
@@ -378,8 +407,6 @@ fun ChatScreen(
                     Text("Rechazar", fontWeight = FontWeight.Bold)
                 }
             },
-
-
             shape = RoundedCornerShape(20.dp),
             containerColor = Color.White
         )
