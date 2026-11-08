@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
+import android.R.attr.timeZone
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -86,7 +88,7 @@ fun DetalleAveriaScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifyBackground)
             )
         },
         bottomBar = {
@@ -179,19 +181,41 @@ fun DetalleAveriaScreen(
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            val calificacionStr = detalle.clienteCalificacion?.let { "%.1f".format(it) } ?: "4.8"
+
+                            val calificacion = detalle?.clienteCalificacion ?: 0.0
+                            val totalResenas = detalle?.clienteTotalResenas ?: 0
+
+                            val textoResenas = if (calificacion > 0.0) {
+                                "%.1f ($totalResenas reseñas)".format(calificacion)
+                            } else {
+                                "Sin calificaciones"
+                            }
+
                             Text(
-                                text = "$calificacionStr (12 reseñas de trabajadores)",
+                                text = textoResenas,
                                 fontSize = 12.sp,
                                 color = ServifyTextMuted
                             )
                         }
 
-                        Text(
-                            text = "📅 Cliente desde 2023",
-                            fontSize = 11.sp,
-                            color = ServifyTextMuted
-                        )
+                        // Días siendo cliente
+                        val diasCliente = viewModel.calcularDiasCliente(viewModel.detalle?.clienteCreadoEn)
+                        val textoCliente = if (diasCliente <= 0) "Nuevo en Servify" else "$diasCliente días siendo cliente de Servify"
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = ServifyTextMuted,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = textoCliente,
+                                fontSize = 12.sp,
+                                color = ServifyTextMuted
+                            )
+                        }
                     }
                 }
 
@@ -214,7 +238,7 @@ fun DetalleAveriaScreen(
                     }
 
                     Text(
-                        text = "⏱ Publicado hace 2h",
+                        text = viewModel.tiempoRelativo(viewModel.detalle?.creadoEn),
                         fontSize = 12.sp,
                         color = ServifyTextMuted
                     )
@@ -366,3 +390,4 @@ fun DetalleAveriaScreen(
         }
     }
 }
+

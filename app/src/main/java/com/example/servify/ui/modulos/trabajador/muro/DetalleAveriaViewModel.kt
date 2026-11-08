@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
+import android.R.attr.timeZone
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,6 +11,9 @@ import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.DetalleSolicitud
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class DetalleAveriaViewModel : ViewModel() {
     var detalle by mutableStateOf<DetalleSolicitud?>(null)
@@ -58,4 +62,46 @@ class DetalleAveriaViewModel : ViewModel() {
             }
         }
     }
+
+    fun tiempoRelativo(iso: String?): String {
+        if (iso.isNullOrBlank()) return ""
+        try {
+            val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val fecha = formato.parse(iso.take(19)) ?: return ""
+            val ahora = System.currentTimeMillis()
+            val diffMs = ahora - fecha.time
+            val diffMinutos = (diffMs / (1000 * 60)).toInt()
+            val diffHoras = (diffMinutos / 60)
+            val diffDias = (diffHoras / 24)
+
+            return when {
+                diffMinutos < 1 -> "Hace un momento"
+                diffMinutos < 60 -> "Hace $diffMinutos min"
+                diffHoras < 24 -> "Hace $diffHoras h"
+                diffDias == 1 -> "Ayer"
+                diffDias < 7 -> "Hace $diffDias días"
+                else -> SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(fecha)
+            }
+        } catch (e: Exception) {
+            return ""
+        }
+    }
+
+    fun calcularDiasCliente(fechaIso: String?): Int {
+        if (fechaIso.isNullOrBlank()) return 0
+        return try {
+            val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val fechaRegistro = formato.parse(fechaIso.take(19)) ?: return 0
+            val diffMs = System.currentTimeMillis() - fechaRegistro.time
+            (diffMs / (1000 * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+
 }

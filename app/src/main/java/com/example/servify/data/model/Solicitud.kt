@@ -103,6 +103,7 @@ data class DetalleSolicitud(
     @SerializedName("cliente_id") val clienteId: Int,
     @SerializedName("cliente_nombre") val clienteNombre: String,
     @SerializedName("cliente_calificacion") val clienteCalificacion: Double? = null,
+    @SerializedName("cliente_total_resenas") val clienteTotalResenas: Int? = 0,
     @SerializedName("categoria_nombre") val categoriaNombre: String,
     @SerializedName("titulo") val titulo: String,
     @SerializedName("descripcion") val descripcion: String,
@@ -113,7 +114,9 @@ data class DetalleSolicitud(
     @SerializedName("longitud") val longitud: Double? = null,
     @SerializedName("estado") val estado: String? = null,
     @SerializedName("ya_postulado") val yaPostulado: Boolean = false,
-    @SerializedName("fotos") val fotos: List<String> = emptyList()
+    @SerializedName("fotos") val fotos: List<String> = emptyList(),
+    @SerializedName("creado_en") val creadoEn: String? = null,
+    @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null,
 )
 
 data class CrearSolicitudRespuesta(
