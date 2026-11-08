@@ -63,4 +63,9 @@ object LlamadasManager {
         socket = null
         llamadaEntrante = null
     }
+
+    fun finalizar(conversacionId: Int) {
+        socket?.emit("finalizar_llamada", JSONObject().put("conversacionId", conversacionId))
+    }
+
 }

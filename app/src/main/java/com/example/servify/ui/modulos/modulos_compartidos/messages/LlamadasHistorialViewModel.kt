@@ -1,0 +1,28 @@
+package com.example.servify.ui.modulos.modulos_compartidos.messages
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.servify.data.SessionManager
+import com.example.servify.data.api.RetrofitClient
+import com.example.servify.data.model.LlamadaItem
+import kotlinx.coroutines.launch
+
+class LlamadasHistorialViewModel : ViewModel() {
+    var llamadas by mutableStateOf<List<LlamadaItem>>(emptyList())
+    var isLoading by mutableStateOf(false)
+
+    fun cargar() {
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val res = RetrofitClient.instance.obtenerLlamadas("Bearer $token")
+                if (res.isSuccessful) llamadas = res.body() ?: emptyList()
+            } catch (_: Exception) { }
+            finally { isLoading = false }
+        }
+    }
+}
