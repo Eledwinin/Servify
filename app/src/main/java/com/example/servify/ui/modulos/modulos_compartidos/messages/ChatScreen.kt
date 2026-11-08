@@ -97,13 +97,13 @@ fun ChatScreen(
         }
     }
 
-    // Escuchar cuando el ViewModel detecte una llamada entrante por el socket
     LaunchedEffect(viewModel.llamadaEntrante) {
         viewModel.llamadaEntrante?.let { (_, esVideo) ->
             tipoVideoLlamadaEntrante = esVideo
             mostrarDialogoLLamada = true
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -135,7 +135,6 @@ fun ChatScreen(
                     }
                 },
                 actions = {
-                    // Botón de Llamada de Voz (Limpio, el servidor registra el evento)
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, false)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", false))
@@ -143,7 +142,6 @@ fun ChatScreen(
                         Icon(Icons.Default.Call, contentDescription = "Llamar", tint = verdePrincipal)
                     }
 
-                    // Botón de Videollamada (Limpio, el servidor registra el evento)
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, true)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", true))
@@ -151,7 +149,6 @@ fun ChatScreen(
                         Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = verdePrincipal)
                     }
 
-                    // Si hay acuerdo, el botón literal desaparece de la barra
                     if (!hayAcuerdoCerrado) {
                         IconButton(onClick = { mostrarModalOferta = true }) {
                             Icon(Icons.Default.LocalOffer, contentDescription = "Proponer Precio", tint = verdePrincipal)
@@ -161,13 +158,16 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = Color(0xFFF8FAFC),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
+
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding()
+                .navigationBarsPadding()
         ) {
             // Banner superior indicador si ya llegaron a un acuerdo
             if (hayAcuerdoCerrado) {
@@ -191,7 +191,12 @@ fun ChatScreen(
                 }
             }
 
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            // Lista de mensajes (Ocupa todo el espacio flexible del centro)
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 if (viewModel.isLoading && viewModel.mensajes.isEmpty()) {
                     CircularProgressIndicator(color = verdePrincipal, modifier = Modifier.align(Alignment.Center))
                 } else if (viewModel.mensajes.isEmpty()) {
@@ -223,15 +228,40 @@ fun ChatScreen(
 
                             when {
                                 tipoMensaje == "sistema" -> {
-                                    val esLlamada = m.contenido.contains("llamada", ignoreCase = true) ||
-                                            m.contenido.contains("videollamada", ignoreCase = true)
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
-                                        if (esLlamada) Icon(
-                                            if (m.contenido.contains("video", ignoreCase = true)) Icons.Default.Videocam else Icons.Default.Call,
-                                            null, tint = Color(0xFF475569), modifier = Modifier.size(14.dp)
-                                        )
-                                        Text(m.contenido, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Surface(
+                                            color = Color(0xFFE2E8F0),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            ) {
+                                                val esLlamada = m.contenido.contains("llamada", ignoreCase = true) ||
+                                                        m.contenido.contains("videollamada", ignoreCase = true)
+                                                if (esLlamada) {
+                                                    Icon(
+                                                        if (m.contenido.contains("video", ignoreCase = true)) Icons.Default.Videocam else Icons.Default.Call,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF475569),
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
+                                                Text(
+                                                    text = m.contenido,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color(0xFF475569),
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                                 esOfertaReal -> {
@@ -282,6 +312,7 @@ fun ChatScreen(
                 }
             }
 
+            // Barra inferior de texto (Alineada perfectamente al fondo del Column con imePadding)
             if (!viewModel.activa) {
                 Surface(color = Color(0xFFFEF3C7), modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -395,7 +426,7 @@ fun ChatScreen(
                 OutlinedButton(
                     onClick = {
                         mostrarDialogoLLamada = false
-                        LlamadasManager.responder(conversacionId, false) // 👈 Avisa al servidor que rechazaste
+                        LlamadasManager.responder(conversacionId, false)
                         viewModel.limpiarLlamadaEntrante()
                     },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
@@ -409,7 +440,6 @@ fun ChatScreen(
         )
     }
 }
-
 @Composable
 fun TarjetaOfertaItem(
     mensaje: Mensaje,

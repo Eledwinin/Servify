@@ -17,6 +17,10 @@ object LlamadasManager {
     var llamadaCancelada by mutableStateOf(0)
     var respuestaLlamada by mutableStateOf<Boolean?>(null)
 
+    // Almacenamos temporalmente los datos de la llamada activa
+    var ultimoTokenGenerado: String? = null
+    var ultimoCanalGenerado: String? = null
+
     fun conectar(token: String) {
         if (socket?.connected() == true) return
         val opts = IO.Options().apply {
@@ -27,6 +31,10 @@ object LlamadasManager {
 
         s.on("llamada_entrante") { args ->
             val j = args.firstOrNull() as? JSONObject ?: return@on
+            // Capturamos también el token y el canal si vienen en la llamada entrante
+            ultimoTokenGenerado = j.optString("token").takeIf { !it.isNullOrBlank() }
+            ultimoCanalGenerado = j.optString("canal").takeIf { !it.isNullOrBlank() }
+
             llamadaEntrante = LlamadaEntrante(
                 j.optInt("conversacionId"), j.optBoolean("esVideo"), j.optString("deNombre")
             )
@@ -37,14 +45,30 @@ object LlamadasManager {
             llamadaCancelada++
         }
         s.on("llamada_respondida") { args ->
-            respuestaLlamada = (args.firstOrNull() as? JSONObject)?.optBoolean("aceptada")
+            val j = args.firstOrNull() as? JSONObject
+            respuestaLlamada = j?.optBoolean("aceptada")
         }
         s.connect()
         socket = s
     }
 
-    fun llamar(conversacionId: Int, esVideo: Boolean) {
-        socket?.emit("llamar", JSONObject().put("conversacionId", conversacionId).put("esVideo", esVideo))
+    fun llamar(conversacionId: Int, esVideo: Boolean, onTokenRecibido: ((canal: String, token: String) -> Unit)? = null) {
+        val data = JSONObject()
+            .put("conversacionId", conversacionId)
+            .put("esVideo", esVideo)
+
+        socket?.emit("llamar", data, io.socket.client.Ack { args ->
+            val res = args.firstOrNull() as? JSONObject ?: return@Ack
+            if (res.optBoolean("ok")) {
+                val canal = res.optString("canal")
+                val token = res.optString("token")
+
+                ultimoCanalGenerado = canal
+                ultimoTokenGenerado = token
+
+                onTokenRecibido?.invoke(canal, token)
+            }
+        })
     }
 
     fun responder(conversacionId: Int, aceptar: Boolean) {
@@ -67,5 +91,4 @@ object LlamadasManager {
     fun finalizar(conversacionId: Int) {
         socket?.emit("finalizar_llamada", JSONObject().put("conversacionId", conversacionId))
     }
-
 }

@@ -63,6 +63,7 @@ class AgoraManager(
             autoSubscribeVideo = esVideo
         }
 
+        // Firma correcta: token, channelId, uid, options
         val resultado = engine.joinChannel(token, channelName, uid, opciones)
         android.util.Log.d("AGORA", "joinChannel('$channelName') devolvió $resultado")
     }

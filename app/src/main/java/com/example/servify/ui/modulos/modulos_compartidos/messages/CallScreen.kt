@@ -80,8 +80,12 @@ fun CallScreen(
         try {
             val auth = "Bearer ${SessionManager.token}"
             val res = RetrofitClient.instance.obtenerTokenLlamada(auth, conversacionId)
+
             if (res.isSuccessful && res.body()?.token != null) {
-                agoraManager.unirseCanal(channelName, res.body()!!.token, esVideo)
+                val body = res.body()!!
+                val canal = body.canal ?: "chat_$conversacionId"
+
+                agoraManager.unirseCanal(canal, body.token, esVideo)
             } else {
                 Toast.makeText(context, "No se pudo iniciar la llamada (${res.code()})", Toast.LENGTH_LONG).show()
                 navController.popBackStack()
