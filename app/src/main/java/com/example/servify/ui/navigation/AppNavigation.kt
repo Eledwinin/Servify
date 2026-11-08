@@ -28,6 +28,7 @@ import com.example.servify.ui.componentes.navegacion.BarraNavegacion
 import com.example.servify.ui.modulos.admin.AdminDashboardScreen
 import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
 import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
+import com.example.servify.ui.modulos.cliente.contratacion.CheckoutPagoScreen
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
@@ -107,7 +108,6 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
                         navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
                     },
                     onVerTodasResenas = { navController.navigate(Rutas.Resenas.ruta) }
-
                 )
             }
         }
@@ -170,7 +170,6 @@ fun AppNavigation() {
             }
 
             composable(Rutas.Resenas.ruta) { backStackEntry ->
-
                 val perfilViewModel: PerfilViewModel = viewModel()
 
                 // Asegurarnos de recargar si está vacía al entrar
@@ -225,6 +224,19 @@ fun AppNavigation() {
                 DetalleTecnicoScreen(
                     idTecnico = idTecnico,
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Rutas.CheckoutPago.ruta,
+                arguments = listOf(
+                    navArgument("solicitudId") { type = NavType.IntType; defaultValue = 0 }
+                )
+            ) { backStackEntry ->
+                val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
+                CheckoutPagoScreen(
+                    solicitudId = solicitudId,
+                    navController = navController
                 )
             }
 
@@ -379,7 +391,7 @@ fun AppNavigation() {
             }
         }
 
-        // Diálogo global de llamada entrante (cualquier pantalla, incluido el chat)
+        // Diálogo global de llamada entrante
         LlamadasManager.llamadaEntrante?.let { ll ->
             AlertDialog(
                 onDismissRequest = {},

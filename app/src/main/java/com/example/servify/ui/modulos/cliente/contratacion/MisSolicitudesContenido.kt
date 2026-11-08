@@ -170,7 +170,7 @@ fun MisSolicitudesContenido(
                         "aceptada", "aceptado" -> Triple("ACEPTADA", ServifyCianSoft, ServifyBluePrimary)
                         "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
                         "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
-                        "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary) // 💙 AZUL DESTACADO
+                        "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary)
                         "completado", "completada" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
                         else -> Triple(s.estado.uppercase(), ServifyInputBackground, ServifyTextMuted)
                     }
@@ -300,7 +300,10 @@ fun MisSolicitudesContenido(
             },
             onConfirmarPago = { metodoPago ->
                 if (metodoPago == "tarjeta") {
-                    viewModel.iniciarCierreSolicitud(solicitud.id, "tarjeta")
+                    val idActual = solicitud.id
+                    solicitudParaCerrar = null
+                    viewModel.limpiarEstadoCierre()
+                    navController.navigate(Rutas.CheckoutPago.crearRuta(idActual))
                 } else {
                     viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo")
                 }

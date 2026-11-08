@@ -21,7 +21,10 @@ sealed class Rutas(val ruta: String) {
     object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
     object Resenas : Rutas("resenas")
 
-    object CheckoutPago : Rutas("checkout_pago")
+    // Checkout de Pago con Tarjeta
+    object CheckoutPago : Rutas("checkout_pago?solicitudId={solicitudId}") {
+        fun crearRuta(solicitudId: Int) = "checkout_pago?solicitudId=$solicitudId"
+    }
 
     // Detalle Técnico con soporte para Int o String
     object DetalleTecnico : Rutas("detalle_tecnico/{idTecnico}") {
