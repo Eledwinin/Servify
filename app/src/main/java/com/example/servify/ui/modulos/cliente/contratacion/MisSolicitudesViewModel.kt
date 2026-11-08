@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.cliente.contratacion
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,7 +17,11 @@ class MisSolicitudesViewModel : ViewModel() {
     var mensajeError by mutableStateOf<String?>(null)
 
     fun cargar() {
-        val token = SessionManager.token ?: return
+        val token = SessionManager.token ?: run {
+            mensajeError = "Sesión no válida"
+            return
+        }
+
         viewModelScope.launch {
             isLoading = true
             try {
@@ -24,10 +29,11 @@ class MisSolicitudesViewModel : ViewModel() {
                 if (res.isSuccessful) {
                     solicitudes = res.body() ?: emptyList()
                 } else {
-                    android.util.Log.e("MIS_SOL", "Código ${res.code()} - ${res.errorBody()?.string()}")
+                    Log.e("MIS_SOL", "Código ${res.code()}: ${res.errorBody()?.string()}")
                     mensajeError = "Error ${res.code()} al cargar tus solicitudes"
                 }
             } catch (e: Exception) {
+                Log.e("MIS_SOL", "Excepción al cargar solicitudes: ${e.message}", e)
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false

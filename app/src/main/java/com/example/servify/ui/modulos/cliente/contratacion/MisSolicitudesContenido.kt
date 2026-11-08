@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.data.model.MiSolicitud
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -30,7 +31,7 @@ fun MisSolicitudesContenido(
 ) {
     val context = LocalContext.current
 
-    // Estado para manejar las pestañas superiores
+    // Estado para manejar las pestañas superiores (0 = En Curso, 1 = Historial, 2 = Directas ✉️)
     var pestañaSeleccionada by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) { viewModel.cargar() }
@@ -42,16 +43,24 @@ fun MisSolicitudesContenido(
         }
     }
 
-    // Clasificación de las solicitudes del cliente según el estado
-    val solicitudesEnCurso = viewModel.solicitudes.filter {
-        it.estado.equals("pendiente", ignoreCase = true) || it.estado.equals("en_proceso", ignoreCase = true)
+    // Identifica si una solicitud es de flujo de Contratación Directa
+    fun esSolicitudDirecta(s: MiSolicitud): Boolean {
+        return s.titulo.startsWith("Contratación Directa", ignoreCase = true) ||
+                s.estado.equals("directa", ignoreCase = true)
     }
 
-    val solicitudesHistorial = viewModel.solicitudes.filter {
-        it.estado.equals("completado", ignoreCase = true) || it.estado.equals("cancelado", ignoreCase = true) || it.estado.equals("rechazado", ignoreCase = true)
+    // 1. Solicitudes DIRECTAS (Pendientes, Aceptadas o Rechazadas)
+    val solicitudesDirectas = viewModel.solicitudes.filter { esSolicitudDirecta(it) }
+
+    // 2. Solicitudes PÚBLICAS en curso (Excluye las directas)
+    val solicitudesEnCurso = viewModel.solicitudes.filter { s ->
+        !esSolicitudDirecta(s) && (s.estado.equals("pendiente", ignoreCase = true) || s.estado.equals("en_proceso", ignoreCase = true))
     }
 
-    val listaActual = if (pestañaSeleccionada == 0) solicitudesEnCurso else solicitudesHistorial
+    // 3. Solicitudes PÚBLICAS en historial (Excluye las directas)
+    val solicitudesHistorial = viewModel.solicitudes.filter { s ->
+        !esSolicitudDirecta(s) && (s.estado.equals("completado", ignoreCase = true) || s.estado.equals("cancelado", ignoreCase = true) || s.estado.equals("rechazado", ignoreCase = true))
+    }
 
     Column(
         modifier = Modifier
@@ -82,7 +91,7 @@ fun MisSolicitudesContenido(
                     Text(
                         "En Curso",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = if (pestañaSeleccionada == 0) ServifyBluePrimary else ServifyTextMuted
                     )
                 }
@@ -97,14 +106,35 @@ fun MisSolicitudesContenido(
                     Text(
                         "Historial",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = if (pestañaSeleccionada == 1) ServifyBluePrimary else ServifyTextMuted
+                    )
+                }
+            )
+            Tab(
+                selected = pestañaSeleccionada == 2,
+                onClick = { pestañaSeleccionada = 2 },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (pestañaSeleccionada == 2) ServifySurface else Color.Transparent),
+                text = {
+                    Text(
+                        "Directas ✉️",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = if (pestañaSeleccionada == 2) ServifyBluePrimary else ServifyTextMuted
                     )
                 }
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        val listaActual = when (pestañaSeleccionada) {
+            0 -> solicitudesEnCurso
+            1 -> solicitudesHistorial
+            else -> solicitudesDirectas
+        }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -120,7 +150,11 @@ fun MisSolicitudesContenido(
                 item {
                     Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (pestañaSeleccionada == 0) "No tienes solicitudes en curso" else "No hay historial de solicitudes",
+                            text = when (pestañaSeleccionada) {
+                                0 -> "No tienes solicitudes en curso"
+                                1 -> "No hay historial de solicitudes"
+                                else -> "No has enviado contrataciones directas"
+                            },
                             color = ServifyTextMuted,
                             fontSize = 14.sp
                         )
@@ -129,9 +163,11 @@ fun MisSolicitudesContenido(
             } else {
                 items(listaActual, key = { it.id }) { s ->
                     val (textoEstado, colorFondo, colorTexto) = when (s.estado.lowercase()) {
-                        "pendiente" -> Triple("PUBLICADA", ServifyCianSoft, ServifyBluePrimary)
+                        "aceptada", "aceptado" -> Triple("ACEPTADA", ServifyCianSoft, ServifyBluePrimary)
+                        "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
+                        "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
                         "en_proceso" -> Triple("EN PROCESO", ServifyPendingBg, ServifyPendingText)
-                        "completado" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
+                        "completado", "completada" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
                         else -> Triple(s.estado.uppercase(), ServifyInputBackground, ServifyTextMuted)
                     }
 
@@ -201,14 +237,22 @@ fun MisSolicitudesContenido(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = when (s.totalPropuestas) {
-                                    0 -> "Sin propuestas todavía"
-                                    1 -> "1 propuesta recibida"
-                                    else -> "${s.totalPropuestas} propuestas recibidas"
+                                text = if (pestañaSeleccionada == 2) {
+                                    when (s.estado.lowercase()) {
+                                        "aceptada", "aceptado" -> "¡El técnico aceptó la contratación!"
+                                        "rechazada", "rechazado" -> "El técnico rechazó la solicitud"
+                                        else -> "Esperando respuesta del técnico..."
+                                    }
+                                } else {
+                                    when (s.totalPropuestas) {
+                                        0 -> "Sin propuestas todavía"
+                                        1 -> "1 propuesta recibida"
+                                        else -> "${s.totalPropuestas} propuestas recibidas"
+                                    }
                                 },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (s.totalPropuestas > 0) ServifyBluePrimary else ServifyTextMuted
+                                color = if (pestañaSeleccionada == 2 && s.estado.lowercase() in listOf("aceptada", "aceptado")) ServifyBluePrimary else ServifyTextMuted
                             )
                         }
                     }
