@@ -93,9 +93,11 @@ fun CallScreen(
     }
 
     fun colgar() {
-        if (!alguienSeUnio) LlamadasManager.cancelar(conversacionId)
+        if (alguienSeUnio) LlamadasManager.finalizar(conversacionId)
+        else LlamadasManager.cancelar(conversacionId)
         navController.popBackStack()
     }
+
 
     // Permisos
     val permisos = remember {

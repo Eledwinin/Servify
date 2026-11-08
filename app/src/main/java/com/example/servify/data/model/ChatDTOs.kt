@@ -23,3 +23,14 @@ data class TokenLlamadaRespuesta(
     @SerializedName("token") val token: String,
     @SerializedName("canal") val canal: String
 )
+
+data class LlamadaItem(
+    @SerializedName("id") val id: Int,
+    @SerializedName("conversacion_id") val conversacionId: Int,
+    @SerializedName("emisor_id") val emisorId: Int,
+    @SerializedName("es_video") val esVideo: Int = 0,
+    @SerializedName("estado") val estado: String,
+    @SerializedName("iniciada_en") val iniciadaEn: String? = null,
+    @SerializedName("duracion_seg") val duracionSeg: Int? = null,
+    @SerializedName("otro_nombre") val otroNombre: String
+)

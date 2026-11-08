@@ -135,7 +135,7 @@ fun ChatScreen(
                     }
                 },
                 actions = {
-                    // Botón de Llamada de Voz
+                    // Botón de Llamada de Voz (Limpio, el servidor registra el evento)
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, false)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", false))
@@ -143,7 +143,7 @@ fun ChatScreen(
                         Icon(Icons.Default.Call, contentDescription = "Llamar", tint = verdePrincipal)
                     }
 
-                    // Botón de Videollamada
+                    // Botón de Videollamada (Limpio, el servidor registra el evento)
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, true)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", true))
@@ -151,7 +151,7 @@ fun ChatScreen(
                         Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = verdePrincipal)
                     }
 
-                    // 🛑 ESTE ES EL FILTRO DEFINITIVO: Si hay acuerdo, el botón literal desaparece de la barra
+                    // Si hay acuerdo, el botón literal desaparece de la barra
                     if (!hayAcuerdoCerrado) {
                         IconButton(onClick = { mostrarModalOferta = true }) {
                             Icon(Icons.Default.LocalOffer, contentDescription = "Proponer Precio", tint = verdePrincipal)
@@ -223,19 +223,15 @@ fun ChatScreen(
 
                             when {
                                 tipoMensaje == "sistema" -> {
-                                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                        Surface(
-                                            color = Color(0xFFE2E8F0),
-                                            shape = RoundedCornerShape(16.dp)
-                                        ) {
-                                            Text(
-                                                text = m.contenido,
-                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color(0xFF475569)
-                                            )
-                                        }
+                                    val esLlamada = m.contenido.contains("llamada", ignoreCase = true) ||
+                                            m.contenido.contains("videollamada", ignoreCase = true)
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
+                                        if (esLlamada) Icon(
+                                            if (m.contenido.contains("video", ignoreCase = true)) Icons.Default.Videocam else Icons.Default.Call,
+                                            null, tint = Color(0xFF475569), modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(m.contenido, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
                                     }
                                 }
                                 esOfertaReal -> {
@@ -385,6 +381,7 @@ fun ChatScreen(
                 Button(
                     onClick = {
                         mostrarDialogoLLamada = false
+                        LlamadasManager.responder(conversacionId, true)
                         viewModel.limpiarLlamadaEntrante()
                         navController.navigate(Rutas.Call.crearRuta("chat_$conversacionId", tipoVideoLlamadaEntrante))
                     },
@@ -398,7 +395,7 @@ fun ChatScreen(
                 OutlinedButton(
                     onClick = {
                         mostrarDialogoLLamada = false
-                        LlamadasManager.responder(conversacionId, false)
+                        LlamadasManager.responder(conversacionId, false) // 👈 Avisa al servidor que rechazaste
                         viewModel.limpiarLlamadaEntrante()
                     },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),

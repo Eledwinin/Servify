@@ -16,6 +16,7 @@ import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.CrearSolicitudRespuesta
 import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
+import com.example.servify.data.model.LlamadaItem
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
@@ -98,6 +99,10 @@ interface ApiService {
     suspend fun getPerfilProfesional(
         @Path("id") id: String
     ): Response<ProfesionalPerfil>
+
+
+    @GET("api/chat/llamadas")
+    suspend fun obtenerLlamadas(@Header("Authorization") token: String): Response<List<LlamadaItem>>
 
     // Endpoint para listar todos los profesionales en el Home
     @GET("api/users/profesionales")

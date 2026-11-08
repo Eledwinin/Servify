@@ -26,26 +26,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
+import com.example.servify.data.model.LlamadaItem
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
-import com.example.servify.ui.componentes.navegacion.TopBarPrincipal
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
-
-// Modelo para el registro de llamadas
-data class RegistroLlamadaItem(
-    val id: Int,
-    val nombreUsuario: String,
-    val tituloSolicitud: String,
-    val esVideo: Boolean,
-    val duracion: String,
-    val fecha: String,
-    val entrante: Boolean
-)
 
 @Composable
 fun ConversacionesScreen(
     navController: NavController,
-    viewModel: ConversacionesViewModel = viewModel()
+    viewModel: ConversacionesViewModel = viewModel(),
+    llamadasViewModel: LlamadasHistorialViewModel = viewModel()
 ) {
     val context = LocalContext.current
 
@@ -53,7 +43,10 @@ fun ConversacionesScreen(
     var pestañaActiva by remember { mutableStateOf(0) }
     var textoBusqueda by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) { viewModel.cargar() }
+    LaunchedEffect(Unit) {
+        viewModel.cargar()
+        llamadasViewModel.cargar()
+    }
 
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
@@ -64,7 +57,7 @@ fun ConversacionesScreen(
 
     Scaffold(
         topBar = {
-            TopBarConMenu(navController = navController,titulo = "Mensajería")
+            TopBarConMenu(navController = navController, titulo = "Mensajería")
         },
         containerColor = ServifyBackground
     ) { padding ->
@@ -74,8 +67,8 @@ fun ConversacionesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-
             Spacer(modifier = Modifier.height(12.dp))
+
             // Pestañas superiores estilo píldora corporativa
             TabRow(
                 selectedTabIndex = pestañaActiva,
@@ -105,7 +98,10 @@ fun ConversacionesScreen(
                 )
                 Tab(
                     selected = pestañaActiva == 1,
-                    onClick = { pestañaActiva = 1 },
+                    onClick = {
+                        pestañaActiva = 1
+                        llamadasViewModel.cargar() // Recargar historial al abrir pestaña
+                    },
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
                         .background(if (pestañaActiva == 1) ServifySurface else Color.Transparent),
@@ -124,7 +120,7 @@ fun ConversacionesScreen(
 
             // Contenido dinámico según la pestaña
             if (pestañaActiva == 0) {
-                // Seccion de Chats con barra de búsqueda
+                // Sección de Chats con barra de búsqueda
                 OutlinedTextField(
                     value = textoBusqueda,
                     onValueChange = { textoBusqueda = it },
@@ -268,80 +264,35 @@ fun ConversacionesScreen(
                     }
                 }
             } else {
-                // Sección de Registro de Llamadas
-                val llamadasSimuladas = listOf(
-                    RegistroLlamadaItem(1, "Ana Martínez", "Reparación de Computadora", true, "4 min 12 seg", "Hoy, 10:30 AM", false),
-                    RegistroLlamadaItem(2, "Carlos Gómez", "Instalación de tomacorrientes", false, "1 min 45 seg", "Ayer, 03:15 PM", true),
-                    RegistroLlamadaItem(3, "María López", "Limpieza Profunda Casa", true, "8 min 30 seg", "26 Sep", false)
-                )
+                // Sección de Registro de Llamadas reales obtenidas del Backend
+                val miId = SessionManager.usuarioActual?.id ?: 0
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(llamadasSimuladas, key = { it.id }) { llamada ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = ServifySurface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                if (llamadasViewModel.isLoading && llamadasViewModel.llamadas.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = ServifyBluePrimary)
+                    }
+                } else if (llamadasViewModel.llamadas.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            "No hay registros de llamadas recientes",
+                            color = ServifyTextMuted,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(llamadasViewModel.llamadas, key = { it.id }) { llamada ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(ServifyCianSoft),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (llamada.esVideo) Icons.Default.Videocam else Icons.Default.Call,
-                                        contentDescription = null,
-                                        tint = ServifyBluePrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(14.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = llamada.nombreUsuario,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                        color = ServifyTextTitle
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = llamada.tituloSolicitud,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = ServifyBluePrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "Duración: ${llamada.duracion} • ${llamada.fecha}",
-                                        fontSize = 11.sp,
-                                        color = ServifyTextMuted
-                                    )
-                                }
-
-                                Surface(
-                                    color = ServifyInputBackground,
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = if (llamada.entrante) "Recibida" else "Realizada",
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ServifyTextMuted
-                                    )
+                                FilaLlamada(l = llamada, miId = miId) {
+                                    navController.navigate(Rutas.Chat.crearRuta(llamada.conversacionId, llamada.otroNombre))
                                 }
                             }
                         }
@@ -349,5 +300,93 @@ fun ConversacionesScreen(
                 }
             }
         }
+    }
+}
+
+// Componente reutilizable para cada fila del historial de llamadas
+@Composable
+fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
+    val saliente = l.emisorId == miId
+    val fallida = l.estado in listOf("perdida", "rechazada", "cancelada")
+
+    // Colores e iconos dinámicos según el estado
+    val colorEstado = when (l.estado) {
+        "completada" -> Color(0xFF0D9488) // Esmeralda si fue exitosa
+        "rechazada" -> Color(0xFFEF4444)  // Rojo si fue rechazada
+        "cancelada" -> Color(0xFFF59E0B)  // Naranja si fue cancelada
+        else -> Color(0xFFEF4444)         // Rojo para perdidas
+    }
+
+    val estadoTexto = when (l.estado) {
+        "completada" -> "Duración: %02d:%02d".format((l.duracionSeg ?: 0) / 60, (l.duracionSeg ?: 0) % 60)
+        "rechazada" -> "Llamada rechazada"
+        "cancelada" -> "Llamada cancelada"
+        else -> "Llamada perdida"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Avatar con iniciales o icono flotante moderno
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape)
+                .background(if (fallida && !saliente) Color(0xFFFEE2E2) else ServifyCianSoft),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = l.otroNombre.split(" ").filter { it.isNotBlank() }.take(2)
+                    .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
+                color = if (fallida && !saliente) Color(0xFFEF4444) else ServifyBluePrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        // Textos descriptivos principales
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = l.otroNombre,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = ServifyTextTitle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Icono chiquito indicando si fue entrante/saliente y voz/video
+                Icon(
+                    imageVector = if (l.esVideo == 1) Icons.Default.Videocam else Icons.Default.Call,
+                    contentDescription = null,
+                    tint = colorEstado,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "${if (saliente) "Saliente" else "Entrante"} · $estadoTexto",
+                    fontSize = 12.sp,
+                    color = colorEstado,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        // Hora alineada a la derecha
+        Text(
+            text = horaDe(l.iniciadaEn),
+            fontSize = 11.sp,
+            color = ServifyTextMuted,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
