@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,15 +38,15 @@ class MuroSolicitudesViewModel(
                     solicitudes = res.body() ?: emptyList()
                 } else {
                     val err = res.errorBody()?.string()
-                    android.util.Log.e("MURO", "Código ${res.code()} - $err")
+                    Log.e("MURO", "Código ${res.code()}: $err")
                     mensajeError = "Error ${res.code()} al cargar solicitudes"
                 }
 
                 // 2. Cargar solicitudes directas (Sobrecito ✉️)
                 val resDirectas = solicitudesRepository.obtenerContratacionesTecnico(token)
                 resDirectas.onSuccess { lista ->
-                    // Filtrar solo las pendientes
-                    contratacionesDirectas = lista.filter { it.estado.equals("pendiente", ignoreCase = true) }
+                    // Guardamos la lista completa para poder gestionar pendientes y aceptadas
+                    contratacionesDirectas = lista
                 }
 
             } catch (e: Exception) {
@@ -62,12 +63,20 @@ class MuroSolicitudesViewModel(
             val resultado = solicitudesRepository.responderContratacionDirecta(token, idContratacion, estado)
             resultado.onSuccess {
                 mensajeExito = if (estado == "aceptado") "¡Solicitud aceptada!" else "Solicitud rechazada"
-                // Quitar de la lista local en pantalla
-                contratacionesDirectas = contratacionesDirectas.filter { it.id != idContratacion }
+
+                // Actualizamos el estado localmente para que la tarjeta cambie y muestre el botón de Chat
+                contratacionesDirectas = contratacionesDirectas.map { item ->
+                    if (item.id == idContratacion) item.copy(estado = estado) else item
+                }
             }.onFailure { err ->
                 mensajeError = err.localizedMessage
             }
         }
+    }
+
+    // Quitar la contratación directa de la lista local al presionar la papelera 🗑️
+    fun eliminarContratacionDirectaLocal(id: Int) {
+        contratacionesDirectas = contratacionesDirectas.filter { it.id != id }
     }
 
     fun ignorar(id: Int) {
@@ -87,7 +96,7 @@ class MuroSolicitudesViewModel(
                     ignorar(solicitudId) // la quitamos del muro
                 } else {
                     val err = res.errorBody()?.string()
-                    android.util.Log.e("POSTULACION", "Código ${res.code()} - $err")
+                    Log.e("POSTULACION", "Código ${res.code()}: $err")
                     mensajeError = if (res.code() == 409) "Ya te postulaste a esta solicitud"
                     else "Error ${res.code()} al postularte"
                 }

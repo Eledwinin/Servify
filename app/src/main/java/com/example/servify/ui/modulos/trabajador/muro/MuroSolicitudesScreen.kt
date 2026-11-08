@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
@@ -317,7 +318,7 @@ fun MuroSolicitudesScreen(
                 }
             }
 
-            // 5. LISTA DE SOLICITUDES
+            // 5. LISTA DE SOLICITUDES PÚBLICAS
             if (viewModel.isLoading) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
@@ -462,7 +463,7 @@ fun MuroSolicitudesScreen(
         }
     }
 
-    // Modal para revisar Solicitudes Directas (Sobrecito ✉️)
+    // Modal para revisar Solicitudes Directas (Sobrecito ✉️ con SCROLL)
     if (mostrarModalDirectas) {
         AlertDialog(
             onDismissRequest = { mostrarModalDirectas = false },
@@ -476,18 +477,26 @@ fun MuroSolicitudesScreen(
             text = {
                 if (contratacionesDirectas.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text("No tienes nuevas solicitudes directas de clientes.", fontSize = 13.sp, color = ServifyTextMuted)
+                        Text("No tienes solicitudes directas registradas.", fontSize = 13.sp, color = ServifyTextMuted)
                     }
                 } else {
+                    // LazyColumn con altura máxima que permite SCROLL si hay múltiples elementos
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 420.dp)
                     ) {
                         items(contratacionesDirectas, key = { it.id }) { item ->
                             ItemContratacionDirecta(
                                 contratacion = item,
                                 onAceptar = { viewModel.responderContratacion(item.id, "aceptado") },
-                                onRechazar = { viewModel.responderContratacion(item.id, "rechazado") }
+                                onRechazar = { viewModel.responderContratacion(item.id, "rechazado") },
+                                onEliminar = { viewModel.eliminarContratacionDirectaLocal(item.id) },
+                                onIrAlChat = {
+                                    mostrarModalDirectas = false
+                                    navController.navigate("chat/${item.id}")
+                                }
                             )
                         }
                     }
@@ -552,8 +561,13 @@ fun BotonAccesoRapido(
 fun ItemContratacionDirecta(
     contratacion: ContratacionDirectaResponse,
     onAceptar: () -> Unit,
-    onRechazar: () -> Unit
+    onRechazar: () -> Unit,
+    onEliminar: () -> Unit,
+    onIrAlChat: () -> Unit
 ) {
+    val esAceptada = contratacion.estado.equals("aceptado", ignoreCase = true) ||
+            contratacion.estado.equals("aceptada", ignoreCase = true)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = ServifySurface),
@@ -561,21 +575,40 @@ fun ItemContratacionDirecta(
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(ServifyCianSoft),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = contratacion.cliente_nombre.firstOrNull()?.uppercase() ?: "C",
-                        fontWeight = FontWeight.Bold,
-                        color = ServifyBluePrimary
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(36.dp).clip(CircleShape).background(ServifyCianSoft),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = contratacion.cliente_nombre.firstOrNull()?.uppercase() ?: "C",
+                            fontWeight = FontWeight.Bold,
+                            color = ServifyBluePrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(text = contratacion.cliente_nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(text = contratacion.categoria_nombre, fontSize = 11.sp, color = ServifyTextMuted)
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    Text(text = contratacion.cliente_nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(text = contratacion.categoria_nombre, fontSize = 11.sp, color = ServifyTextMuted)
+
+                // Botón para ELIMINAR / QUITAR la solicitud 🗑️
+                IconButton(
+                    onClick = onEliminar,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar solicitud",
+                        tint = ServifyDanger,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
@@ -583,21 +616,37 @@ fun ItemContratacionDirecta(
             Text(text = contratacion.descripcion, fontSize = 13.sp, color = ServifyTextTitle)
             Spacer(modifier = Modifier.height(10.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = onRechazar,
-                    modifier = Modifier.weight(1f).height(38.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Rechazar", fontSize = 12.sp, color = ServifyDanger)
-                }
+            // Si se ACEPTÓ, el botón se transforma a "Abrir Chat con el Cliente 💬"
+            if (esAceptada) {
                 Button(
-                    onClick = onAceptar,
-                    modifier = Modifier.weight(1f).height(38.dp),
+                    onClick = onIrAlChat,
+                    modifier = Modifier.fillMaxWidth().height(40.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
                 ) {
-                    Text("Aceptar", fontSize = 12.sp, color = Color.White)
+                    Text("Abrir Chat con el Cliente 💬", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            } else {
+                // Si está pendiente, muestra Rechazar o Aceptar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onRechazar,
+                        modifier = Modifier.weight(1f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Rechazar", fontSize = 12.sp, color = ServifyDanger)
+                    }
+                    Button(
+                        onClick = onAceptar,
+                        modifier = Modifier.weight(1f).height(38.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
+                    ) {
+                        Text("Aceptar", fontSize = 12.sp, color = Color.White)
+                    }
                 }
             }
         }
