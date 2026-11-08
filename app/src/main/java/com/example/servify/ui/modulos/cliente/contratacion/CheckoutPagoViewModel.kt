@@ -14,7 +14,7 @@ class CheckoutPagoViewModel(
 ) : ViewModel() {
 
     var numeroTarjeta by mutableStateOf("")
-    var fechaExpiracion by mutableStateOf("")
+    var fechaExpiracion by mutableStateOf("") // Guarda solo números (ej: "1226")
     var cvc by mutableStateOf("")
     var nombreTitular by mutableStateOf("")
 
@@ -23,14 +23,19 @@ class CheckoutPagoViewModel(
     var qrTokenGenerado by mutableStateOf<String?>(null)
 
     fun procesarPago(solicitudId: Int, onExito: () -> Unit) {
-        if (numeroTarjeta.replace(" ", "").length < 16) {
+        val digitosTarjeta = numeroTarjeta.replace(" ", "")
+        if (digitosTarjeta.length < 16) {
             mensajeError = "Ingresa un número de tarjeta válido (16 dígitos)"
             return
         }
-        if (fechaExpiracion.length < 5) {
-            mensajeError = "Ingresa la fecha de expiración (MM/AA)"
+
+        // Filtra únicamente números por seguridad
+        val digitosFecha = fechaExpiracion.filter { it.isDigit() }
+        if (digitosFecha.length < 4) {
+            mensajeError = "Ingresa la fecha de expiración completa (MM/AA)"
             return
         }
+
         if (cvc.length < 3) {
             mensajeError = "Ingresa un CVC válido (3 dígitos)"
             return
@@ -46,12 +51,14 @@ class CheckoutPagoViewModel(
             return
         }
 
+        // 🎯 Formatea automáticamente "1226" a "12/26" si la API requiere la barra diagonal
+        val fechaFormateada = "${digitosFecha.take(2)}/${digitosFecha.drop(2)}"
+
         cargando = true
         mensajeError = null
 
         viewModelScope.launch {
             try {
-                // Llamada a iniciarCierre coincidiendo exactamente con la firma de tu SolicitudesRepository
                 val resultado = repository.iniciarCierre(
                     token = token,
                     solicitudId = solicitudId,

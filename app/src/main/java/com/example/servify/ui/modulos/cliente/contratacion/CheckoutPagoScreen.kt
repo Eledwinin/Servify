@@ -19,7 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +31,34 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.ui.componentes.QrGenerator
 import com.example.servify.ui.theme.*
+
+// Transformador para insertar automáticamente el '/' después de los primeros 2 dígitos
+class ExpiracionVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = if (text.text.length >= 4) text.text.substring(0, 4) else text.text
+        var out = ""
+        for (i in trimmed.indices) {
+            out += trimmed[i]
+            if (i == 1) out += "/"
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 1) return offset
+                if (offset <= 4) return offset + 1
+                return 5
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 5) return offset - 1
+                return 4
+            }
+        }
+
+        return TransformedText(AnnotatedString(out), offsetMapping)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +81,16 @@ fun CheckoutPagoScreen(
         viewModel.mensajeError?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
             viewModel.mensajeError = null
+        }
+    }
+
+    // Formateador visual para mostrar en la tarjeta de arriba
+    val fechaTarjeta = remember(viewModel.fechaExpiracion) {
+        val digitos = viewModel.fechaExpiracion.filter { it.isDigit() }
+        if (digitos.length >= 2) {
+            "${digitos.take(2)}/${digitos.drop(2)}"
+        } else {
+            digitos
         }
     }
 
@@ -140,7 +182,7 @@ fun CheckoutPagoScreen(
                             Column {
                                 Text("EXPIRA", fontSize = 10.sp, color = ServifySurface.copy(alpha = 0.7f))
                                 Text(
-                                    text = if (viewModel.fechaExpiracion.isBlank()) "MM/AA" else viewModel.fechaExpiracion,
+                                    text = if (fechaTarjeta.isBlank()) "MM/AA" else fechaTarjeta,
                                     fontSize = 12.sp,
                                     color = ServifySurface,
                                     fontWeight = FontWeight.Bold
@@ -155,7 +197,7 @@ fun CheckoutPagoScreen(
                 // Campos del Formulario
                 OutlinedTextField(
                     value = viewModel.numeroTarjeta,
-                    onValueChange = { if (it.length <= 16) viewModel.numeroTarjeta = it },
+                    onValueChange = { if (it.length <= 16) viewModel.numeroTarjeta = it.filter { char -> char.isDigit() } },
                     label = { Text("Número de tarjeta") },
                     leadingIcon = { Icon(Icons.Default.CreditCard, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -180,8 +222,16 @@ fun CheckoutPagoScreen(
                 ) {
                     OutlinedTextField(
                         value = viewModel.fechaExpiracion,
-                        onValueChange = { if (it.length <= 5) viewModel.fechaExpiracion = it },
+                        onValueChange = { input ->
+                            // Filtra solo los números y limita a 4 dígitos (MMAA)
+                            val soloNumeros = input.filter { it.isDigit() }
+                            if (soloNumeros.length <= 4) {
+                                viewModel.fechaExpiracion = soloNumeros
+                            }
+                        },
                         label = { Text("MM/AA") },
+                        placeholder = { Text("MMAA") },
+                        visualTransformation = ExpiracionVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
@@ -190,7 +240,7 @@ fun CheckoutPagoScreen(
 
                     OutlinedTextField(
                         value = viewModel.cvc,
-                        onValueChange = { if (it.length <= 4) viewModel.cvc = it },
+                        onValueChange = { if (it.length <= 4) viewModel.cvc = it.filter { char -> char.isDigit() } },
                         label = { Text("CVC") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
