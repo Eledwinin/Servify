@@ -10,5 +10,6 @@ data class Resena(
     @SerializedName("contratacion_directa_id") val contratacionDirectaId: Int? = null,
     @SerializedName("calificacion") val calificacion: Int,
     @SerializedName("comentario") val comentario: String? = null,
-    @SerializedName("creado_en") val creadoEn: String? = null
+    @SerializedName("creado_en") val creadoEn: String? = null,
+    @SerializedName("nombre_cliente") val nombreCliente: String? = null // <- Agregado para pintar el nombre real del cliente
 )

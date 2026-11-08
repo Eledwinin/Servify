@@ -130,6 +130,15 @@ class ChatViewModel : ViewModel() {
             mensajeError = "Ingresa un monto válido"
             return
         }
+
+        // Al enviar una nueva oferta propia, marcamos las ofertas pendientes anteriores como canceladas/reemplazadas localmente
+        for (i in mensajes.indices) {
+            val m = mensajes[i]
+            if (m.emisorId == miId && (m.tipo == "oferta" || m.monto != null && m.monto > 0.0) && m.estadoOferta.equals("pendiente", ignoreCase = true)) {
+                mensajes[i] = m.copy(estadoOferta = "cancelada")
+            }
+        }
+
         socket?.enviarOferta(conversacionId, monto)
     }
 

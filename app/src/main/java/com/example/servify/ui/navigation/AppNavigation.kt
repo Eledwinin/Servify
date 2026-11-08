@@ -47,6 +47,8 @@ import com.example.servify.ui.modulos.modulos_compartidos.messages.Conversacione
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
 import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
@@ -103,7 +105,9 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
                         LlamadasManager.desconectar()
                         SessionManager.cerrarSesion()
                         navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
-                    }
+                    },
+                    onVerTodasResenas = { navController.navigate(Rutas.Resenas.ruta) }
+
                 )
             }
         }
@@ -162,6 +166,23 @@ fun AppNavigation() {
                     onRegistroExitoso = { navController.navigate(Rutas.Login.ruta) { popUpTo(Rutas.Login.ruta) { inclusive = true } } },
                     onIrALogin = { navController.navigate(Rutas.Login.ruta) { popUpTo(Rutas.Login.ruta) { inclusive = true } } },
                     onVolver = { navController.popBackStack() }
+                )
+            }
+
+            composable(Rutas.Resenas.ruta) { backStackEntry ->
+
+                val perfilViewModel: PerfilViewModel = viewModel()
+
+                // Asegurarnos de recargar si está vacía al entrar
+                LaunchedEffect(Unit) {
+                    if (SessionManager.token != null) {
+                        perfilViewModel.cargarResenas(SessionManager.token!!)
+                    }
+                }
+
+                ResenasScreen(
+                    onBackClick = { navController.popBackStack() },
+                    viewModel = perfilViewModel
                 )
             }
 

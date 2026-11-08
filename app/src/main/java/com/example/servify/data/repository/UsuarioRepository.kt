@@ -8,19 +8,17 @@ import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.api.SubirFotoResponse
 import com.example.servify.data.model.ActualizarPerfilRequest
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.data.model.Resena
 import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.data.uriAJpegBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
-
 
 class UsuarioRepository(
     private val apiService: ApiService = RetrofitClient.instance
@@ -55,7 +53,7 @@ class UsuarioRepository(
                 if (respuesta.isSuccessful) {
                     Result.success(respuesta.body()?.mensaje ?: "Perfil actualizado correctamente")
                 } else {
-                    val detalle = respuesta.errorBody()?.string()
+                    val detalle = respuesta.errorBody()?.string() ?: ""
                     android.util.Log.e("PERFIL", "Código ${respuesta.code()} - $detalle")
                     Result.failure(Exception("Error al guardar cambios (${respuesta.code()})"))
                 }
@@ -143,7 +141,6 @@ class UsuarioRepository(
         }
     }
 
-
     suspend fun subirFotoPortafolio(
         context: Context,
         token: String,
@@ -163,7 +160,8 @@ class UsuarioRepository(
                 if (respuesta.isSuccessful && respuesta.body() != null) {
                     Result.success(respuesta.body()!!)
                 } else {
-                    android.util.Log.e("PORTAFOLIO", "Código ${respuesta.code()} - ${respuesta.errorBody()?.string()}")
+                    val errBody = respuesta.errorBody()?.string() ?: ""
+                    android.util.Log.e("PORTAFOLIO", "Código ${respuesta.code()} - $errBody")
                     Result.failure(Exception("Error al subir foto (${respuesta.code()})"))
                 }
             } catch (e: Exception) {
@@ -180,6 +178,22 @@ class UsuarioRepository(
                     Result.success(respuesta.body()!!.mensaje)
                 } else {
                     Result.failure(Exception("Error al eliminar foto (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    // 3. RESEÑAS DEL TÉCNICO
+    suspend fun obtenerResenasUsuario(token: String): Result<List<Resena>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.obtenerResenasUsuario("Bearer $token")
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!)
+                } else {
+                    Result.failure(Exception("Error al cargar reseñas (${respuesta.code()})"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))

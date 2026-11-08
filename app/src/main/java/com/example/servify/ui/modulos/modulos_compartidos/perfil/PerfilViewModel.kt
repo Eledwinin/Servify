@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.FotoPortafolioResponse
+import com.example.servify.data.model.Resena
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.data.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 data class PerfilUiState(
     val usuario: UsuarioModel? = null,
     val fotosPortafolio: List<FotoPortafolioResponse> = emptyList(),
+    val resenas: List<Resena> = emptyList(), // <- Lista de reseñas agregada
     val isLoading: Boolean = false,
     val isUploadingFoto: Boolean = false,
     val error: String? = null
@@ -43,11 +45,29 @@ class PerfilViewModel(
                     usuario = usuario,
                     isLoading = false
                 )
+                // Cargamos también las reseñas al obtener el perfil
+                cargarResenas(token)
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = err.message
                 )
+            }
+        }
+    }
+
+    // ==========================================
+    // RESEÑAS DEL TÉCNICO
+    // ==========================================
+
+    fun cargarResenas(token: String) {
+        if (token.isBlank()) return
+        viewModelScope.launch {
+            val resultado = repository.obtenerResenasUsuario(token) // Asegúrate que tu repositorio tenga este método
+            resultado.onSuccess { listaResenas ->
+                _uiState.value = _uiState.value.copy(resenas = listaResenas)
+            }.onFailure { err ->
+                android.util.Log.e("RESENAS", err.message ?: "error")
             }
         }
     }

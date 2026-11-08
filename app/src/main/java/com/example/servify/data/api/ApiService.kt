@@ -26,6 +26,7 @@ import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
+import com.example.servify.data.model.Resena
 import com.example.servify.data.model.ResponderContratacionRequest
 import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
@@ -145,6 +146,11 @@ interface ApiService {
         @Path("fotoId") fotoId: Int
     ): Response<MensajeResponse>
 
+
+    @GET("api/users/resenas")
+    suspend fun obtenerResenasUsuario(
+        @Header("Authorization") token: String
+    ): Response<List<Resena>>
 
     // Solicitudes
     @POST("api/solicitudes")

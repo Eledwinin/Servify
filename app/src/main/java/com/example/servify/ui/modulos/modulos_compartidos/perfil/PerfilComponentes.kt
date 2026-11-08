@@ -215,21 +215,9 @@ private fun DatoContacto(icono: ImageVector, titulo: String, valor: String) {
 fun SeccionResenasCliente() {
     val c = PerfilColores
     TarjetaBase {
-        Text("Mis Reseñas", color = c.texto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("4.8", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = c.texto)
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text("★★★★★", color = ServifyStarYellow, fontSize = 12.sp)
-                Text("Basado en 12 trabajos", fontSize = 11.sp, color = c.gris)
-            }
-        }
+        Text("Reseñas como Cliente", color = c.texto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
-        HorizontalDivider(color = c.borde, thickness = 0.5.dp)
-        Spacer(Modifier.height(4.dp))
-        Text("Juan P. (Técnico)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = c.texto)
-        Text("Excelente cliente, muy amable, tenía todo preparado para que yo trabajara rápido y pagó sin problemas.", fontSize = 12.sp, color = c.gris, lineHeight = 16.sp)
+        Text("Aquí verás el historial de calificaciones que te han dejado los técnicos al finalizar los servicios.", fontSize = 12.sp, color = c.gris)
     }
 }
 

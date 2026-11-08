@@ -12,26 +12,27 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.LlamadasManager
-import com.example.servify.data.model.Mensaje
+import com.example.servify.ui.componentes.cards.TarjetaOfertaItem
 import com.example.servify.ui.navigation.Rutas
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -53,20 +54,24 @@ fun ChatScreen(
     nombreOtro: String,
     onBackClick: () -> Unit,
     navController: NavController,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    onVerPerfil: () -> Unit = {},
+    onReportarUsuario: (motivo: String) -> Unit = {},
+    onVaciarChat: () -> Unit = {}
 ) {
-    val verdePrincipal = Color(0xFF0D9488) // Esmeralda / teal moderno
-    val verdeClaroBg = Color(0xFFF0FDFA)
+    val verdePrincipal = Color(0xFF0F2C59)
     val context = LocalContext.current
     val listState = rememberLazyListState()
     var texto by remember { mutableStateOf("") }
     var mostrarModalOferta by remember { mutableStateOf(false) }
 
-    // Estados para el diálogo de llamada entrante dentro del chat
+    var menuAbierto by remember { mutableStateOf(false) }
+    var mostrarDialogoReporte by remember { mutableStateOf(false) }
+    var mostrarDialogoVaciar by remember { mutableStateOf(false) }
+
     var mostrarDialogoLLamada by remember { mutableStateOf(false) }
     var tipoVideoLlamadaEntrante by remember { mutableStateOf(false) }
 
-    // Detectar si ya hay alguna oferta aceptada en la conversación
     val hayAcuerdoCerrado by remember {
         derivedStateOf {
             viewModel.mensajes.any { m ->
@@ -104,7 +109,6 @@ fun ChatScreen(
         }
     }
 
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -113,19 +117,23 @@ fun ChatScreen(
                         Box(
                             Modifier
                                 .size(40.dp)
-                                .background(verdeClaroBg, CircleShape),
+                                .background(Color(0xFFE0F2FE), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 nombreOtro.split(" ").filter { it.isNotBlank() }.take(2)
                                     .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                                color = verdePrincipal, fontWeight = FontWeight.Bold, fontSize = 14.sp
+                                color = Color(0xFF0284C7), fontWeight = FontWeight.Bold, fontSize = 14.sp
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(nombreOtro, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
-                            Text("En línea", fontSize = 11.sp, color = Color(0xFF64748B))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(7.dp).background(Color(0xFF22C55E), CircleShape))
+                                Spacer(Modifier.width(4.dp))
+                                Text("En línea", fontSize = 11.sp, color = Color(0xFF64748B))
+                            }
                         }
                     }
                 },
@@ -139,19 +147,41 @@ fun ChatScreen(
                         LlamadasManager.llamar(conversacionId, false)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", false))
                     }) {
-                        Icon(Icons.Default.Call, contentDescription = "Llamar", tint = verdePrincipal)
+                        Icon(Icons.Default.Call, contentDescription = "Llamar", tint = Color(0xFF334155))
                     }
 
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, true)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", true))
                     }) {
-                        Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = verdePrincipal)
+                        Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = Color(0xFF334155))
                     }
 
-                    if (!hayAcuerdoCerrado) {
-                        IconButton(onClick = { mostrarModalOferta = true }) {
-                            Icon(Icons.Default.LocalOffer, contentDescription = "Proponer Precio", tint = verdePrincipal)
+                    Box {
+                        IconButton(onClick = { menuAbierto = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Más opciones", tint = Color(0xFF334155))
+                        }
+                        DropdownMenu(
+                            expanded = menuAbierto,
+                            onDismissRequest = { menuAbierto = false },
+                            containerColor = Color.White,
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Ver perfil", color = Color(0xFF1E293B)) },
+                                leadingIcon = { Icon(Icons.Default.Person, null, tint = verdePrincipal) },
+                                onClick = { menuAbierto = false; onVerPerfil() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Reportar usuario", color = Color(0xFF1E293B)) },
+                                leadingIcon = { Icon(Icons.Default.Flag, null, tint = verdePrincipal) },
+                                onClick = { menuAbierto = false; mostrarDialogoReporte = true }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Vaciar chat", color = Color(0xFFEF4444)) },
+                                leadingIcon = { Icon(Icons.Default.DeleteSweep, null, tint = Color(0xFFEF4444)) },
+                                onClick = { menuAbierto = false; mostrarDialogoVaciar = true }
+                            )
                         }
                     }
                 },
@@ -161,20 +191,14 @@ fun ChatScreen(
         containerColor = Color(0xFFF8FAFC),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .imePadding()
                 .navigationBarsPadding()
         ) {
-            // Banner superior indicador si ya llegaron a un acuerdo
             if (hayAcuerdoCerrado) {
-                Surface(
-                    color = Color(0xFFCCFBF1),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Surface(color = Color(0xFFCCFBF1), modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -191,12 +215,7 @@ fun ChatScreen(
                 }
             }
 
-            // Lista de mensajes (Ocupa todo el espacio flexible del centro)
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (viewModel.isLoading && viewModel.mensajes.isEmpty()) {
                     CircularProgressIndicator(color = verdePrincipal, modifier = Modifier.align(Alignment.Center))
                 } else if (viewModel.mensajes.isEmpty()) {
@@ -216,9 +235,7 @@ fun ChatScreen(
                 } else {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
@@ -228,23 +245,14 @@ fun ChatScreen(
 
                             when {
                                 tipoMensaje == "sistema" -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Surface(
-                                            color = Color(0xFFE2E8F0),
-                                            shape = RoundedCornerShape(10.dp)
-                                        ) {
+                                    Box(Modifier.fillMaxWidth().padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+                                        Surface(color = Color(0xFFE2E8F0), shape = RoundedCornerShape(10.dp)) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                             ) {
-                                                val esLlamada = m.contenido.contains("llamada", ignoreCase = true) ||
-                                                        m.contenido.contains("videollamada", ignoreCase = true)
+                                                val esLlamada = m.contenido.contains("llamada", ignoreCase = true) || m.contenido.contains("videollamada", ignoreCase = true)
                                                 if (esLlamada) {
                                                     Icon(
                                                         if (m.contenido.contains("video", ignoreCase = true)) Icons.Default.Videocam else Icons.Default.Call,
@@ -266,21 +274,17 @@ fun ChatScreen(
                                 }
                                 esOfertaReal -> {
                                     val montoExtraido = m.monto ?: m.contenido.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
-                                    val mensajeParaTarjeta = m.copy(monto = montoExtraido)
-
                                     TarjetaOfertaItem(
-                                        mensaje = mensajeParaTarjeta,
+                                        mensaje = m.copy(monto = montoExtraido),
                                         esMio = m.emisorId == viewModel.miId,
                                         onAceptar = { viewModel.responderOferta(m.id, "aceptar") },
-                                        onRechazar = { viewModel.responderOferta(m.id, "rechazar") }
+                                        onRechazar = { viewModel.responderOferta(m.id, "rechazar") },
+                                        horaFormateada = horaDe(m.enviadoEn)
                                     )
                                 }
                                 else -> {
                                     val mio = m.emisorId == viewModel.miId
-                                    Row(
-                                        Modifier.fillMaxWidth(),
-                                        horizontalArrangement = if (mio) Arrangement.End else Arrangement.Start
-                                    ) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mio) Arrangement.End else Arrangement.Start) {
                                         Surface(
                                             color = if (mio) verdePrincipal else Color.White,
                                             shape = RoundedCornerShape(
@@ -289,13 +293,11 @@ fun ChatScreen(
                                                 bottomEnd = if (mio) 4.dp else 18.dp
                                             ),
                                             shadowElevation = 1.5.dp,
+                                            border = if (mio) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
                                             modifier = Modifier.widthIn(max = 290.dp)
                                         ) {
                                             Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                                                Text(
-                                                    m.contenido, fontSize = 15.sp,
-                                                    color = if (mio) Color.White else Color(0xFF1E293B)
-                                                )
+                                                Text(m.contenido, fontSize = 15.sp, color = if (mio) Color.White else Color(0xFF1E293B))
                                                 Spacer(Modifier.height(4.dp))
                                                 Text(
                                                     horaDe(m.enviadoEn), fontSize = 10.sp,
@@ -312,7 +314,6 @@ fun ChatScreen(
                 }
             }
 
-            // Barra inferior de texto (Alineada perfectamente al fondo del Column con imePadding)
             if (!viewModel.activa) {
                 Surface(color = Color(0xFFFEF3C7), modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -323,15 +324,9 @@ fun ChatScreen(
                     )
                 }
             } else {
-                Surface(
-                    color = Color.White,
-                    shadowElevation = 8.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Surface(color = Color.White, shadowElevation = 8.dp, modifier = Modifier.fillMaxWidth()) {
                     Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
@@ -341,8 +336,15 @@ fun ChatScreen(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(24.dp),
                             maxLines = 4,
+                            trailingIcon = {
+                                if (!hayAcuerdoCerrado) {
+                                    IconButton(onClick = { mostrarModalOferta = true }) {
+                                        Icon(Icons.Default.Add, contentDescription = "Proponer precio", tint = Color(0xFF64748B), modifier = Modifier.size(22.dp))
+                                    }
+                                }
+                            },
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = verdePrincipal,
+                                focusedBorderColor = Color(0xFFCBD5E1),
                                 unfocusedBorderColor = Color(0xFFE2E8F0),
                                 focusedContainerColor = Color(0xFFF8FAFC),
                                 unfocusedContainerColor = Color(0xFFF8FAFC)
@@ -350,17 +352,9 @@ fun ChatScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         IconButton(
-                            onClick = {
-                                viewModel.enviar(texto)
-                                texto = ""
-                            },
+                            onClick = { viewModel.enviar(texto); texto = "" },
                             enabled = texto.isNotBlank(),
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    if (texto.isNotBlank()) verdePrincipal else Color(0xFFE2E8F0),
-                                    CircleShape
-                                )
+                            modifier = Modifier.size(48.dp).background(if (texto.isNotBlank()) verdePrincipal else Color(0xFFE2E8F0), CircleShape)
                         ) {
                             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = Color.White)
                         }
@@ -370,44 +364,74 @@ fun ChatScreen(
         }
     }
 
-    // Modal para proponer precio (Solo si no hay acuerdo)
     if (mostrarModalOferta && !hayAcuerdoCerrado) {
         ModalProponerPrecio(
             onDismiss = { mostrarModalOferta = false },
-            onEnviar = { monto ->
-                viewModel.enviarOferta(monto)
-                mostrarModalOferta = false
-            }
+            onEnviar = { monto -> viewModel.enviarOferta(monto); mostrarModalOferta = false }
         )
     }
 
-    // Diálogo flotante de llamada entrante dentro del chat (Aceptar / Rechazar)
+    if (mostrarDialogoReporte) {
+        var motivo by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoReporte = false },
+            title = { Text("Reportar usuario", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E293B)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Cuéntanos qué pasó con $nombreOtro para que podamos revisarlo.", fontSize = 13.sp, color = Color(0xFF64748B))
+                    OutlinedTextField(
+                        value = motivo,
+                        onValueChange = { motivo = it },
+                        placeholder = { Text("Motivo del reporte", color = Color(0xFF94A3B8)) },
+                        shape = RoundedCornerShape(14.dp),
+                        minLines = 3, maxLines = 5,
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = verdePrincipal, unfocusedBorderColor = Color(0xFFCBD5E1), cursorColor = verdePrincipal),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onReportarUsuario(motivo.trim()); mostrarDialogoReporte = false; Toast.makeText(context, "Reporte enviado", Toast.LENGTH_SHORT).show() },
+                    enabled = motivo.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal),
+                    shape = RoundedCornerShape(10.dp)
+                ) { Text("Reportar", color = Color.White, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoReporte = false }) { Text("Cancelar", color = Color(0xFF64748B), fontWeight = FontWeight.Bold) }
+            },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = Color.White
+        )
+    }
+
+    if (mostrarDialogoVaciar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoVaciar = false },
+            title = { Text("Vaciar chat", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E293B)) },
+            text = { Text("Se borrarán todos los mensajes de esta conversación. Esta acción no se puede deshacer.", fontSize = 14.sp, color = Color(0xFF64748B)) },
+            confirmButton = {
+                Button(
+                    onClick = { mostrarDialogoVaciar = false; onVaciarChat() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                    shape = RoundedCornerShape(10.dp)
+                ) { Text("Vaciar", color = Color.White, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoVaciar = false }) { Text("Cancelar", color = Color(0xFF64748B), fontWeight = FontWeight.Bold) }
+            },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = Color.White
+        )
+    }
+
     if (mostrarDialogoLLamada) {
         AlertDialog(
             onDismissRequest = { },
-            icon = {
-                Icon(
-                    imageVector = if (tipoVideoLlamadaEntrante) Icons.Default.Videocam else Icons.Default.Call,
-                    contentDescription = null,
-                    tint = verdePrincipal,
-                    modifier = Modifier.size(36.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = if (tipoVideoLlamadaEntrante) "Videollamada entrante" else "Llamada de voz entrante",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Text(
-                    text = "$nombreOtro te está llamando...",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B),
-                    textAlign = TextAlign.Center
-                )
-            },
+            icon = { Icon(if (tipoVideoLlamadaEntrante) Icons.Default.Videocam else Icons.Default.Call, null, tint = verdePrincipal, modifier = Modifier.size(36.dp)) },
+            title = { Text(if (tipoVideoLlamadaEntrante) "Videollamada entrante" else "Llamada de voz entrante", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = { Text("$nombreOtro te está llamando...", fontSize = 14.sp, color = Color(0xFF64748B), textAlign = TextAlign.Center) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -418,9 +442,7 @@ fun ChatScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal),
                     shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Aceptar", color = Color.White, fontWeight = FontWeight.Bold)
-                }
+                ) { Text("Aceptar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 OutlinedButton(
@@ -431,159 +453,10 @@ fun ChatScreen(
                     },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                     shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Rechazar", fontWeight = FontWeight.Bold)
-                }
+                ) { Text("Rechazar", fontWeight = FontWeight.Bold) }
             },
             shape = RoundedCornerShape(20.dp),
             containerColor = Color.White
         )
-    }
-}
-@Composable
-fun TarjetaOfertaItem(
-    mensaje: Mensaje,
-    esMio: Boolean,
-    onAceptar: () -> Unit,
-    onRechazar: () -> Unit
-) {
-    val verdePrincipal = Color(0xFF0D9488)
-    val estado = mensaje.estadoOferta ?: "pendiente"
-
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = if (esMio) Arrangement.End else Arrangement.Start
-    ) {
-        Surface(
-            color = Color.White,
-            shape = RoundedCornerShape(16.dp),
-            shadowElevation = 3.dp,
-            modifier = Modifier.widthIn(min = 260.dp, max = 310.dp)
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.LocalOffer, null, tint = verdePrincipal, modifier = Modifier.size(16.dp))
-                        Text("Propuesta Económica", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = verdePrincipal)
-                    }
-                    Text(horaDe(mensaje.enviadoEn), fontSize = 10.sp, color = Color(0xFF94A3B8))
-                }
-
-                Text(
-                    text = "$${String.format(Locale.US, "%.2f", mensaje.monto ?: 0.0)}",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF0F172A)
-                )
-
-                when (estado) {
-                    "pendiente" -> {
-                        if (esMio) {
-                            Text("Esperando respuesta del usuario...", fontSize = 12.sp, color = Color(0xFF64748B), fontStyle = FontStyle.Italic)
-                        } else {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = onRechazar,
-                                    modifier = Modifier.weight(1f).height(38.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
-                                ) {
-                                    Text("Rechazar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                }
-                                Button(
-                                    onClick = onAceptar,
-                                    modifier = Modifier.weight(1f).height(38.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal)
-                                ) {
-                                    Text("Aceptar", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                }
-                            }
-                        }
-                    }
-                    "aceptada" -> {
-                        Surface(color = Color(0xFFCCFBF1), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            Text("✓ Oferta Aceptada (Acuerdo Cerrado)", modifier = Modifier.padding(8.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F766E), textAlign = TextAlign.Center)
-                        }
-                    }
-                    "rechazada" -> {
-                        Surface(color = Color(0xFFFEE2E2), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            Text("✕ Oferta Rechazada", modifier = Modifier.padding(8.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB91C1C), textAlign = TextAlign.Center)
-                        }
-                    }
-                    else -> {
-                        Text("Oferta cancelada", fontSize = 11.sp, color = Color(0xFF94A3B8))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ModalProponerPrecio(
-    onDismiss: () -> Unit,
-    onEnviar: (Double) -> Unit
-) {
-    val verdePrincipal = Color(0xFF0D9488)
-    var montoStr by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = Color.White
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .imePadding()
-                .padding(horizontal = 24.dp, vertical = 12.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text("Proponer Precio / Regatear", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-            Text("Ingresa la cantidad monetaria en dólares que propones para este servicio.", fontSize = 13.sp, color = Color(0xFF64748B))
-
-            OutlinedTextField(
-                value = montoStr,
-                onValueChange = { montoStr = it; error = null },
-                label = { Text("Monto en USD ($)") },
-                placeholder = { Text("Ej: 45.00") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = verdePrincipal,
-                    focusedLabelColor = verdePrincipal,
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (error != null) {
-                Text(error!!, color = Color(0xFFEF4444), fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Button(
-                onClick = {
-                    val montoLimpio = montoStr.replace(",", ".").trim()
-                    val monto = montoLimpio.toDoubleOrNull()
-
-                    if (monto == null || monto <= 0) {
-                        error = "Ingresa un monto válido mayor a 0"
-                        return@Button
-                    }
-                    onEnviar(monto)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal)
-            ) {
-                Text("Enviar Propuesta Económica", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
-        }
     }
 }

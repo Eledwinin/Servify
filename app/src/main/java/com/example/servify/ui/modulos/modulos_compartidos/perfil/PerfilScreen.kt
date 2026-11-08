@@ -16,7 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +26,7 @@ import com.example.servify.ui.componentes.botones.BotonAccion
 import com.example.servify.ui.componentes.cards.TarjetaBase
 import com.example.servify.ui.componentes.feedback.DialogoConfirmacion
 import com.example.servify.ui.theme.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,10 +35,11 @@ fun PerfilScreen(
     onIrAEditarCliente: () -> Unit,
     onIrAEditarTrabajador: () -> Unit,
     onCerrarSesion: () -> Unit,
+    onVerTodasResenas: () -> Unit,
     viewModel: PerfilViewModel = viewModel()
 ) {
     val c = PerfilColores
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     val ui by viewModel.uiState.collectAsState()
 
     var dialogoVip by remember { mutableStateOf(false) }
@@ -55,6 +57,7 @@ fun PerfilScreen(
         if (token.isNotBlank()) {
             viewModel.cargarPerfil(token)
             viewModel.cargarPortafolio()
+            viewModel.cargarResenas(token) // Carga las reseñas reales desde la BD
         }
     }
     LaunchedEffect(ui.error) {
@@ -169,19 +172,120 @@ fun PerfilScreen(
 
                 TarjetaContacto(user)
 
+                // El portafolio sí se queda solo para técnicos
                 if (esTecnico) {
                     TarjetaPortafolio(ui.fotosPortafolio, ui.isUploadingFoto, abrirSelector) {
                         viewModel.eliminarFotoPortafolio(it)
                     }
-                    TarjetaBase {
-                        Text("Mis Reseñas", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text("Aún no tienes reseñas registradas.", color = c.gris, fontSize = 13.sp)
-                    }
-                } else {
-                    SeccionResenasCliente()
                 }
 
-                // Aquí validamos a qué pantalla de edición navegar dependiendo si es técnico o cliente
+                // --- TARJETA DE RESEÑAS 100% DINÁMICAS (VISIBLE PARA TODOS) ---
+                TarjetaBase {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Mis Reseñas",
+                            color = c.texto,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        if (ui.resenas.isNotEmpty()) {
+                            TextButton(
+                                onClick = {
+                                    onVerTodasResenas()
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    "Ver todo",
+                                    color = ServifyBluePrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    if (ui.resenas.isEmpty()) {
+                        Divider(color = ServifyBorder, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 8.dp))
+                        Text(
+                            "Aún no tienes reseñas registradas.",
+                            color = c.gris,
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        // Promedio dinámico real calculado de las reseñas
+                        val promedioReal = ui.resenas.map { it.calificacion.toDouble() }.average()
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = String.format(Locale.US, "%.1f", promedioReal),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = ServifyTextTitle
+                            )
+                            Column {
+                                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    repeat(5) { index ->
+                                        Text(
+                                            text = "★",
+                                            color = if (index < promedioReal.toInt()) Color(0xFFF59E0B) else ServifyBorder,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Basado en ${ui.resenas.size} reseñas",
+                                    fontSize = 12.sp,
+                                    color = ServifyTextMuted
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        // Imprime únicamente las últimas 2 reseñas reales
+                        ui.resenas.take(2).forEach { resena ->
+                            Divider(color = ServifyBorder, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 8.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = resena.nombreCliente ?: "Usuario",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = ServifyTextTitle
+                                    )
+                                    Text(
+                                        text = "★ ${resena.calificacion}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFF59E0B)
+                                    )
+                                }
+                                Text(
+                                    text = resena.comentario ?: "",
+                                    fontSize = 13.sp,
+                                    color = ServifyTextBody
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Botones de acción inferiores
                 BotonAccion(
                     texto = "Editar Perfil",
                     icono = Icons.Default.Settings,
