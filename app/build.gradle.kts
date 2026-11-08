@@ -47,6 +47,12 @@ android {
 
 dependencies {
 
+    // Librería para GENERAR el QR en pantalla (Cliente)
+    implementation("com.google.zxing:core:3.5.2")
+
+// Librería para ESCANEAR el QR con la cámara (Técnico - JourneyApps ZXing Embedded)
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     //sdk de mapa
     implementation("org.maplibre.gl:android-sdk:11.5.1")
 

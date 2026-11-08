@@ -16,6 +16,9 @@ import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.CrearSolicitudRespuesta
 import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
+import com.example.servify.data.model.GenericResponse
+import com.example.servify.data.model.IniciarCierreRequest
+import com.example.servify.data.model.IniciarCierreResponse
 import com.example.servify.data.model.LlamadaItem
 import com.example.servify.data.model.LoginRequest
 import com.example.servify.data.model.LoginResponse
@@ -27,6 +30,7 @@ import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
 import com.example.servify.data.model.Resena
+import com.example.servify.data.model.ResenaRequest
 import com.example.servify.data.model.ResponderContratacionRequest
 import com.example.servify.data.model.RespuestaVipDto
 import com.example.servify.data.model.SolicitarRecuperacionRequest
@@ -34,6 +38,8 @@ import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.model.SolicitudVipDto
 import com.example.servify.data.model.TokenLlamadaRespuesta
 import com.example.servify.data.model.UsuarioModel
+import com.example.servify.data.model.ValidarQrRequest
+import com.example.servify.data.model.ValidarQrResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -182,6 +188,29 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<DetalleSolicitud>
+
+    // ==========================================
+    // NUEVOS: CIERRE DE SERVICIO, QR Y RESEÑAS
+    // ==========================================
+
+    @POST("api/solicitudes/{id}/iniciar-cierre")
+    suspend fun iniciarCierre(
+        @Header("Authorization") token: String,
+        @Path("id") solicitudId: Int,
+        @Body request: IniciarCierreRequest
+    ): Response<IniciarCierreResponse>
+
+    @POST("api/solicitudes/validar-qr")
+    suspend fun validarQr(
+        @Header("Authorization") token: String,
+        @Body request: ValidarQrRequest
+    ): Response<ValidarQrResponse>
+
+    @POST("api/resenas")
+    suspend fun crearResena(
+        @Header("Authorization") token: String,
+        @Body request: ResenaRequest
+    ): Response<GenericResponse>
 
     // ==========================================
     // CONTRATACIÓN DIRECTA (Cliente -> Técnico)

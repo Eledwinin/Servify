@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -37,6 +38,8 @@ import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +55,18 @@ fun MuroSolicitudesScreen(
     var categoriaSeleccionada by remember { mutableStateOf("Todas") }
     var estaDisponible by remember { mutableStateOf(true) }
     var mostrarModalDirectas by remember { mutableStateOf(false) }
+
+    // 📷 LAUNCHER PARA ESCANEO DE CÓDIGO QR CON CÁMARA (ZXING)
+    val qrScanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            // Se leyó exitosamente el QR, enviamos al backend para validar
+            viewModel.validarQrCliente(result.contents)
+        } else {
+            Toast.makeText(context, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(Unit) { viewModel.cargarSolicitudes() }
 
@@ -238,7 +253,20 @@ fun MuroSolicitudesScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     BotonAccesoRapido("Mi Agenda", Icons.Default.ViewAgenda, Modifier.weight(1f)) { }
-                    BotonAccesoRapido("Escanear QR", Icons.Default.QrCodeScanner, Modifier.weight(1f)) { }
+
+                    // 📷 BOTÓN ESCANEAR QR ACTIVADO
+                    BotonAccesoRapido("Escanear QR", Icons.Default.QrCodeScanner, Modifier.weight(1f)) {
+                        val options = ScanOptions().apply {
+                            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                            setPrompt("Escanea el código QR del cliente para confirmar el cierre")
+                            setCameraId(0) // Usar cámara trasera
+                            setBeepEnabled(true)
+                            setBarcodeImageEnabled(false)
+                            setOrientationLocked(false)
+                        }
+                        qrScanLauncher.launch(options)
+                    }
+
                     BotonAccesoRapido("Reportes", Icons.Default.LocalOffer, Modifier.weight(1f)) { }
                 }
             }
@@ -480,7 +508,6 @@ fun MuroSolicitudesScreen(
                         Text("No tienes solicitudes directas registradas.", fontSize = 13.sp, color = ServifyTextMuted)
                     }
                 } else {
-                    // LazyColumn con altura máxima que permite SCROLL si hay múltiples elementos
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier
@@ -598,7 +625,6 @@ fun ItemContratacionDirecta(
                     }
                 }
 
-                // Botón para ELIMINAR / QUITAR la solicitud 🗑️
                 IconButton(
                     onClick = onEliminar,
                     modifier = Modifier.size(28.dp)
@@ -616,7 +642,6 @@ fun ItemContratacionDirecta(
             Text(text = contratacion.descripcion, fontSize = 13.sp, color = ServifyTextTitle)
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Si se ACEPTÓ, el botón se transforma a "Abrir Chat con el Cliente 💬"
             if (esAceptada) {
                 Button(
                     onClick = onIrAlChat,
@@ -627,7 +652,6 @@ fun ItemContratacionDirecta(
                     Text("Abrir Chat con el Cliente 💬", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             } else {
-                // Si está pendiente, muestra Rechazar o Aceptar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

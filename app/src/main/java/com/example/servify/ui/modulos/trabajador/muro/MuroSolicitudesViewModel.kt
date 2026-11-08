@@ -21,6 +21,7 @@ class MuroSolicitudesViewModel(
     var solicitudes by mutableStateOf<List<SolicitudItemTecnico>>(emptyList())
     var contratacionesDirectas by mutableStateOf<List<ContratacionDirectaResponse>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var cargandoValidacionQr by mutableStateOf(false)
     var mensajeError by mutableStateOf<String?>(null)
     var mensajeExito by mutableStateOf<String?>(null)
 
@@ -45,7 +46,6 @@ class MuroSolicitudesViewModel(
                 // 2. Cargar solicitudes directas (Sobrecito ✉️)
                 val resDirectas = solicitudesRepository.obtenerContratacionesTecnico(token)
                 resDirectas.onSuccess { lista ->
-                    // Guardamos la lista completa para poder gestionar pendientes y aceptadas
                     contratacionesDirectas = lista
                 }
 
@@ -57,6 +57,34 @@ class MuroSolicitudesViewModel(
         }
     }
 
+    // ==========================================
+    // VALIDAR QR DEL CLIENTE (TÉCNICO / TRABAJADOR)
+    // ==========================================
+    fun validarQrCliente(qrToken: String) {
+        val token = SessionManager.token ?: run {
+            mensajeError = "Sesión no válida"
+            return
+        }
+
+        viewModelScope.launch {
+            cargandoValidacionQr = true
+            val result = solicitudesRepository.validarQr(
+                token = token,
+                qrToken = qrToken,
+                tecnicoId = 0 // El backend auto-identifica al técnico mediante el token Bearer
+            )
+            cargandoValidacionQr = false
+
+            result.onSuccess { response ->
+                mensajeExito = response.mensaje ?: "¡Servicio completado y cerrado exitosamente!"
+                cargarSolicitudes() // Recarga la lista de solicitudes del muro
+            }.onFailure { error ->
+                Log.e("VALIDAR_QR", "Error al validar QR: ${error.message}", error)
+                mensajeError = error.message ?: "Código QR inválido o expirado"
+            }
+        }
+    }
+
     fun responderContratacion(idContratacion: Int, estado: String) {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
@@ -64,7 +92,6 @@ class MuroSolicitudesViewModel(
             resultado.onSuccess {
                 mensajeExito = if (estado == "aceptado") "¡Solicitud aceptada!" else "Solicitud rechazada"
 
-                // Actualizamos el estado localmente para que la tarjeta cambie y muestre el botón de Chat
                 contratacionesDirectas = contratacionesDirectas.map { item ->
                     if (item.id == idContratacion) item.copy(estado = estado) else item
                 }
@@ -93,7 +120,7 @@ class MuroSolicitudesViewModel(
                 )
                 if (res.isSuccessful) {
                     mensajeExito = "Postulación enviada"
-                    ignorar(solicitudId) // la quitamos del muro
+                    ignorar(solicitudId)
                 } else {
                     val err = res.errorBody()?.string()
                     Log.e("POSTULACION", "Código ${res.code()}: $err")

@@ -9,12 +9,22 @@ import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.MiSolicitud
+import com.example.servify.data.repository.SolicitudesRepository
 import kotlinx.coroutines.launch
 
-class MisSolicitudesViewModel : ViewModel() {
+class MisSolicitudesViewModel(
+    private val solicitudesRepository: SolicitudesRepository = SolicitudesRepository()
+) : ViewModel() {
     var solicitudes by mutableStateOf<List<MiSolicitud>>(emptyList())
     var isLoading by mutableStateOf(false)
     var mensajeError by mutableStateOf<String?>(null)
+
+    // ==========================================
+    // ESTADOS PARA CIERRE DE SERVICIO Y CÓDIGO QR
+    // ==========================================
+    var cargandoCierre by mutableStateOf(false)
+    var qrTokenGenerado by mutableStateOf<String?>(null)
+    var solicitudIdCierreSeleccionada by mutableStateOf<Int?>(null)
 
     fun cargar() {
         val token = SessionManager.token ?: run {
@@ -39,5 +49,40 @@ class MisSolicitudesViewModel : ViewModel() {
                 isLoading = false
             }
         }
+    }
+
+    // ==========================================
+    // FUNCIÓN PARA INICIAR EL CIERRE
+    // ==========================================
+    fun iniciarCierreSolicitud(solicitudId: Int, metodoPago: String, tecnicoId: Int? = null) {
+        val token = SessionManager.token ?: run {
+            mensajeError = "Sesión no válida"
+            return
+        }
+
+        viewModelScope.launch {
+            cargandoCierre = true
+            solicitudIdCierreSeleccionada = solicitudId
+
+            val result = solicitudesRepository.iniciarCierre(
+                token = token,
+                solicitudId = solicitudId,
+                metodoPago = metodoPago,
+                tecnicoId = tecnicoId
+            )
+
+            cargandoCierre = false
+            result.onSuccess { response ->
+                qrTokenGenerado = response.qrToken
+            }.onFailure { error ->
+                Log.e("MIS_SOL", "Error en iniciarCierre: ${error.message}", error)
+                mensajeError = error.message ?: "Error al iniciar el cierre"
+            }
+        }
+    }
+
+    fun limpiarEstadoCierre() {
+        qrTokenGenerado = null
+        solicitudIdCierreSeleccionada = null
     }
 }

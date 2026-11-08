@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.model.MiSolicitud
+import com.example.servify.ui.modulos.cliente.contratacion.DialogoCierreCliente
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -33,6 +34,9 @@ fun MisSolicitudesContenido(
 
     // Estado para manejar las pestañas superiores (0 = En Curso, 1 = Historial, 2 = Directas ✉️)
     var pestañaSeleccionada by remember { mutableStateOf(0) }
+
+    // Control de Modal de Cierre / Pago
+    var solicitudParaCerrar by remember { mutableStateOf<MiSolicitud?>(null) }
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -166,7 +170,7 @@ fun MisSolicitudesContenido(
                         "aceptada", "aceptado" -> Triple("ACEPTADA", ServifyCianSoft, ServifyBluePrimary)
                         "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
                         "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
-                        "en_proceso" -> Triple("EN PROCESO", ServifyPendingBg, ServifyPendingText)
+                        "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary) // 💙 AZUL DESTACADO
                         "completado", "completada" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
                         else -> Triple(s.estado.uppercase(), ServifyInputBackground, ServifyTextMuted)
                     }
@@ -236,28 +240,73 @@ fun MisSolicitudesContenido(
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text(
-                                text = if (pestañaSeleccionada == 2) {
-                                    when (s.estado.lowercase()) {
-                                        "aceptada", "aceptado" -> "¡El técnico aceptó la contratación!"
-                                        "rechazada", "rechazado" -> "El técnico rechazó la solicitud"
-                                        else -> "Esperando respuesta del técnico..."
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (pestañaSeleccionada == 2) {
+                                        when (s.estado.lowercase()) {
+                                            "aceptada", "aceptado" -> "¡El técnico aceptó la contratación!"
+                                            "rechazada", "rechazado" -> "El técnico rechazó la solicitud"
+                                            else -> "Esperando respuesta del técnico..."
+                                        }
+                                    } else {
+                                        when (s.totalPropuestas) {
+                                            0 -> "Sin propuestas todavía"
+                                            1 -> "1 propuesta recibida"
+                                            else -> "${s.totalPropuestas} propuestas recibidas"
+                                        }
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (pestañaSeleccionada == 2 && s.estado.lowercase() in listOf("aceptada", "aceptado")) ServifyBluePrimary else ServifyTextMuted,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                // 🎯 BOTÓN "FINALIZAR TRABAJO" (Se muestra en solicitudes en proceso o aceptadas)
+                                if (s.estado.equals("en_proceso", ignoreCase = true) || s.estado.equals("aceptada", ignoreCase = true)) {
+                                    Button(
+                                        onClick = { solicitudParaCerrar = s },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            "Finalizar Trabajo",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
                                     }
-                                } else {
-                                    when (s.totalPropuestas) {
-                                        0 -> "Sin propuestas todavía"
-                                        1 -> "1 propuesta recibida"
-                                        else -> "${s.totalPropuestas} propuestas recibidas"
-                                    }
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (pestañaSeleccionada == 2 && s.estado.lowercase() in listOf("aceptada", "aceptado")) ServifyBluePrimary else ServifyTextMuted
-                            )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    // 📲 MODAL CIERRE Y GENERADOR DE CÓDIGO QR PARA EL CLIENTE
+    solicitudParaCerrar?.let { solicitud ->
+        DialogoCierreCliente(
+            solicitudId = solicitud.id,
+            tecnicoId = null,
+            onDismissRequest = {
+                solicitudParaCerrar = null
+                viewModel.limpiarEstadoCierre()
+            },
+            onConfirmarPago = { metodoPago ->
+                if (metodoPago == "tarjeta") {
+                    viewModel.iniciarCierreSolicitud(solicitud.id, "tarjeta")
+                } else {
+                    viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo")
+                }
+            },
+            qrToken = viewModel.qrTokenGenerado,
+            cargando = viewModel.cargandoCierre
+        )
     }
 }
