@@ -23,6 +23,7 @@ import com.example.servify.ui.theme.*
 @Composable
 fun DetalleTecnicoScreen(
     idTecnico: Int,
+    mostrarBotonContratar: Boolean = false, // 👈 Se agrega para controlar la visibilidad del botón
     onBackClick: () -> Unit = {},
     viewModel: DetalleTecnicoViewModel = viewModel()
 ) {
@@ -67,8 +68,9 @@ fun DetalleTecnicoScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
         },
+        // 🚀 SI MOSTRARBOTONCONTRATAR ES FALSE, LA BARRA INFERIOR CON EL BOTÓN NO SE RENDERIZA
         bottomBar = {
-            state.tecnico?.let { prof ->
+            if (mostrarBotonContratar && state.tecnico != null) {
                 Surface(
                     shadowElevation = 8.dp,
                     color = ServifySurface
@@ -169,7 +171,6 @@ fun DetalleTecnicoScreen(
                 Button(
                     onClick = {
                         if (descripcionTexto.isNotBlank()) {
-                            // Toma el ID real de la categoría del técnico (1 como fallback de respaldo)
                             val categoriaIdReal = tecnico.categoriaId ?: 1
                             viewModel.enviarSolicitudDirecta(categoriaIdReal, descripcionTexto)
                             mostrarDialogo = false

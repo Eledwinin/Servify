@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.cliente.propuestas
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.servify.data.model.PropuestaItem
+import com.example.servify.ui.navigation.Rutas
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +29,7 @@ fun PropuestasScreen(
     solicitudId: Int,
     onBackClick: () -> Unit,
     onChatClick: (Int, String) -> Unit,
+    navController: NavController? = null,
     viewModel: PropuestasViewModel = viewModel()
 ) {
     val verdeServify = Color(0xFF1B7B61)
@@ -83,7 +87,14 @@ fun PropuestasScreen(
                 items(viewModel.propuestas, key = { it.id }) { p ->
                     val esAceptada = p.estado == "aceptada"
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                // 🚀 OCULTAMOS EL BOTÓN ÚNICAMENTE AL NAVEGAR DESDE LAS PROPUESTAS
+                                if (p.tecnicoId > 0) {
+                                    navController?.navigate(Rutas.DetalleTecnico.crearRuta(p.tecnicoId, mostrarBoton = false))
+                                }
+                            },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (esAceptada) Color(0xFFF0FAF6) else Color.White

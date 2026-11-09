@@ -232,15 +232,20 @@ fun AppNavigation() {
                 )
             }
 
+            // 🚀 DETALLE TÉCNICO CON PARAMETRO MOSTRARBOTON PASADO CORRECTAMENTE
             composable(
                 route = Rutas.DetalleTecnico.ruta,
                 arguments = listOf(
-                    navArgument("idTecnico") { type = NavType.IntType; defaultValue = 1 }
+                    navArgument("idTecnico") { type = NavType.IntType; defaultValue = 1 },
+                    navArgument("mostrarBoton") { type = NavType.BoolType; defaultValue = false }
                 )
             ) { backStackEntry ->
                 val idTecnico = backStackEntry.arguments?.getInt("idTecnico") ?: 1
+                val mostrarBoton = backStackEntry.arguments?.getBoolean("mostrarBoton") ?: false
+
                 DetalleTecnicoScreen(
                     idTecnico = idTecnico,
+                    mostrarBotonContratar = mostrarBoton,
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -289,7 +294,6 @@ fun AppNavigation() {
             composable(Rutas.PlanesMembresia.ruta) {
                 PlanesMembresiaScreen(
                     onSeleccionarPlan = { tipoPlan, monto ->
-                        // Codificamos el nombre del plan por si lleva espacios (ej: "Plan Semanal")
                         val tipoCodificado = java.net.URLEncoder.encode(tipoPlan, "UTF-8")
                         navController.navigate("metodos_pago_custom/$tipoCodificado/$monto")
                     },
@@ -361,7 +365,8 @@ fun AppNavigation() {
                     onBackClick = { navController.popBackStack() },
                     onChatClick = { convId, nombre ->
                         navController.navigate(Rutas.Chat.crearRuta(convId, nombre))
-                    }
+                    },
+                    navController = navController
                 )
             }
 

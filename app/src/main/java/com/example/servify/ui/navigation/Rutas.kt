@@ -21,7 +21,7 @@ sealed class Rutas(val ruta: String) {
     object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
     object Resenas : Rutas("resenas")
 
-    // 🌟 Reseñas y Calificaciones (Redirección automática tras escaneo QR / Cierre)
+    // 🌟 Reseñas y Calificaciones
     object CrearResena : Rutas("crear_resena/{solicitudId}/{destinatarioId}") {
         fun crearRuta(solicitudId: Int, destinatarioId: Int) =
             "crear_resena/$solicitudId/$destinatarioId"
@@ -32,10 +32,12 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(solicitudId: Int) = "checkout_pago?solicitudId=$solicitudId"
     }
 
-    // Detalle Técnico con soporte para Int o String
-    object DetalleTecnico : Rutas("detalle_tecnico/{idTecnico}") {
-        fun crearRuta(idTecnico: Int) = "detalle_tecnico/$idTecnico"
-        fun crearRuta(idTecnico: String) = "detalle_tecnico/$idTecnico"
+    // 🚀 DETALLE TÉCNICO (mostrarBoton es TRUE por defecto para toda la app)
+    object DetalleTecnico : Rutas("detalle_tecnico/{idTecnico}?mostrarBoton={mostrarBoton}") {
+        fun crearRuta(idTecnico: Int, mostrarBoton: Boolean = true) =
+            "detalle_tecnico/$idTecnico?mostrarBoton=$mostrarBoton"
+        fun crearRuta(idTecnico: String, mostrarBoton: Boolean = true) =
+            "detalle_tecnico/$idTecnico?mostrarBoton=$mostrarBoton"
     }
 
     object PropuestasSolicitud : Rutas("propuestas_solicitud/{solicitudId}") {
@@ -58,7 +60,7 @@ sealed class Rutas(val ruta: String) {
     }
     object AdminSolicitudes : Rutas("admin_solicitudes")
 
-    // Mapa con soporte de parámetros opcionales para solicitudes
+    // Mapa con soporte de parámetros opcionales
     object Mapa : Rutas("mapa_screen?lat={lat}&lng={lng}&titulo={titulo}") {
         fun crearRuta(lat: Double, lng: Double, titulo: String) =
             "mapa_screen?lat=$lat&lng=$lng&titulo=${android.net.Uri.encode(titulo)}"

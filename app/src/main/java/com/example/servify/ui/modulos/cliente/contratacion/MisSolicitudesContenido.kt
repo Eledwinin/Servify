@@ -184,7 +184,13 @@ fun MisSolicitudesContenido(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
+                                // 🌟 NAVEGACIÓN INTELIGENTE AL PERFIL DEL TÉCNICO O A SUS PROPUESTAS:
+                                val idTecnico = s.tecnicoId
+                                if (idTecnico != null && idTecnico > 0) {
+                                    navController.navigate(Rutas.DetalleTecnico.crearRuta(idTecnico))
+                                } else {
+                                    navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
+                                }
                             },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = ServifySurface),
