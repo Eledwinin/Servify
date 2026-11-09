@@ -76,10 +76,23 @@ fun MuroSolicitudesScreen(
             viewModel.mensajeError = null
         }
     }
+
     LaunchedEffect(viewModel.mensajeExito) {
         viewModel.mensajeExito?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.mensajeExito = null
+        }
+    }
+
+    // ⏱️ REDIRECCIÓN A RESEÑA TRAS 5 SEGUNDOS DE ESCANEAR EL QR CON ÉXITO
+    LaunchedEffect(viewModel.irACalificar) {
+        if (viewModel.irACalificar) {
+            val solId = viewModel.solicitudIdParaCalificar ?: 0
+            val cliId = viewModel.clienteIdParaCalificar ?: 0
+
+            viewModel.resenaNavegada()
+
+            navController.navigate(Rutas.CrearResena.crearRuta(solId, cliId))
         }
     }
 

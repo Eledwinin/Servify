@@ -21,6 +21,12 @@ sealed class Rutas(val ruta: String) {
     object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
     object Resenas : Rutas("resenas")
 
+    // 🌟 Reseñas y Calificaciones (Redirección automática tras escaneo QR / Cierre)
+    object CrearResena : Rutas("crear_resena/{solicitudId}/{destinatarioId}") {
+        fun crearRuta(solicitudId: Int, destinatarioId: Int) =
+            "crear_resena/$solicitudId/$destinatarioId"
+    }
+
     // Checkout de Pago con Tarjeta
     object CheckoutPago : Rutas("checkout_pago?solicitudId={solicitudId}") {
         fun crearRuta(solicitudId: Int) = "checkout_pago?solicitudId=$solicitudId"

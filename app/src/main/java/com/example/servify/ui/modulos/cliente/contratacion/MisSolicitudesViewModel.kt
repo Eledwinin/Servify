@@ -26,6 +26,10 @@ class MisSolicitudesViewModel(
     var qrTokenGenerado by mutableStateOf<String?>(null)
     var solicitudIdCierreSeleccionada by mutableStateOf<Int?>(null)
 
+    // ESTADOS PARA REDIRECCIÓN A RESEÑA (CLIENTE)
+    var irACalificarCliente by mutableStateOf(false)
+    var tecnicoIdParaCalificar by mutableStateOf<Int?>(null)
+
     fun cargar() {
         val token = SessionManager.token ?: run {
             mensajeError = "Sesión no válida"
@@ -51,9 +55,6 @@ class MisSolicitudesViewModel(
         }
     }
 
-    // ==========================================
-    // FUNCIÓN PARA INICIAR EL CIERRE
-    // ==========================================
     fun iniciarCierreSolicitud(solicitudId: Int, metodoPago: String, tecnicoId: Int? = null) {
         val token = SessionManager.token ?: run {
             mensajeError = "Sesión no válida"
@@ -63,6 +64,7 @@ class MisSolicitudesViewModel(
         viewModelScope.launch {
             cargandoCierre = true
             solicitudIdCierreSeleccionada = solicitudId
+            tecnicoIdParaCalificar = tecnicoId
 
             val result = solicitudesRepository.iniciarCierre(
                 token = token,
@@ -81,8 +83,17 @@ class MisSolicitudesViewModel(
         }
     }
 
+    fun prepararRedireccionResena(solId: Int, tecnicoId: Int) {
+        solicitudIdCierreSeleccionada = solId
+        tecnicoIdParaCalificar = if (tecnicoId > 0) tecnicoId else tecnicoIdParaCalificar
+        irACalificarCliente = true
+    }
+
+    fun resenaClienteNavegada() {
+        irACalificarCliente = false
+    }
+
     fun limpiarEstadoCierre() {
         qrTokenGenerado = null
-        solicitudIdCierreSeleccionada = null
     }
 }

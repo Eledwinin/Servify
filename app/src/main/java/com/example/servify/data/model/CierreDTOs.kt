@@ -31,17 +31,17 @@ data class ValidarQrResponse(
     @SerializedName("tecnico_id") val tecnicoId: Int?
 )
 
-// Petición para Crear Reseña
+// Petición para Crear Reseña (Cliente & Técnico)
 data class ResenaRequest(
     @SerializedName("autor_id") val autorId: Int,
     @SerializedName("destinatario_id") val destinatarioId: Int,
     @SerializedName("solicitud_id") val solicitudId: Int? = null,
     @SerializedName("contratacion_directa_id") val contratacionDirectaId: Int? = null,
     @SerializedName("calificacion") val calificacion: Int,
-    @SerializedName("comentario") val comentario: String? = ""
+    @SerializedName("comentario") val comentario: String? = null
 )
 
-// Respuesta Genérica
+// Respuesta Genérica para Peticiones HTTP
 data class GenericResponse(
     @SerializedName("ok") val ok: Boolean,
     @SerializedName("mensaje") val mensaje: String?,

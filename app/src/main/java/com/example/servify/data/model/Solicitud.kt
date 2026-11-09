@@ -66,6 +66,7 @@ data class MiSolicitud(
     @SerializedName("estado") val estado: String,
     @SerializedName("categoria_nombre") val categoriaNombre: String,
     @SerializedName("total_propuestas") val totalPropuestas: Int = 0,
+    @SerializedName("tecnico_id") val tecnicoId: Int? = null, // 👈 Se agrega para calificar y evitar el error 404
     @SerializedName("creado_en") val creadoEn: String? = null
 )
 
@@ -116,7 +117,7 @@ data class DetalleSolicitud(
     @SerializedName("ya_postulado") val yaPostulado: Boolean = false,
     @SerializedName("fotos") val fotos: List<String> = emptyList(),
     @SerializedName("creado_en") val creadoEn: String? = null,
-    @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null,
+    @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null
 )
 
 data class CrearSolicitudRespuesta(

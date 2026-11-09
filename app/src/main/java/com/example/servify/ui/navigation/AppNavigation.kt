@@ -47,6 +47,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
@@ -172,7 +173,6 @@ fun AppNavigation() {
             composable(Rutas.Resenas.ruta) { backStackEntry ->
                 val perfilViewModel: PerfilViewModel = viewModel()
 
-                // Asegurarnos de recargar si está vacía al entrar
                 LaunchedEffect(Unit) {
                     if (SessionManager.token != null) {
                         perfilViewModel.cargarResenas(SessionManager.token!!)
@@ -182,6 +182,24 @@ fun AppNavigation() {
                 ResenasScreen(
                     onBackClick = { navController.popBackStack() },
                     viewModel = perfilViewModel
+                )
+            }
+
+            // 🌟 REGISTRO DE RUTA: CREAR RESEÑA Y CALIFICACIÓN (BLINDADO)
+            composable(
+                route = Rutas.CrearResena.ruta,
+                arguments = listOf(
+                    navArgument("solicitudId") { type = NavType.IntType; defaultValue = 0 },
+                    navArgument("destinatarioId") { type = NavType.IntType; defaultValue = 0 }
+                )
+            ) { backStackEntry ->
+                val solicitudId = backStackEntry.arguments?.getInt("solicitudId") ?: 0
+                val destinatarioId = backStackEntry.arguments?.getInt("destinatarioId") ?: 0
+
+                CrearResenaScreen(
+                    solicitudId = solicitudId,
+                    destinatarioId = destinatarioId,
+                    navController = navController
                 )
             }
 

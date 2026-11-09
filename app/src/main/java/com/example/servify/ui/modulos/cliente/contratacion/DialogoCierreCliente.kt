@@ -20,13 +20,13 @@ fun DialogoCierreCliente(
     tecnicoId: Int?,
     onDismissRequest: () -> Unit,
     onConfirmarPago: (metodoPago: String) -> Unit,
+    onCalificarClick: () -> Unit, // 👈 🎯 NUEVO CALLBACK DIRECTO
     qrToken: String?,
     cargando: Boolean = false
 ) {
     var metodoSeleccionado by remember { mutableStateOf("efectivo") }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    // Generar la imagen Bitmap del código QR cuando el backend responde con el token
     LaunchedEffect(qrToken) {
         if (!qrToken.isNullOrEmpty()) {
             qrBitmap = QrGenerator.generarBitmapQr(qrToken)
@@ -52,19 +52,21 @@ fun DialogoCierreCliente(
                     }
                 }
             } else {
+                // 🚀 ESTRATEGIA NUEVA: BOTÓN DIRECTO PARA NAVEGAR A RESEÑAS
                 Button(
-                    onClick = onDismissRequest,
-                    shape = RoundedCornerShape(12.dp)
+                    onClick = onCalificarClick,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
                 ) {
-                    Text("Cerrar")
+                    Text("Calificar al Técnico ⭐")
                 }
             }
         },
         dismissButton = {
-            if (qrToken.isNullOrEmpty()) {
-                OutlinedButton(onClick = onDismissRequest) {
-                    Text("Cancelar")
-                }
+            OutlinedButton(onClick = onDismissRequest) {
+                Text(if (qrToken.isNullOrEmpty()) "Cancelar" else "Cerrar")
             }
         },
         title = {
@@ -86,7 +88,6 @@ fun DialogoCierreCliente(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Opción 1: Efectivo
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -98,7 +99,6 @@ fun DialogoCierreCliente(
                         Text(text = "💵 Efectivo")
                     }
 
-                    // Opción 2: Tarjeta / Digital
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -111,7 +111,7 @@ fun DialogoCierreCliente(
                     }
                 } else {
                     Text(
-                        text = "El técnico deberá escanear este código desde su app para validar y finalizar el servicio.",
+                        text = "El técnico deberá escanear este código desde su app para validar el servicio. Una vez escaneado, presiona para calificarlo.",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

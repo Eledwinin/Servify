@@ -12,6 +12,7 @@ import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.repository.SolicitudesRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MuroSolicitudesViewModel(
@@ -24,6 +25,11 @@ class MuroSolicitudesViewModel(
     var cargandoValidacionQr by mutableStateOf(false)
     var mensajeError by mutableStateOf<String?>(null)
     var mensajeExito by mutableStateOf<String?>(null)
+
+    // ⏱️ ESTADOS PARA LA REDIRECCIÓN A RESEÑA (5 SEGUNDOS)
+    var irACalificar by mutableStateOf(false)
+    var solicitudIdParaCalificar by mutableStateOf<Int?>(null)
+    var clienteIdParaCalificar by mutableStateOf<Int?>(null)
 
     fun cargarSolicitudes() {
         val token = SessionManager.token ?: return
@@ -76,13 +82,33 @@ class MuroSolicitudesViewModel(
             cargandoValidacionQr = false
 
             result.onSuccess { response ->
+                // 1. Mensaje de éxito inmediato
                 mensajeExito = response.mensaje ?: "¡Servicio completado y cerrado exitosamente!"
                 cargarSolicitudes() // Recarga la lista de solicitudes del muro
+
+                val solId = response.solicitudId ?: 0
+                val cliId = response.clienteId ?: 0
+
+                // 2. Espera rápida de 5 SEGUNDOS (5,000 ms)
+                delay(5000)
+
+                // 3. Activa la bandera para que la pantalla navegue a la reseña
+                solicitudIdParaCalificar = solId
+                clienteIdParaCalificar = cliId
+                irACalificar = true
+
             }.onFailure { error ->
                 Log.e("VALIDAR_QR", "Error al validar QR: ${error.message}", error)
                 mensajeError = error.message ?: "Código QR inválido o expirado"
             }
         }
+    }
+
+    // Limpia el evento de navegación tras redirigir
+    fun resenaNavegada() {
+        irACalificar = false
+        solicitudIdParaCalificar = null
+        clienteIdParaCalificar = null
     }
 
     fun responderContratacion(idContratacion: Int, estado: String) {

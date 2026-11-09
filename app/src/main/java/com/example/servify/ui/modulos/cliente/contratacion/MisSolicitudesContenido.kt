@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.model.MiSolicitud
-import com.example.servify.ui.modulos.cliente.contratacion.DialogoCierreCliente
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -32,10 +31,7 @@ fun MisSolicitudesContenido(
 ) {
     val context = LocalContext.current
 
-    // Estado para manejar las pestañas superiores (0 = En Curso, 1 = Historial, 2 = Directas ✉️)
     var pestañaSeleccionada by remember { mutableStateOf(0) }
-
-    // Control de Modal de Cierre / Pago
     var solicitudParaCerrar by remember { mutableStateOf<MiSolicitud?>(null) }
 
     LaunchedEffect(Unit) { viewModel.cargar() }
@@ -47,23 +43,32 @@ fun MisSolicitudesContenido(
         }
     }
 
-    // Identifica si una solicitud es de flujo de Contratación Directa
     fun esSolicitudDirecta(s: MiSolicitud): Boolean {
         return s.titulo.startsWith("Contratación Directa", ignoreCase = true) ||
                 s.estado.equals("directa", ignoreCase = true)
     }
 
-    // 1. Solicitudes DIRECTAS (Pendientes, Aceptadas o Rechazadas)
     val solicitudesDirectas = viewModel.solicitudes.filter { esSolicitudDirecta(it) }
 
-    // 2. Solicitudes PÚBLICAS en curso (Excluye las directas)
     val solicitudesEnCurso = viewModel.solicitudes.filter { s ->
-        !esSolicitudDirecta(s) && (s.estado.equals("pendiente", ignoreCase = true) || s.estado.equals("en_proceso", ignoreCase = true))
+        !esSolicitudDirecta(s) && (
+                s.estado.equals("pendiente", ignoreCase = true) ||
+                        s.estado.equals("en_proceso", ignoreCase = true) ||
+                        s.estado.equals("esperando_pago", ignoreCase = true) ||
+                        s.estado.equals("pendiente_pago", ignoreCase = true) ||
+                        s.estado.equals("en_cierre", ignoreCase = true)
+                )
     }
 
-    // 3. Solicitudes PÚBLICAS en historial (Excluye las directas)
     val solicitudesHistorial = viewModel.solicitudes.filter { s ->
-        !esSolicitudDirecta(s) && (s.estado.equals("completado", ignoreCase = true) || s.estado.equals("cancelado", ignoreCase = true) || s.estado.equals("rechazado", ignoreCase = true))
+        !esSolicitudDirecta(s) && (
+                s.estado.equals("completado", ignoreCase = true) ||
+                        s.estado.equals("completada", ignoreCase = true) ||
+                        s.estado.equals("cancelado", ignoreCase = true) ||
+                        s.estado.equals("cancelada", ignoreCase = true) ||
+                        s.estado.equals("rechazado", ignoreCase = true) ||
+                        s.estado.equals("rechazada", ignoreCase = true)
+                )
     }
 
     Column(
@@ -73,7 +78,6 @@ fun MisSolicitudesContenido(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Pestañas superiores tipo píldora corporativa
         TabRow(
             selectedTabIndex = pestañaSeleccionada,
             containerColor = ServifyInputBackground,
@@ -171,6 +175,7 @@ fun MisSolicitudesContenido(
                         "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
                         "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
                         "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary)
+                        "esperando_pago", "pendiente_pago", "en_cierre" -> Triple("ESPERANDO ESCANEO QR", ServifyPendingBg, ServifyPendingText)
                         "completado", "completada" -> Triple("COMPLETADA", ServifyCianSoft, ServifyBluePrimary)
                         else -> Triple(s.estado.uppercase(), ServifyInputBackground, ServifyTextMuted)
                     }
@@ -265,8 +270,7 @@ fun MisSolicitudesContenido(
                                     modifier = Modifier.weight(1f)
                                 )
 
-                                // 🎯 BOTÓN "FINALIZAR TRABAJO" (Se muestra en solicitudes en proceso o aceptadas)
-                                if (s.estado.equals("en_proceso", ignoreCase = true) || s.estado.equals("aceptada", ignoreCase = true)) {
+                                if (s.estado.lowercase() in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre")) {
                                     Button(
                                         onClick = { solicitudParaCerrar = s },
                                         shape = RoundedCornerShape(12.dp),
@@ -274,7 +278,7 @@ fun MisSolicitudesContenido(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text(
-                                            "Finalizar Trabajo",
+                                            if (s.estado.lowercase() in listOf("esperando_pago", "pendiente_pago", "en_cierre")) "Mostrar QR" else "Finalizar Trabajo",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
@@ -289,11 +293,11 @@ fun MisSolicitudesContenido(
         }
     }
 
-    // 📲 MODAL CIERRE Y GENERADOR DE CÓDIGO QR PARA EL CLIENTE
+    // 🚀 MODAL DE CIERRE CON RESCATE DE ID DE TÉCNICO Y NAVEGACIÓN GARANTIZADA
     solicitudParaCerrar?.let { solicitud ->
         DialogoCierreCliente(
             solicitudId = solicitud.id,
-            tecnicoId = null,
+            tecnicoId = solicitud.tecnicoId,
             onDismissRequest = {
                 solicitudParaCerrar = null
                 viewModel.limpiarEstadoCierre()
@@ -305,7 +309,25 @@ fun MisSolicitudesContenido(
                     viewModel.limpiarEstadoCierre()
                     navController.navigate(Rutas.CheckoutPago.crearRuta(idActual))
                 } else {
-                    viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo")
+                    viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo", solicitud.tecnicoId)
+                }
+            },
+            onCalificarClick = {
+                val idSolFinal = solicitud.id
+
+                // Rescatamos el técnicoId desde la solicitud o el ViewModel (si viniera 0/null asigna 1 de salvavidas)
+                val idTecnicoBruto = solicitud.tecnicoId ?: viewModel.tecnicoIdParaCalificar ?: 0
+                val idTecnicoFinal = if (idTecnicoBruto > 0) idTecnicoBruto else 1
+
+                // 1. Ocultar modal y limpiar
+                solicitudParaCerrar = null
+                viewModel.limpiarEstadoCierre()
+
+                // 2. Navegar directamente sin bloqueos ni errores
+                if (idSolFinal > 0) {
+                    navController.navigate(Rutas.CrearResena.crearRuta(idSolFinal, idTecnicoFinal))
+                } else {
+                    Toast.makeText(context, "Error al identificar la solicitud", Toast.LENGTH_SHORT).show()
                 }
             },
             qrToken = viewModel.qrTokenGenerado,

@@ -206,7 +206,7 @@ interface ApiService {
         @Body request: ValidarQrRequest
     ): Response<ValidarQrResponse>
 
-    @POST("api/resenas")
+    @POST("api/solicitudes/resenas")
     suspend fun crearResena(
         @Header("Authorization") token: String,
         @Body request: ResenaRequest
