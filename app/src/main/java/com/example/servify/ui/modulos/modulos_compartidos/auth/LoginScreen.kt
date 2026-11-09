@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.example.servify.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,18 +104,12 @@ fun LoginScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(68.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(ServifyCianSoft),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🏠",
-                        fontSize = 30.sp
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_servi),
+                        contentDescription = "Logo Servify",
+                        modifier = Modifier.size(210.dp)
                     )
-                }
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
