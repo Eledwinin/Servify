@@ -37,6 +37,9 @@ data class ProfesionalPerfil(
     @SerializedName("id")
     val id: Int,
 
+    @SerializedName("categoriaId", alternate = ["categoria_id", "idCategoria", "id_categoria"])
+    val categoriaId: Int? = null,
+
     @SerializedName("nombreCompleto")
     val nombreCompleto: String,
 
@@ -65,8 +68,6 @@ data class ProfesionalPerfil(
     @SerializedName("trabajosCompletados") val trabajosCompletados: Int = 0,
     @SerializedName("esVip") val esVip: Int = 0,
     @SerializedName("resenas") val resenas: List<ResenaItem> = emptyList()
-
-
 )
 
 data class ResenaItem(

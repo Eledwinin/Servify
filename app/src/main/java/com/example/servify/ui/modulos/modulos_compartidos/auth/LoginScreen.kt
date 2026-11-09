@@ -1,28 +1,46 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -32,11 +50,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.servify.data.SessionManager
-import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.feedback.MensajeFeedback
-import com.example.servify.ui.theme.*
+import com.example.servify.ui.theme.ServifyBackground
+import com.example.servify.ui.theme.ServifyBluePrimary
+import com.example.servify.ui.theme.ServifyBorder
+import com.example.servify.ui.theme.ServifyCianSoft
+import com.example.servify.ui.theme.ServifyDarkNavy
+import com.example.servify.ui.theme.ServifyInputBackground
+import com.example.servify.ui.theme.ServifySurface
+import com.example.servify.ui.theme.ServifyTextBody
+import com.example.servify.ui.theme.ServifyTextMuted
+import com.example.servify.ui.theme.ServifyTextPlaceholder
+import com.example.servify.ui.theme.ServifyTextTitle
 
 @Composable
 fun LoginScreen(
@@ -51,7 +77,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ServifyBackground) // Fondo celeste pastel (#DAFBFF)
+            .background(ServifyBackground)
     ) {
         Box(
             modifier = Modifier
@@ -73,9 +99,8 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally // <-- Aquí estaba el error (Decía CenterHost)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Ícono Superior dentro de contenedor celeste suave
                 Box(
                     modifier = Modifier
                         .size(68.dp)
@@ -91,7 +116,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Títulos con jerarquía fuerte
                 Text(
                     text = "Bienvenido de nuevo",
                     style = MaterialTheme.typography.titleLarge,
@@ -109,13 +133,11 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Mensaje de feedback de error (si existe)
                 MensajeFeedback(
                     mensaje = viewModel.mensajeError,
                     esError = true
                 )
 
-                // Campo de Correo Electrónico
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "CORREO ELECTRÓNICO",
@@ -156,7 +178,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo de Contraseña
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "CONTRASEÑA",
@@ -215,7 +236,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // ¿Olvidaste tu contraseña?
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.CenterEnd
@@ -236,7 +256,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Botón Iniciar Sesión
                 Button(
                     onClick = {
                         focusManager.clearFocus()
@@ -272,7 +291,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Enlace de Registro
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -294,98 +312,4 @@ fun LoginScreen(
             }
         }
     }
-
-    if (viewModel.mostrarDialogoCategorias) {
-        DialogoSeleccionCategoria(
-            categorias = viewModel.categoriasDisponibles,
-            cargando = viewModel.cargandoCategorias,
-            onCategoriaSeleccionada = { categoria ->
-                viewModel.confirmarCategoriaTecnico(categoria) { usuario, _ ->
-                    onLoginExitoso(usuario)
-                }
-            },
-            onDismiss = {
-                viewModel.cerrarDialogoCategorias()
-            }
-        )
-    }
-}
-
-@Composable
-fun DialogoSeleccionCategoria(
-    categorias: List<Categoria>,
-    cargando: Boolean,
-    onCategoriaSeleccionada: (Categoria) -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Selecciona tu Especialidad",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = ServifyTextTitle
-            )
-        },
-        text = {
-            if (cargando) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = ServifyBluePrimary)
-                }
-            } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Elige la categoría con la que trabajarás:",
-                        fontSize = 13.sp,
-                        color = ServifyTextMuted,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 280.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(categorias) { cat ->
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onCategoriaSeleccionada(cat) },
-                                shape = RoundedCornerShape(12.dp),
-                                color = ServifySurface,
-                                border = BorderStroke(1.dp, ServifyBorder)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = cat.nombre,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = ServifyTextBody
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = ServifyRed)
-            }
-        },
-        containerColor = ServifySurface,
-        shape = RoundedCornerShape(20.dp)
-    )
 }

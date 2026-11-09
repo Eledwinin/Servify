@@ -169,9 +169,9 @@ fun DetalleTecnicoScreen(
                 Button(
                     onClick = {
                         if (descripcionTexto.isNotBlank()) {
-                            // Enviamos ID de categoría por defecto 1 (o adaptable según el backend)
-                            val categoriaId = 1
-                            viewModel.enviarSolicitudDirecta(categoriaId, descripcionTexto)
+                            // Toma el ID real de la categoría del técnico (1 como fallback de respaldo)
+                            val categoriaIdReal = tecnico.categoriaId ?: 1
+                            viewModel.enviarSolicitudDirecta(categoriaIdReal, descripcionTexto)
                             mostrarDialogo = false
                         }
                     }

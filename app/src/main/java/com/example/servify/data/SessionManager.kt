@@ -13,8 +13,15 @@ object SessionManager {
     var latitud: Double? = null
     var longitud: Double? = null
 
+    // Categoría / Especialidad del técnico
+    var categoriaId: Int? = null
+        private set
+
+    var categoriaNombre: String? = null
+        private set
+
     val esTecnico: Boolean
-        get() = usuarioActual?.rol?.lowercase() in listOf("tecnico", "trabajador")
+        get() = usuarioActual?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos")
 
     var esVip: Boolean by mutableStateOf(false)
 
@@ -23,8 +30,34 @@ object SessionManager {
 
     fun guardarSesion(nuevoToken: String?, usuario: UsuarioModel?) {
         token = nuevoToken
-        usuarioActual = usuario
-        esVip = usuario?.esVip ?: false
+
+        // Preserva la categoría si el nuevo objeto de perfil la devuelve nula/vacía
+        val idFinal = usuario?.categoriaId?.takeIf { it != 0 }
+            ?: usuarioActual?.categoriaId
+            ?: categoriaId
+
+        val nombreFinal = usuario?.categoriaNombre?.takeIf { it.isNotBlank() }
+            ?: usuarioActual?.categoriaNombre
+            ?: categoriaNombre
+
+        val usuarioCombinado = usuario?.copy(
+            categoriaId = idFinal,
+            categoriaNombre = nombreFinal
+        )
+
+        usuarioActual = usuarioCombinado
+        categoriaId = idFinal
+        categoriaNombre = nombreFinal
+        esVip = usuarioCombinado?.esVip ?: false
+    }
+
+    fun guardarCategoriaSeleccionada(id: Int, nombre: String) {
+        categoriaId = id
+        categoriaNombre = nombre
+        usuarioActual = usuarioActual?.copy(
+            categoriaId = id,
+            categoriaNombre = nombre
+        )
     }
 
     fun actualizarUbicacion(lat: Double, lng: Double) {
@@ -43,6 +76,8 @@ object SessionManager {
     fun cerrarSesion() {
         token = null
         usuarioActual = null
+        categoriaId = null
+        categoriaNombre = null
         esVip = false
         latitud = null
         longitud = null
@@ -57,7 +92,7 @@ object SessionManager {
 
     // Obtiene la URL de la foto de perfil desde el modelo de usuario actual
     fun obtenerFotoUrl(): String? {
-        return usuarioActual?.fotoUrl // Asegúrate de que en UsuarioModel tu variable de foto se llame asi (o fotoUrl)
+        return usuarioActual?.fotoUrl
     }
 
     // Genera las iniciales automáticamente a partir del nombre
