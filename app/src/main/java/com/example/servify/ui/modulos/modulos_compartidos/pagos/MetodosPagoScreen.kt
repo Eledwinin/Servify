@@ -16,13 +16,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.servify.modulos_compartidos.pagos.PagoUiState
+import com.example.servify.modulos_compartidos.pagos.PagosViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MetodosPagoScreen(
     viewModel: PagosViewModel,
-    tipoPlan: String = "VIP",
-    monto: Double = 9.99,
+    tipoPlan: String,
+    monto: Double,
     onVolver: () -> Unit,
     onPagoExitoso: () -> Unit
 ) {
@@ -35,6 +38,7 @@ fun MetodosPagoScreen(
         "Transferencia Bancaria",
         "Chivo Wallet / Bitcoin"
     )
+    val montoFormateado = String.format(Locale.US, "%.2f", monto)
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -74,12 +78,15 @@ fun MetodosPagoScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = "Resumen de la Orden", fontSize = 14.sp, color = Color.Gray)
                         Spacer(modifier = Modifier.height(4.dp))
+
+                        val montoFormateado = String.format(Locale.US, "%.2f", monto)
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "Suscripción Plan $tipoPlan", fontWeight = FontWeight.Bold)
-                            Text(text = "$$monto USD", fontWeight = FontWeight.Bold)
+                            Text(text = "Suscripción - $tipoPlan", fontWeight = FontWeight.Bold)
+                            Text(text = "$$montoFormateado USD", fontWeight = FontWeight.Bold) // <--- Aquí usamos la variable formateada
                         }
                     }
                 }
@@ -147,7 +154,7 @@ fun MetodosPagoScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Confirmar y Pagar $$monto", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Confirmar y Pagar $$montoFormateado", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

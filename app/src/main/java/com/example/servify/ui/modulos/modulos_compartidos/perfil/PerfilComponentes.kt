@@ -71,24 +71,51 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
 fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
     val c = PerfilColores
 
+    val tipoPlanActual = user?.tipoPlan ?: SessionManager.tipoPlanActivo ?: ""
+    val esSemanal = tipoPlanActual.contains("Semanal", ignoreCase = true)
+
+    // Color de acento para VIP o Semanal, pero NEGRO/OSCURO para cuando no tenga plan
+    val colorAcento = when {
+        esSemanal -> Color(0xFF0284C7) // Celeste para el semanal
+        esVip -> c.dorado            // Dorado para el PRO
+        else -> c.texto              // <--- CAMBIO AQUÍ: Usamos el color de texto principal para que no se pierda
+    }
+
+    val fondoAvatar = when {
+        esSemanal -> Color(0xFFE0F2FE)
+        esVip -> c.doradoClaro
+        else -> c.verdeClaro
+    }
+
+    val textoSubtitulo = when {
+        esSemanal && esTecnico -> "Técnico con Plan Semanal"
+        esSemanal -> "Plan Semanal Activo"
+        esVip && esTecnico -> "Técnico Verificado PRO"
+        else -> user?.rol?.replaceFirstChar { it.uppercase() } ?: "Cliente"
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .background(ServifySurface, RoundedCornerShape(16.dp))
-            .border(1.dp, if (esVip) c.dorado.copy(alpha = 0.5f) else c.borde, RoundedCornerShape(16.dp))
+            .border(
+                width = if (esVip || esSemanal) 2.dp else 1.dp,
+                color = colorAcento.copy(alpha = if (esVip || esSemanal) 0.8f else 0.3f),
+                shape = RoundedCornerShape(16.dp)
+            )
             .padding(16.dp)
     ) {
         Box(
             Modifier
                 .size(64.dp)
                 .clip(CircleShape)
-                .background(if (esVip) c.doradoClaro else c.verdeClaro),
+                .background(fondoAvatar),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = iniciales(user?.nombre),
-                color = if (esVip) c.dorado else c.verde,
+                color = if (esVip || esSemanal) colorAcento else c.verde,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
             )
@@ -106,16 +133,21 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
                 )
                 if (esVip) {
                     Spacer(Modifier.width(6.dp))
-                    Icon(Icons.Default.WorkspacePremium, "VIP", tint = c.dorado, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.WorkspacePremium,
+                        contentDescription = "VIP",
+                        tint = colorAcento,
+                        modifier = Modifier.size(18.sp.value.dp) // o 18.dp
+                    )
                 }
             }
 
+            // TEXTO DEL SUBTÍTULO CON BUEN CONTRASTE
             Text(
-                text = if (esVip && esTecnico) "Técnico Verificado PRO"
-                else user?.rol?.replaceFirstChar { it.uppercase() } ?: "Cliente",
-                color = if (esVip && esTecnico) c.dorado else c.gris,
+                text = textoSubtitulo,
+                color = colorAcento, // Si no tiene plan, ahora usará c.texto (oscuro y legible)
                 fontSize = 13.sp,
-                fontWeight = if (esVip && esTecnico) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (esVip || esSemanal) FontWeight.Bold else FontWeight.Medium
             )
 
             if (esTecnico) {
@@ -160,33 +192,96 @@ fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: ()
 }
 
 @Composable
-fun TarjetaVip(onCancelar: () -> Unit) {
+fun TarjetaVip(tipoPlan: String?, onCancelar: () -> Unit) {
     val c = PerfilColores
+
+    // Validamos si es el plan semanal o el pro para cambiar el texto y estilo
+    val esSemanal = tipoPlan?.contains("Semanal", ignoreCase = true) == true
+
+    val tituloPlan = if (esSemanal) "Plan Semanal Activo" else "Plan Servify PRO"
+    val subtituloPlan = if (esSemanal) "$3.99 / semana •" else "Suscripción Mensual Exclusiva"
+    val descripcionPlan = if (esSemanal)
+        "Disfrutas de postulación prioritaria a solicitudes e insignia de técnico verificado por 7 días."
+    else
+        "Disfrutas de visibilidad destacada en el inicio, comisión reducida en servicios y postulaciones ilimitadas."
+
     Card(
-        colors = CardDefaults.cardColors(containerColor = c.doradoClaro),
+        colors = CardDefaults.cardColors(
+            containerColor = ServifyDarkNavy
+        ),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, c.dorado.copy(alpha = 0.4f)),
+        border = null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.WorkspacePremium, null, tint = c.dorado)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Plan Servify PRO Activo", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF78350F))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = c.dorado.copy(alpha = 0.15f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.WorkspacePremium,
+                                contentDescription = null,
+                                tint = c.dorado,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = tituloPlan,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = subtituloPlan,
+                            fontSize = 11.sp,
+                            color = c.dorado,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
-                TextButton(onClick = onCancelar, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-                    Text("Cancelar Plan", color = c.rojo, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                TextButton(
+                    onClick = onCancelar,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ServifyDanger
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "Cancelar Plan",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
+            HorizontalDivider(
+                color = Color.White.copy(alpha = 0.1f),
+                thickness = 0.5.dp
+            )
+
             Text(
-                "Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
+                text = descripcionPlan,
                 fontSize = 12.sp,
-                color = Color(0xFF92400E)
+                color = Color.White.copy(alpha = 0.7f),
+                lineHeight = 17.sp
             )
         }
     }

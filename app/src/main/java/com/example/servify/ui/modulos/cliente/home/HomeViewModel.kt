@@ -3,6 +3,7 @@ package com.example.servify.ui.modulos.cliente.home
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.servify.data.SessionManager
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +58,13 @@ class HomeViewModel(
         }
     }
 
+    private val _esVipUsuario = MutableStateFlow(SessionManager.esVip)
+    val esVipUsuario: StateFlow<Boolean> = _esVipUsuario.asStateFlow()
+
+    fun refrescarEstadoSesion() {
+        _esVipUsuario.value = SessionManager.esVip
+    }
+
     fun actualizarUbicacionCliente(lat: Double, lng: Double) {
         latCliente = lat
         lngCliente = lng
@@ -68,6 +76,7 @@ class HomeViewModel(
         _queryBusqueda.value = nuevaQuery
         aplicarFiltrosYOrden()
     }
+
 
     fun seleccionarCategoria(categoria: String?) {
         _categoriaSeleccionada.value = if (_categoriaSeleccionada.value == categoria) null else categoria

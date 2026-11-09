@@ -88,7 +88,7 @@ fun PlanesMembresiaScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedButton(
-                        onClick = { onSeleccionarPlan("Plan Semanal", 3.99) },
+                        onClick = { onSeleccionarPlan(" Plan Semanal", 3.99) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),

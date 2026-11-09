@@ -53,7 +53,7 @@ class PagosViewModel(
                     val data = response.body()!!
 
                     // Activa el estado VIP reactivo en SessionManager
-                    SessionManager.activarSuscripcionVip()
+                    SessionManager.activarSuscripcionVip(tipoPlan)
 
                     _uiState.value = PagoUiState.Success(data.mensaje, data.esVip)
                     onExito()

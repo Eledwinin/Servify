@@ -56,15 +56,25 @@ fun HomeScreen(
 
     // Técnicos destacados VIP (esVip == 1)
     val tecnicosVipDestacados = remember(listaProfesionales) {
-        listaProfesionales.filter { it.esVip == 1 }
+        listaProfesionales.filter { prof ->
+            val esVipReal = prof.esVip == 1
+            val esSemanal = prof.tipoPlan?.contains("Semanal", ignoreCase = true) == true
+
+            // Retornamos explícitamente la condición para que compile limpio
+            esVipReal && !esSemanal
+        }
     }
 
     // Ranking transparente: VIPs destacados con reputación alta (>= 4.0), seguidos de orden por calificación general
+    // Ranking: VIPs reales primero, luego Plan Semanal, y luego ordenados por calificación general
     val listaOrdenadaTransparente = remember(listaProfesionales) {
         listaProfesionales.sortedWith(
-            compareByDescending<ProfesionalPerfil> { (it.esVip == 1) && (it.calificacionPromedio >= 4.0) }
+            compareByDescending<ProfesionalPerfil> {
+                val esSemanal = it.tipoPlan?.contains("Semanal", ignoreCase = true) == true
+                (it.esVip == 1 && !esSemanal) // VIPs reales van primero
+            }
+                .thenByDescending { it.tipoPlan?.contains("Semanal", ignoreCase = true) == true } // Plan Semanal segundo
                 .thenByDescending { it.calificacionPromedio }
-                .thenByDescending { it.esVip == 1 }
         )
     }
 
@@ -106,6 +116,10 @@ fun HomeScreen(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
         }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.refrescarEstadoSesion() // Sincroniza si sigues o no siendo VIP
+        viewModel.cargarTecnicos()
     }
 
     Scaffold(

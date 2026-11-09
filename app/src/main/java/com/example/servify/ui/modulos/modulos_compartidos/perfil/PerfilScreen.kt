@@ -195,7 +195,10 @@ fun PerfilScreen(
                     }
 
                     if (esVip) {
-                        TarjetaVip(onCancelar = { dialogoVip = true })
+                        TarjetaVip(
+                            tipoPlan = user?.tipoPlan ?: SessionManager.tipoPlanActivo,
+                            onCancelar = { dialogoVip = true }
+                        )
                     }
 
                     TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarTrabajador)

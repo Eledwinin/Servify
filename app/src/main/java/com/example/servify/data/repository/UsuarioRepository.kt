@@ -108,6 +108,21 @@ class UsuarioRepository(
         }
     }
 
+    suspend fun cancelarPlan(token: String): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.cancelarPlan("Bearer $token")
+                if (respuesta.isSuccessful) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception("Error al cancelar plan (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
+        }
+    }
+
     // 1. ELIMINACIÓN DE CUENTA (Cliente y Técnico)
     suspend fun eliminarCuenta(token: String): Result<String> {
         return withContext(Dispatchers.IO) {

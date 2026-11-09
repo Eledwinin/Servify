@@ -22,12 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-
-import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
-import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
-import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
 import com.example.servify.modulos_compartidos.pagos.PagosViewModel
-
 import com.example.servify.data.LlamadasManager
 import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
@@ -51,6 +46,9 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
 import com.example.servify.ui.modulos.modulos_compartidos.messages.CallScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
+import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
+import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
+import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
@@ -287,26 +285,43 @@ fun AppNavigation() {
                 )
             }
 
-            // 🌟 PANTALLAS DE PAGOS (CALLBACK DE 2 PARÁMETROS CORREGIDO):
+            //membresias
             composable(Rutas.PlanesMembresia.ruta) {
                 PlanesMembresiaScreen(
-                    onSeleccionarPlan = { _, _ ->
-                        navController.navigate(Rutas.MetodosPago.ruta)
+                    onSeleccionarPlan = { tipoPlan, monto ->
+                        // Codificamos el nombre del plan por si lleva espacios (ej: "Plan Semanal")
+                        val tipoCodificado = java.net.URLEncoder.encode(tipoPlan, "UTF-8")
+                        navController.navigate("metodos_pago_custom/$tipoCodificado/$monto")
                     },
                     onVolver = { navController.popBackStack() }
                 )
             }
 
-            composable(Rutas.MetodosPago.ruta) {
+            composable(
+                route = "metodos_pago_custom/{tipoPlan}/{monto}",
+                arguments = listOf(
+                    navArgument("tipoPlan") { type = NavType.StringType },
+                    navArgument("monto") { type = NavType.FloatType }
+                )
+            ) { backStackEntry ->
+                val tipoPlanCrudo = backStackEntry.arguments?.getString("tipoPlan") ?: "Plan PRO"
+                val tipoPlan = java.net.URLDecoder.decode(tipoPlanCrudo, "UTF-8")
+
+                val monto = backStackEntry.arguments?.getFloat("monto")?.toDouble()
+                    ?: backStackEntry.arguments?.getString("monto")?.toDoubleOrNull()
+                    ?: 6.99
+
                 val pagosViewModel: PagosViewModel = viewModel()
                 MetodosPagoScreen(
+                    viewModel = pagosViewModel,
+                    tipoPlan = tipoPlan,
+                    monto = monto,
                     onPagoExitoso = {
                         navController.navigate(Rutas.PagoExitoso.ruta) {
                             popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
                         }
                     },
-                    onVolver = { navController.popBackStack() },
-                    viewModel = pagosViewModel
+                    onVolver = { navController.popBackStack() }
                 )
             }
 

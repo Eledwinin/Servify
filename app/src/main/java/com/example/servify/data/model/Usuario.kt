@@ -52,7 +52,13 @@ data class UsuarioModel(
     val categoriaId: Int? = null,
 
     @SerializedName("categoria_nombre", alternate = ["categoriaNombre", "oficio", "categoria", "nombre_categoria", "nombreCategoria"])
-    val categoriaNombre: String? = null
+    val categoriaNombre: String? = null,
+
+    @SerializedName("tipo_plan", alternate = ["tipoPlan"])
+    val tipoPlan: String? = null,
+
+    @SerializedName("fecha_vencimiento_vip", alternate = ["fechaVencimientoVip"])
+    val fechaVencimientoVip: String? = null,
 )
 
 typealias Usuario = UsuarioModel

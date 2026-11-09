@@ -63,6 +63,8 @@ data class ProfesionalPerfil(
 
     @SerializedName("longitud")
     val longitud: Double? = null,
+    @SerializedName("tipoPlan", alternate = ["tipo_plan"])
+    val tipoPlan: String? = null,
 
     @SerializedName("especialidades") val especialidades: List<String> = emptyList(),
     @SerializedName("trabajosCompletados") val trabajosCompletados: Int = 0,

@@ -35,6 +35,8 @@ class PerfilViewModel(
     // PERFIL BÁSICO Y VIP
     // ==========================================
 
+
+
     fun cargarPerfil(token: String) {
         if (token.isBlank()) return
         viewModelScope.launch {
@@ -80,16 +82,25 @@ class PerfilViewModel(
     fun cambiarMembresiaVip(esVip: Boolean, onResultado: (Boolean) -> Unit) {
         val usuario = SessionManager.usuarioActual ?: return
         val token = SessionManager.token ?: return
+
         viewModelScope.launch {
-            val resultado = repository.actualizarEstadoVip(usuario.id, esVip)
-            resultado.onSuccess { nuevoEstado ->
-                SessionManager.esVip = nuevoEstado
-                val usuarioActualizado = usuario.copy(esVip = nuevoEstado)
-                SessionManager.guardarSesion(token, usuarioActualizado)
-                _uiState.value = _uiState.value.copy(usuario = usuarioActualizado)
+            if (!esVip) {
+                // Llamamos al servidor para borrar el VIP en la base de datos real
+                val resultado = repository.cancelarPlan(token)
+                resultado.onSuccess {
+                    // Limpiamos la sesión localmente
+                    SessionManager.cancelarSuscripcionVip()
+                    val usuarioActualizado = usuario.copy(esVip = false, tipoPlan = null)
+                    SessionManager.guardarSesion(token, usuarioActualizado)
+                    _uiState.value = _uiState.value.copy(usuario = usuarioActualizado)
+                    onResultado(true)
+                }.onFailure { err ->
+                    Log.e("VIP", "Error al cancelar plan en servidor: ${err.message}")
+                    onResultado(false)
+                }
+            } else {
+                // Si es para activar, lo manejas de acuerdo a tu flujo de pagos
                 onResultado(true)
-            }.onFailure {
-                onResultado(false)
             }
         }
     }

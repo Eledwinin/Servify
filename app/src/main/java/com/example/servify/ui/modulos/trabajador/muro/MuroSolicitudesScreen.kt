@@ -68,6 +68,17 @@ fun MuroSolicitudesScreen(
         }
     }
 
+    val tipoPlanActual = SessionManager.usuarioActual?.tipoPlan ?: ""
+    val esSemanal = tipoPlanActual.contains("Semanal", ignoreCase = true)
+    val esPro = tipoPlanActual.contains("PRO", ignoreCase = true) || (esVip && !esSemanal)
+
+    // Definimos el texto que va a mostrar el botón/badge
+    val textoBoton = when {
+        esSemanal -> "Plan Semanal"
+        esPro -> "¡Eres Plan Pro! ⭐"
+        else -> "VER PLANES"
+    }
+
     LaunchedEffect(Unit) { viewModel.cargarSolicitudes() }
 
     LaunchedEffect(viewModel.mensajeError) {
@@ -149,11 +160,15 @@ fun MuroSolicitudesScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = if (esVip) "¡Eres VIP! ⭐" else "PLAN PRO 👑",
+                            text = textoBoton,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (esVip) ServifyPendingText else Color(0xFF4338CA)
+                            color = when {
+                                esSemanal -> Color(0xFF0284C7) // Un azul/celeste bonito para el semanal (o el color que prefieras)
+                                esPro -> ServifyPendingText     // El color dorado/amarillo que ya usabas para el PRO
+                                else -> Color(0xFF4338CA)      // Color por defecto para "VER PLANES"
+                            }
                         )
                     }
                 }

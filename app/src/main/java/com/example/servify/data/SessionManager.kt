@@ -17,6 +17,9 @@ object SessionManager {
     var categoriaId: Int? = null
         private set
 
+    var tipoPlanActivo: String? = null // Para guardar si es "Plan Semanal" o "Plan Servify PRO"
+        private set
+
     var categoriaNombre: String? = null
         private set
 
@@ -65,12 +68,20 @@ object SessionManager {
         longitud = lng
     }
 
-    fun activarSuscripcionVip() {
+    fun activarSuscripcionVip(tipo: String = "VIP") {
         esVip = true
+        tipoPlanActivo = tipo
+        usuarioActual = usuarioActual?.copy(esVip = true, tipoPlan = tipo)
     }
 
     fun cancelarSuscripcionVip() {
         esVip = false
+        tipoPlanActivo = null
+        usuarioActual = usuarioActual?.copy(
+            esVip = false,
+            tipoPlan = null,
+            fechaVencimientoVip = null
+        )
     }
 
     fun cerrarSesion() {

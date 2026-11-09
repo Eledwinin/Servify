@@ -28,7 +28,10 @@ fun TarjetaTecnico(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val esVip = profesional.esVip == 1
+    // 🌟 Distinguimos entre VIP real y Plan Semanal
+    val esSemanal = profesional.tipoPlan?.contains("Semanal", ignoreCase = true) == true
+    val esVipReal = profesional.esVip == 1 && !esSemanal
+
     val nombre = profesional.nombreCompleto.ifBlank { "Técnico" }
     val oficio = profesional.oficio.ifBlank { "Servicio" }
 
@@ -48,8 +51,12 @@ fun TarjetaTecnico(
         colors = CardDefaults.cardColors(containerColor = ServifySurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         border = BorderStroke(
-            width = if (esVip) 1.5.dp else 1.dp,
-            color = if (esVip) Color(0xFFFDE68A) else ServifyBorder
+            width = if (esVipReal || esSemanal) 1.5.dp else 1.dp,
+            color = when {
+                esVipReal -> Color(0xFFFDE68A)  // Dorado para VIP PRO
+                esSemanal -> Color(0xFF0284C7)  // Celeste/Azul para Plan Semanal
+                else -> ServifyBorder
+            }
         )
     ) {
         Row(
@@ -62,12 +69,22 @@ fun TarjetaTecnico(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(if (esVip) Color(0xFFFEF3C7) else ServifyCianSoft),
+                    .background(
+                        when {
+                            esVipReal -> Color(0xFFFEF3C7) // Fondo dorado claro
+                            esSemanal -> Color(0xFFE0F2FE) // Fondo celeste claro
+                            else -> ServifyCianSoft
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = iniciales,
-                    color = if (esVip) Color(0xFFB45309) else ServifyBluePrimary,
+                    color = when {
+                        esVipReal -> Color(0xFFB45309)
+                        esSemanal -> Color(0xFF0284C7)
+                        else -> ServifyBluePrimary
+                    },
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -87,26 +104,44 @@ fun TarjetaTecnico(
                         color = ServifyTextTitle
                     )
 
-                    if (esVip) {
-                        Surface(
-                            color = Color(0xFFFEF3C7),
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = "VIP",
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFFB45309)
+                    // 🌟 ETIQUETA DINÁMICA: VIP VS SEMANAL VS VERIFICADO NORMAL
+                    when {
+                        esVipReal -> {
+                            Surface(
+                                color = Color(0xFFFEF3C7),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "VIP",
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFFB45309)
+                                )
+                            }
+                        }
+                        esSemanal -> {
+                            Surface(
+                                color = Color(0xFFE0F2FE),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "SEMANAL",
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0369A1)
+                                )
+                            }
+                        }
+                        else -> {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Verificado",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(14.dp)
                             )
                         }
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Verificado",
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(14.dp)
-                        )
                     }
                 }
 
