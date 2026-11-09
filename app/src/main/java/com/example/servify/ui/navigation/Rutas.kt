@@ -1,5 +1,7 @@
 package com.example.servify.ui.navigation
 
+import android.net.Uri
+
 sealed class Rutas(val ruta: String) {
     // Pantallas públicas
     object Login : Rutas("login")
@@ -21,7 +23,7 @@ sealed class Rutas(val ruta: String) {
     object EditarPerfilTrabajador : Rutas("editar_perfil_trabajador")
     object Resenas : Rutas("resenas")
 
-    // Checkout de Pago con Tarjeta
+    // Checkout de Pago con Tarjeta (Cliente)
     object CheckoutPago : Rutas("checkout_pago?solicitudId={solicitudId}") {
         fun crearRuta(solicitudId: Int) = "checkout_pago?solicitudId=$solicitudId"
     }
@@ -38,12 +40,23 @@ sealed class Rutas(val ruta: String) {
 
     object Chat : Rutas("chat/{conversacionId}?nombre={nombre}") {
         fun crearRuta(conversacionId: Int, nombre: String) =
-            "chat/$conversacionId?nombre=${android.net.Uri.encode(nombre)}"
+            "chat/$conversacionId?nombre=${Uri.encode(nombre)}"
     }
 
+    // ==========================================
+    // FLUJO DE MONETIZACIÓN Y PLANES (TRABAJADOR)
+    // ==========================================
     object PlanesMembresia : Rutas("planes_membresia")
-    object MetodosPago : Rutas("metodos_pago")
-    object PagoExitoso : Rutas("pago_exitoso")
+
+    object MetodosPago : Rutas("metodos_pago/{monto}/{tipoPlan}") {
+        fun crearRuta(monto: Double, tipoPlan: String) =
+            "metodos_pago/$monto/${Uri.encode(tipoPlan)}"
+    }
+
+    object PagoExitoso : Rutas("pago_exitoso/{monto}/{tipoPlan}?metodo={metodo}") {
+        fun crearRuta(monto: Double, tipoPlan: String, metodo: String = "Visa •••• 4242") =
+            "pago_exitoso/$monto/${Uri.encode(tipoPlan)}?metodo=${Uri.encode(metodo)}"
+    }
 
     // Módulo Administrador
     object AdminDashboard : Rutas("admin_dashboard")
@@ -55,7 +68,7 @@ sealed class Rutas(val ruta: String) {
     // Mapa con soporte de parámetros opcionales para solicitudes
     object Mapa : Rutas("mapa_screen?lat={lat}&lng={lng}&titulo={titulo}") {
         fun crearRuta(lat: Double, lng: Double, titulo: String) =
-            "mapa_screen?lat=$lat&lng=$lng&titulo=${android.net.Uri.encode(titulo)}"
+            "mapa_screen?lat=$lat&lng=$lng&titulo=${Uri.encode(titulo)}"
     }
 
     // Mapa de Solicitudes (Trabajador)

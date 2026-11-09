@@ -24,6 +24,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.servify.data.LlamadasManager
 import com.example.servify.data.SessionManager
+import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
+import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
+import com.example.servify.modulos_compartidos.pagos.PagosViewModel
+import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
 import com.example.servify.ui.modulos.admin.AdminDashboardScreen
 import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
@@ -45,12 +49,9 @@ import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
 import com.example.servify.ui.modulos.modulos_compartidos.messages.CallScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ConversacionesScreen
-import com.example.servify.ui.modulos.modulos_compartidos.pagos.MetodosPagoScreen
-import com.example.servify.ui.modulos.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
-import com.example.servify.ui.modulos.trabajador.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen
@@ -64,7 +65,6 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
     val pagerState = rememberPagerState(initialPage = paginaInicial, pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
 
-    // Único punto donde se conecta el socket (ya hay sesión al llegar aquí)
     LaunchedEffect(Unit) {
         SessionManager.token?.let { LlamadasManager.conectar(it) }
     }
@@ -102,6 +102,7 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
                     token = SessionManager.token ?: "",
                     onIrAEditarCliente = { navController.navigate(Rutas.EditarPerfilCliente.ruta) },
                     onIrAEditarTrabajador = { navController.navigate(Rutas.EditarPerfilTrabajador.ruta) },
+                    onIrAPlanes = { navController.navigate(Rutas.PlanesMembresia.ruta) },
                     onCerrarSesion = {
                         LlamadasManager.desconectar()
                         SessionManager.cerrarSesion()
@@ -169,10 +170,9 @@ fun AppNavigation() {
                 )
             }
 
-            composable(Rutas.Resenas.ruta) { backStackEntry ->
+            composable(Rutas.Resenas.ruta) {
                 val perfilViewModel: PerfilViewModel = viewModel()
 
-                // Asegurarnos de recargar si está vacía al entrar
                 LaunchedEffect(Unit) {
                     if (SessionManager.token != null) {
                         perfilViewModel.cargarResenas(SessionManager.token!!)
@@ -267,35 +267,60 @@ fun AppNavigation() {
                 )
             }
 
+            // Flujo de membresias
             composable(Rutas.PlanesMembresia.ruta) {
-                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
                 PlanesMembresiaScreen(
-                    navController = navController,
-                    onPlanAdquirido = {
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
-                            SessionManager.activarSuscripcionVip()
-                            navController.navigate(Rutas.PagoExitoso.ruta)
-                        }
+                    onVolver = { navController.popBackStack() },
+                    onSeleccionarPlan = { tipoPlan, monto ->
+                        navController.navigate(Rutas.MetodosPago.crearRuta(monto, tipoPlan))
                     }
                 )
             }
 
-            composable(Rutas.MetodosPago.ruta) {
-                val perfilViewModel: com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel = viewModel()
+            composable(
+                route = Rutas.MetodosPago.ruta,
+                arguments = listOf(
+                    navArgument("monto") { type = NavType.StringType },
+                    navArgument("tipoPlan") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val montoStr = backStackEntry.arguments?.getString("monto") ?: "9.99"
+                val tipoPlan = backStackEntry.arguments?.getString("tipoPlan") ?: "VIP"
+                val monto = montoStr.toDoubleOrNull() ?: 9.99
+
+                val pagosViewModel: PagosViewModel = viewModel()
+
                 MetodosPagoScreen(
-                    navController = navController,
-                    onPagoConfirmado = {
-                        perfilViewModel.cambiarMembresiaVip(esVip = true) {
-                            SessionManager.activarSuscripcionVip()
-                            navController.navigate(Rutas.PagoExitoso.ruta) {
-                                popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
-                            }
+                    viewModel = pagosViewModel,
+                    tipoPlan = tipoPlan,
+                    monto = monto,
+                    onVolver = { navController.popBackStack() },
+                    onPagoExitoso = {
+                        navController.navigate(
+                            Rutas.PagoExitoso.crearRuta(monto, tipoPlan, "Tarjeta de Crédito / Débito")
+                        ) {
+                            popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
                         }
                     }
                 )
             }
 
-            composable(Rutas.PagoExitoso.ruta) { PagoExitosoScreen(navController = navController) }
+            composable(
+                route = Rutas.PagoExitoso.ruta,
+                arguments = listOf(
+                    navArgument("monto") { type = NavType.StringType; defaultValue = "9.99" },
+                    navArgument("tipoPlan") { type = NavType.StringType; defaultValue = "VIP" },
+                    navArgument("metodo") { type = NavType.StringType; defaultValue = "Tarjeta" }
+                )
+            ) {
+                PagoExitosoScreen(
+                    onFinalizar = {
+                        navController.navigate(Rutas.Perfil.ruta) {
+                            popUpTo(Rutas.Home.ruta)
+                        }
+                    }
+                )
+            }
 
             composable(Rutas.EditarPerfilCliente.ruta) {
                 EditarPerfilClienteScreen(

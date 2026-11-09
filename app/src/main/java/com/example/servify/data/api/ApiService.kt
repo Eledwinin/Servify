@@ -101,12 +101,11 @@ interface ApiService {
         @Body request: ActualizarPerfilRequest
     ): Response<MensajeResponse>
 
-    // para obtener el perfil del trabajador
+    // Para obtener el perfil del trabajador
     @GET("api/users/{id}")
     suspend fun getPerfilProfesional(
         @Path("id") id: String
     ): Response<ProfesionalPerfil>
-
 
     @GET("api/chat/llamadas")
     suspend fun obtenerLlamadas(@Header("Authorization") token: String): Response<List<LlamadaItem>>
@@ -120,6 +119,21 @@ interface ApiService {
         @Path("id") idUsuario: Int,
         @Body body: SolicitudVipDto
     ): Response<RespuestaVipDto>
+
+    // ==========================================
+    // MEMBRESÍAS Y PLANES (Estándar y VIP)
+    // ==========================================
+
+    @POST("api/users/membresia/suscribir")
+    suspend fun suscribirsePlan(
+        @Header("Authorization") token: String,
+        @Body request: SuscripcionRequest
+    ): Response<SuscripcionResponse>
+
+    @POST("api/users/membresia/cancelar")
+    suspend fun cancelarPlan(
+        @Header("Authorization") token: String
+    ): Response<MensajeResponse>
 
     // ==========================================
     // 1. ELIMINACIÓN DE CUENTA (Cliente y Técnico)
@@ -151,7 +165,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("fotoId") fotoId: Int
     ): Response<MensajeResponse>
-
 
     @GET("api/users/resenas")
     suspend fun obtenerResenasUsuario(
@@ -190,7 +203,7 @@ interface ApiService {
     ): Response<DetalleSolicitud>
 
     // ==========================================
-    // NUEVOS: CIERRE DE SERVICIO, QR Y RESEÑAS
+    // CIERRE DE SERVICIO, QR Y RESEÑAS
     // ==========================================
 
     @POST("api/solicitudes/{id}/iniciar-cierre")
@@ -288,7 +301,7 @@ interface ApiService {
     ): Response<MensajeResponse>
 
     // ==========================================
-    // 3. MÓDULO ADMINISTRADOR
+    // MÓDULO ADMINISTRADOR
     // ==========================================
 
     @GET("api/admin/dashboard")
@@ -326,13 +339,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<TokenLlamadaRespuesta>
-
-    //eliminar una conversasion en cascada
-//    @DELETE("conversaciones/{id}")
-//    suspend fun eliminarConversacion(
-//        @Header("Authorization") token: String,
-//        @Path("id") conversacionId: Int
-//    ): Response<MensajeRespuesta>
 }
 
 // ==========================================
@@ -348,4 +354,18 @@ data class FotoPortafolioResponse(
 data class SubirFotoResponse(
     val mensaje: String,
     val foto: FotoPortafolioResponse
+)
+
+data class SuscripcionRequest(
+    val monto: Double,
+    val tipoPlan: String,
+    val metodoPago: String
+)
+
+data class SuscripcionResponse(
+    val mensaje: String,
+    val esVip: Int,
+    val tipoPlan: String?,
+    val fechaFin: String?,
+    val transaccionId: String?
 )
