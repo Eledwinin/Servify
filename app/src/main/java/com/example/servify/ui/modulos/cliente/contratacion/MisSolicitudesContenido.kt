@@ -263,6 +263,8 @@ fun MisSolicitudesContenido(
                                             "rechazada", "rechazado" -> "El técnico rechazó la solicitud"
                                             else -> "Esperando respuesta del técnico..."
                                         }
+                                    } else if (pestañaSeleccionada == 1) {
+                                        ""
                                     } else {
                                         when (s.totalPropuestas) {
                                             0 -> "Sin propuestas todavía"

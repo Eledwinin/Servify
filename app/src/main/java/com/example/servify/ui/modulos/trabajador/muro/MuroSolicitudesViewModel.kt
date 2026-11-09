@@ -12,11 +12,13 @@ import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.repository.SolicitudesRepository
+import com.example.servify.data.repository.UsuarioRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MuroSolicitudesViewModel(
-    private val solicitudesRepository: SolicitudesRepository = SolicitudesRepository()
+    private val solicitudesRepository: SolicitudesRepository = SolicitudesRepository(),
+    private val usuarioRepository: UsuarioRepository = UsuarioRepository()
 ) : ViewModel() {
 
     var solicitudes by mutableStateOf<List<SolicitudItemTecnico>>(emptyList())
@@ -30,6 +32,11 @@ class MuroSolicitudesViewModel(
     var irACalificar by mutableStateOf(false)
     var solicitudIdParaCalificar by mutableStateOf<Int?>(null)
     var clienteIdParaCalificar by mutableStateOf<Int?>(null)
+
+    var gananciasSemana by mutableStateOf("0.00")
+    var totalTrabajos by mutableStateOf(0)
+
+    var totalResenasTecnico by mutableStateOf(0)
 
     fun cargarSolicitudes() {
         val token = SessionManager.token ?: return
@@ -55,10 +62,25 @@ class MuroSolicitudesViewModel(
                     contratacionesDirectas = lista
                 }
 
+                cargarCantidadResenas()
+
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+
+    private fun cargarCantidadResenas() {
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            val resultado = usuarioRepository.obtenerResenasUsuario(token)
+            resultado.onSuccess { listaResenas ->
+                totalResenasTecnico = listaResenas.size
+            }.onFailure { err ->
+                Log.e("MURO_RESENAS", "Error al cargar reseñas: ${err.message}")
             }
         }
     }

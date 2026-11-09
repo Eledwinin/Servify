@@ -47,6 +47,9 @@ fun MuroSolicitudesScreen(
     navController: NavController,
     viewModel: MuroSolicitudesViewModel = viewModel()
 ) {
+
+
+
     val esVip = SessionManager.esVip
     val context = LocalContext.current
     val listaSolicitudes = viewModel.solicitudes
@@ -248,6 +251,7 @@ fun MuroSolicitudesScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -255,9 +259,10 @@ fun MuroSolicitudesScreen(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = ServifyOnlineGreen, modifier = Modifier.size(14.dp))
-                                    Text("14 Trabajos", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                    Text("${viewModel.totalTrabajos} Trabajos", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
                                 }
                             }
+
 
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
@@ -266,7 +271,15 @@ fun MuroSolicitudesScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(14.dp))
-                                    Text("4.9 (48)", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                    Text(
+                                        text = "%.1f (%d)".format(
+                                            SessionManager.usuarioActual?.calificacionPromedio ?: 0.0,
+                                            viewModel.totalResenasTecnico
+                                        ),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White
+                                    )
                                 }
                             }
                         }
