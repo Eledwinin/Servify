@@ -10,19 +10,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.data.SessionManager
+import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.botones.BotonAccion
+import com.example.servify.ui.componentes.cards.BannerPromocionPlanes
 import com.example.servify.ui.componentes.cards.TarjetaBase
 import com.example.servify.ui.componentes.feedback.DialogoConfirmacion
 import com.example.servify.ui.theme.*
@@ -34,6 +42,7 @@ fun PerfilScreen(
     token: String,
     onIrAEditarCliente: () -> Unit,
     onIrAEditarTrabajador: () -> Unit,
+    onIrAPlanes: () -> Unit,
     onCerrarSesion: () -> Unit,
     onVerTodasResenas: () -> Unit,
     viewModel: PerfilViewModel = viewModel()
@@ -57,7 +66,7 @@ fun PerfilScreen(
         if (token.isNotBlank()) {
             viewModel.cargarPerfil(token)
             viewModel.cargarPortafolio()
-            viewModel.cargarResenas(token) // Carga las reseñas reales desde la BD
+            viewModel.cargarResenas(token)
         }
     }
     LaunchedEffect(ui.error) {
@@ -68,13 +77,18 @@ fun PerfilScreen(
     }
 
     val user = ui.usuario
-    val esTecnico = SessionManager.esTecnico || (user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos"))
-    val esVip = SessionManager.esVip || (user?.esVip == true)
+
+    // Detección precisa de rol usando usuarioActual de SessionManager
+    val rolDetectado = (user?.rol ?: SessionManager.usuarioActual?.rol ?: "").lowercase().trim()
+    val esCliente = rolDetectado == "cliente"
+    val esTecnico = !esCliente && (SessionManager.esTecnico || rolDetectado in listOf("tecnico", "trabajador", "ambos"))
+
+    val esVip = esTecnico && (SessionManager.esVip || (user?.esVip == true))
+
     val (porcentaje, faltantes) = remember(user, ui.fotosPortafolio.size, esTecnico) {
-        calcularCompletitud(user, ui.fotosPortafolio.size, esTecnico)
+        if (esTecnico) calcularCompletitud(user, ui.fotosPortafolio.size, esTecnico) else Pair(100, emptyList())
     }
 
-    // Diálogo de confirmación para Cerrar Sesión
     if (dialogoCerrarSesion) {
         DialogoConfirmacion(
             titulo = "¿Cerrar sesión?",
@@ -98,9 +112,11 @@ fun PerfilScreen(
                 viewModel.cambiarMembresiaVip(false) { exito ->
                     SessionManager.cancelarSuscripcionVip()
                     dialogoVip = false
-                    Toast.makeText(context,
+                    Toast.makeText(
+                        context,
                         if (exito) "Suscripción cancelada" else "Suscripción cancelada localmente",
-                        Toast.LENGTH_SHORT).show()
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             },
             onCancelar = { dialogoVip = false }
@@ -142,9 +158,11 @@ fun PerfilScreen(
                     }
                 },
                 actions = {
-                    Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
-                        modifier = Modifier.padding(end = 16.dp)) {
-                    }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = ServifyInputBackground,
+                        modifier = Modifier.padding(end = 16.dp)
+                    ) {}
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifyBackground),
                 windowInsets = WindowInsets(0.dp)
@@ -157,29 +175,43 @@ fun PerfilScreen(
             }
         } else {
             Column(
-                Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 CabeceraPerfil(user, esTecnico, esVip)
 
-                if (porcentaje < 100 && esTecnico) {
-                    TarjetaCompletitud(porcentaje, faltantes, onIrAEditarTrabajador)
+                // Componentes visibles solo para trabajadores técnicos
+                if (esTecnico) {
+                    if (!esVip) {
+                        BannerPromocionPlanes(onIrAPlanes = onIrAPlanes)
+                    }
+
+                    if (porcentaje < 100) {
+                        TarjetaCompletitud(porcentaje, faltantes, onIrAEditarTrabajador)
+                    }
+
+                    if (esVip) {
+                        TarjetaVip(onCancelar = { dialogoVip = true })
+                    }
+
+                    TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarTrabajador)
                 }
 
-                if (esTecnico && esVip) TarjetaVip(onCancelar = { dialogoVip = true })
-                if (esTecnico) TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarTrabajador)
+                // Información de contacto (omite especialidad para clientes)
+                TarjetaContactoLocal(user, esTecnico)
 
-                TarjetaContacto(user)
-
-                // El portafolio sí se queda solo para técnicos
+                // Portafolio de evidencias fotográficas: exclusivo de técnicos
                 if (esTecnico) {
                     TarjetaPortafolio(ui.fotosPortafolio, ui.isUploadingFoto, abrirSelector) {
                         viewModel.eliminarFotoPortafolio(it)
                     }
                 }
 
-                // --- TARJETA DE RESEÑAS 100% DINÁMICAS (VISIBLE PARA TODOS) ---
+                // Reseñas recibidas
                 TarjetaBase {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -195,9 +227,7 @@ fun PerfilScreen(
 
                         if (ui.resenas.isNotEmpty()) {
                             TextButton(
-                                onClick = {
-                                    onVerTodasResenas()
-                                },
+                                onClick = { onVerTodasResenas() },
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
@@ -213,14 +243,17 @@ fun PerfilScreen(
                     Spacer(Modifier.height(8.dp))
 
                     if (ui.resenas.isEmpty()) {
-                        Divider(color = ServifyBorder, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 8.dp))
+                        HorizontalDivider(
+                            color = ServifyBorder,
+                            thickness = 0.5.dp,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
                         Text(
                             "Aún no tienes reseñas registradas.",
                             color = c.gris,
                             fontSize = 13.sp
                         )
                     } else {
-                        // Promedio dinámico real calculado de las reseñas
                         val promedioReal = ui.resenas.map { it.calificacion.toDouble() }.average()
 
                         Row(
@@ -254,9 +287,12 @@ fun PerfilScreen(
 
                         Spacer(Modifier.height(4.dp))
 
-                        // Imprime únicamente las últimas 2 reseñas reales
                         ui.resenas.take(2).forEach { resena ->
-                            Divider(color = ServifyBorder, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 8.dp))
+                            HorizontalDivider(
+                                color = ServifyBorder,
+                                thickness = 0.5.dp,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -285,7 +321,7 @@ fun PerfilScreen(
                     }
                 }
 
-                // Botones de acción inferiores
+                // Acciones de Perfil
                 BotonAccion(
                     texto = "Editar Perfil",
                     icono = Icons.Default.Settings,
@@ -294,17 +330,93 @@ fun PerfilScreen(
                     }
                 )
 
-                BotonAccion("Cerrar Sesión", Icons.AutoMirrored.Filled.ExitToApp, { dialogoCerrarSesion = true },
-                    colorFondo = c.rojoClaro, colorContenido = c.rojo, conBorde = false)
+                BotonAccion(
+                    "Cerrar Sesión",
+                    Icons.AutoMirrored.Filled.ExitToApp,
+                    { dialogoCerrarSesion = true },
+                    colorFondo = c.rojoClaro,
+                    colorContenido = c.rojo,
+                    conBorde = false
+                )
 
-                TextButton(onClick = { dialogoEliminar = true }, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.DeleteForever, null, tint = c.rojo.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
+                TextButton(
+                    onClick = { dialogoEliminar = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.DeleteForever,
+                        null,
+                        tint = c.rojo.copy(alpha = 0.8f),
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(6.dp))
-                    Text("Eliminar cuenta permanentemente", color = c.rojo.copy(alpha = 0.8f),
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Eliminar cuenta permanentemente",
+                        color = c.rojo.copy(alpha = 0.8f),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
                 Spacer(Modifier.height(14.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaContactoLocal(user: UsuarioModel?, esTecnico: Boolean) {
+    val c = PerfilColores
+
+    val categoriaDirecta = (
+            user?.categoriaNombre?.takeIf { it.isNotBlank() }
+                ?: SessionManager.categoriaNombre?.takeIf { it.isNotBlank() }
+                ?: ""
+            ).trim()
+
+    TarjetaBase {
+        Text(
+            "Información de contacto",
+            color = c.texto,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(4.dp))
+
+        if (esTecnico && categoriaDirecta.isNotBlank()) {
+            DatoContactoItem(
+                icono = Icons.Default.Build,
+                titulo = "ESPECIALIDAD / CATEGORÍA",
+                valor = categoriaDirecta
+            )
+            HorizontalDivider(color = c.borde, thickness = 0.5.dp)
+        }
+
+        DatoContactoItem(Icons.Default.Email, "CORREO", user?.correo ?: "No registrado")
+        HorizontalDivider(color = c.borde, thickness = 0.5.dp)
+        DatoContactoItem(Icons.Default.Phone, "TELÉFONO", user?.telefono?.ifBlank { null } ?: "No registrado")
+        HorizontalDivider(color = c.borde, thickness = 0.5.dp)
+        DatoContactoItem(Icons.Default.LocationOn, "DIRECCIÓN", user?.direccionTexto?.ifBlank { null } ?: "No especificada")
+    }
+}
+
+@Composable
+private fun DatoContactoItem(icono: ImageVector, titulo: String, valor: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Icon(icono, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(titulo, color = PerfilColores.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = valor,
+                color = PerfilColores.texto,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

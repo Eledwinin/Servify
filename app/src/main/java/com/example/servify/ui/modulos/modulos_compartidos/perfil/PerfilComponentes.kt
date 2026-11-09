@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.servify.data.SessionManager
 import com.example.servify.data.api.FotoPortafolioResponse
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.cards.TarjetaBase
@@ -69,6 +70,7 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
 @Composable
 fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
     val c = PerfilColores
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -78,34 +80,54 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
             .padding(16.dp)
     ) {
         Box(
-            Modifier.size(64.dp).clip(CircleShape).background(if (esVip) c.doradoClaro else c.verdeClaro),
+            Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(if (esVip) c.doradoClaro else c.verdeClaro),
             contentAlignment = Alignment.Center
         ) {
-            Text(iniciales(user?.nombre), color = if (esVip) c.dorado else c.verde,
-                fontWeight = FontWeight.Bold, fontSize = 22.sp)
+            Text(
+                text = iniciales(user?.nombre),
+                color = if (esVip) c.dorado else c.verde,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
         }
+
         Spacer(Modifier.width(16.dp))
+
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(user?.nombre ?: "Usuario", color = c.texto, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = user?.nombre ?: "Usuario",
+                    color = c.texto,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 if (esVip) {
                     Spacer(Modifier.width(6.dp))
                     Icon(Icons.Default.WorkspacePremium, "VIP", tint = c.dorado, modifier = Modifier.size(18.dp))
                 }
             }
+
             Text(
-                if (esVip && esTecnico) "Técnico Verificado PRO"
+                text = if (esVip && esTecnico) "Técnico Verificado PRO"
                 else user?.rol?.replaceFirstChar { it.uppercase() } ?: "Cliente",
                 color = if (esVip && esTecnico) c.dorado else c.gris,
                 fontSize = 13.sp,
                 fontWeight = if (esVip && esTecnico) FontWeight.Bold else FontWeight.Normal
             )
+
             if (esTecnico) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("%.1f".format(user?.calificacionPromedio ?: 0.0), color = c.texto,
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = "%.1f".format(user?.calificacionPromedio ?: 0.0),
+                        color = c.texto,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
@@ -122,11 +144,18 @@ fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: ()
         }
         LinearProgressIndicator(
             progress = { porcentaje / 100f },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-            color = c.verde, trackColor = c.verdeClaro
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = c.verde,
+            trackColor = c.verdeClaro
         )
-        Text("Te falta: ${faltantes.joinToString(", ")}. Toca para completarlo.",
-            fontSize = 12.sp, color = c.gris)
+        Text(
+            "Te falta: ${faltantes.joinToString(", ")}. Toca para completarlo.",
+            fontSize = 12.sp,
+            color = c.gris
+        )
     }
 }
 
@@ -140,8 +169,11 @@ fun TarjetaVip(onCancelar: () -> Unit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.WorkspacePremium, null, tint = c.dorado)
                     Spacer(Modifier.width(8.dp))
@@ -151,8 +183,11 @@ fun TarjetaVip(onCancelar: () -> Unit) {
                     Text("Cancelar Plan", color = c.rojo, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Text("Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
-                fontSize = 12.sp, color = Color(0xFF92400E))
+            Text(
+                "Disfrutas de visibilidad destacada, comisión reducida y postulaciones ilimitadas.",
+                fontSize = 12.sp,
+                color = Color(0xFF92400E)
+            )
         }
     }
 }
@@ -161,24 +196,37 @@ fun TarjetaVip(onCancelar: () -> Unit) {
 fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Unit) {
     val c = PerfilColores
     TarjetaBase {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text("Sobre mí", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             TextButton(onClick = onEditar, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                Text(if (biografia.isNullOrBlank()) "Agregar" else "Editar",
-                    color = c.verde, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    if (biografia.isNullOrBlank()) "Agregar" else "Editar",
+                    color = c.verde,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
         Text(
             biografia?.takeIf { it.isNotBlank() }
                 ?: "Cuéntales a los clientes quién eres y qué tipo de trabajos haces. Una buena descripción genera confianza.",
-            fontSize = 13.sp, color = if (biografia.isNullOrBlank()) c.gris else Color.DarkGray, lineHeight = 19.sp
+            fontSize = 13.sp,
+            color = if (biografia.isNullOrBlank()) c.gris else Color.DarkGray,
+            lineHeight = 19.sp
         )
         if ((anosExperiencia ?: 0) > 0) {
             Surface(color = c.verdeClaro, shape = RoundedCornerShape(10.dp)) {
-                Text("$anosExperiencia años de experiencia",
+                Text(
+                    "$anosExperiencia años de experiencia",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.verde)
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = c.verde
+                )
             }
         }
     }
@@ -187,9 +235,26 @@ fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Un
 @Composable
 fun TarjetaContacto(user: UsuarioModel?) {
     val c = PerfilColores
+    val esTecnico = SessionManager.esTecnico || (user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos"))
+
+    // Obtenemos el nombre del oficio/categoría únicamente si viene con texto real desde la BD
+    val categoriaNombre = user?.categoriaNombre?.takeIf { it.isNotBlank() }
+        ?: SessionManager.categoriaNombre?.takeIf { it.isNotBlank() }
+
     TarjetaBase {
         Text("Información de contacto", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
+
+        // SOLO se renderiza si es técnico Y la categoría NO es nula ni vacía
+        if (esTecnico && !categoriaNombre.isNullOrBlank()) {
+            DatoContacto(
+                icono = Icons.Default.Build,
+                titulo = "ESPECIALIDAD / CATEGORÍA",
+                valor = categoriaNombre
+            )
+            HorizontalDivider(color = c.borde, thickness = 0.5.dp)
+        }
+
         DatoContacto(Icons.Default.Email, "CORREO", user?.correo ?: "No registrado")
         HorizontalDivider(color = c.borde, thickness = 0.5.dp)
         DatoContacto(Icons.Default.Phone, "TELÉFONO", user?.telefono?.ifBlank { null } ?: "No registrado")
@@ -200,13 +265,22 @@ fun TarjetaContacto(user: UsuarioModel?) {
 
 @Composable
 private fun DatoContacto(icono: ImageVector, titulo: String, valor: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
         Icon(icono, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
         Column {
             Text(titulo, color = PerfilColores.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            Text(valor, color = PerfilColores.texto, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                valor,
+                color = PerfilColores.texto,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -217,7 +291,11 @@ fun SeccionResenasCliente() {
     TarjetaBase {
         Text("Reseñas como Cliente", color = c.texto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
-        Text("Aquí verás el historial de calificaciones que te han dejado los técnicos al finalizar los servicios.", fontSize = 12.sp, color = c.gris)
+        Text(
+            "Aquí verás el historial de calificaciones que te han dejado los técnicos al finalizar los servicios.",
+            fontSize = 12.sp,
+            color = c.gris
+        )
     }
 }
 
@@ -230,8 +308,11 @@ fun TarjetaPortafolio(
 ) {
     val c = PerfilColores
     TarjetaBase {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text("Mis Trabajos Realizados", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             TextButton(onClick = onSubir, enabled = !subiendo, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 if (subiendo) {
@@ -245,13 +326,20 @@ fun TarjetaPortafolio(
         }
 
         if (fotos.isEmpty()) {
-            Surface(shape = RoundedCornerShape(12.dp), color = ServifyInputBackground,
-                modifier = Modifier.fillMaxWidth().clickable { onSubir() }) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = ServifyInputBackground,
+                modifier = Modifier.fillMaxWidth().clickable { onSubir() }
+            ) {
                 Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.AddPhotoAlternate, null, tint = c.gris, modifier = Modifier.size(30.dp))
                     Text("Aún no has agregado fotos de tus trabajos.", color = c.gris, fontSize = 12.sp)
-                    Text("Toca aquí para subir evidencias fotográficas.", color = c.verde,
-                        fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Toca aquí para subir evidencias fotográficas.",
+                        color = c.verde,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         } else {
@@ -259,17 +347,28 @@ fun TarjetaPortafolio(
                 items(fotos, key = { it.id }) { foto ->
                     val url = if (foto.foto_url.startsWith("http")) foto.foto_url
                     else ChatConfig.SERVER_URL + foto.foto_url
-                    Box(Modifier.size(90.dp).clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, c.borde, RoundedCornerShape(12.dp))) {
+                    Box(
+                        Modifier
+                            .size(90.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, c.borde, RoundedCornerShape(12.dp))
+                    ) {
                         AsyncImage(
-                            model = url, contentDescription = "Trabajo técnico",
-                            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
+                            model = url,
+                            contentDescription = "Trabajo técnico",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
                         IconButton(
                             onClick = { onEliminar(foto.id) },
-                            modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).size(24.dp)
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(2.dp)
+                                .size(24.dp)
                                 .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-                        ) { Icon(Icons.Default.Close, "Eliminar foto", tint = Color.White, modifier = Modifier.size(14.dp)) }
+                        ) {
+                            Icon(Icons.Default.Close, "Eliminar foto", tint = Color.White, modifier = Modifier.size(14.dp))
+                        }
                     }
                 }
             }

@@ -41,8 +41,18 @@ data class UsuarioModel(
 
     @SerializedName("actualizado_en")
     val actualizadoEn: String? = null,
-    @SerializedName("biografia") val biografia: String? = null,
-    @SerializedName("anos_experiencia") val anosExperiencia: Int? = null
+
+    @SerializedName("biografia")
+    val biografia: String? = null,
+
+    @SerializedName("anos_experiencia")
+    val anosExperiencia: Int? = null,
+
+    @SerializedName("categoria_id", alternate = ["categoriaId", "id_categoria", "idCategoria"])
+    val categoriaId: Int? = null,
+
+    @SerializedName("categoria_nombre", alternate = ["categoriaNombre", "oficio", "categoria", "nombre_categoria", "nombreCategoria"])
+    val categoriaNombre: String? = null
 )
 
 typealias Usuario = UsuarioModel
