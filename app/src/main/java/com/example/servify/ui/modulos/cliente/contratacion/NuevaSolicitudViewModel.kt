@@ -19,6 +19,14 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
+private data class ResultadoCrear(
+    val isSuccess: Boolean,
+    val solicitudId: Int?,
+    val errorReal: String?,
+    val code: Int,
+    val mensajeServidor: String?
+)
+
 class NuevaSolicitudViewModel : ViewModel() {
     var categoria by mutableStateOf("")
     var titulo by mutableStateOf("")
@@ -87,22 +95,30 @@ class NuevaSolicitudViewModel : ViewModel() {
                     longitud = lng
                 )
 
-                val respuesta = RetrofitClient.instance.crearSolicitud(authHeader, request)
+                val resultado = withContext(Dispatchers.IO) {
+                    val respuesta = RetrofitClient.instance.crearSolicitud(authHeader, request)
+                    if (respuesta.isSuccessful) {
+                        val body = respuesta.body()
+                        ResultadoCrear(true, body?.id, null, respuesta.code(), body?.mensaje)
+                    } else {
+                        val error = respuesta.errorBody()?.string() ?: "Error desconocido"
+                        ResultadoCrear(false, null, error, respuesta.code(), null)
+                    }
+                }
 
-                if (!respuesta.isSuccessful) {
-                    val errorReal = respuesta.errorBody()?.string() ?: "Error desconocido"
-                    mensajeError = "Fallo del servidor: ${respuesta.code()} - $errorReal"
+                if (!resultado.isSuccess) {
+                    mensajeError = "Fallo del servidor: ${resultado.code} - ${resultado.errorReal}"
                     return@launch
                 }
 
-                val solicitudId = respuesta.body()?.id
+                val idFinal = resultado.solicitudId
 
                 if (fotos.isNotEmpty()) {
-                    if (solicitudId == null) {
-                        mensajeError = "Sin id. Mensaje del servidor: '${respuesta.body()?.mensaje}'"
+                    if (idFinal == null) {
+                        mensajeError = "Sin id. Mensaje del servidor: '${resultado.mensajeServidor}'"
                         return@launch
                     }
-                    val ok = subirFotos(authHeader, solicitudId, resolver)
+                    val ok = subirFotos(authHeader, idFinal, resolver)
                     if (!ok) {
                         mensajeError = "La solicitud se creó, pero no se pudieron subir las fotos."
                         return@launch
@@ -122,7 +138,7 @@ class NuevaSolicitudViewModel : ViewModel() {
         return try {
             android.util.Log.d("DEBUG_FOTOS", "Iniciando subida. Total de fotos seleccionadas: ${fotos.size}")
 
-            // Comprimir fuera del hilo principal
+            // Comprimir fuera del hilo principal en IO/Default
             val partes = withContext(Dispatchers.IO) {
                 fotos.mapIndexedNotNull { i, uri ->
                     android.util.Log.d("DEBUG_FOTOS", "Procesando foto $i con Uri: $uri")
@@ -145,14 +161,17 @@ class NuevaSolicitudViewModel : ViewModel() {
             }
 
             android.util.Log.d("DEBUG_FOTOS", "Enviando ${partes.size} partes al servidor para la solicitud ID: $solicitudId")
-            val res = RetrofitClient.instance.subirFotos(auth, solicitudId, partes)
-
-            if (!res.isSuccessful) {
-                android.util.Log.e("FOTOS", "Error del servidor al subir fotos. Código ${res.code()} - ${res.errorBody()?.string()}")
-            } else {
-                android.util.Log.d("FOTOS", "¡Fotos subidas exitosamente al servidor!")
+            val isSuccess = withContext(Dispatchers.IO) {
+                val res = RetrofitClient.instance.subirFotos(auth, solicitudId, partes)
+                if (!res.isSuccessful) {
+                    val err = res.errorBody()?.string()
+                    android.util.Log.e("FOTOS", "Error del servidor al subir fotos. Código ${res.code()} - $err")
+                } else {
+                    android.util.Log.d("FOTOS", "¡Fotos subidas exitosamente al servidor!")
+                }
+                res.isSuccessful
             }
-            res.isSuccessful
+            isSuccess
         } catch (e: Exception) {
             android.util.Log.e("FOTOS", "Excepción atrapada al subir fotos: ${e.message}")
             false

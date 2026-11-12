@@ -13,8 +13,10 @@ import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.repository.SolicitudesRepository
 import com.example.servify.data.repository.UsuarioRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MuroSolicitudesViewModel(
     private val solicitudesRepository: SolicitudesRepository = SolicitudesRepository(),
@@ -44,16 +46,23 @@ class MuroSolicitudesViewModel(
             isLoading = true
             mensajeError = null
             try {
-                // 1. Cargar solicitudes públicas
-                val res = RetrofitClient.instance.obtenerSolicitudes(
-                    "Bearer $token", SessionManager.latitud, SessionManager.longitud
-                )
-                if (res.isSuccessful) {
-                    solicitudes = res.body() ?: emptyList()
+                // 1. Cargar solicitudes públicas en IO
+                val (listaPub, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerSolicitudes(
+                        "Bearer $token", SessionManager.latitud, SessionManager.longitud
+                    )
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<SolicitudItemTecnico>(), e, res.code())
+                    }
+                }
+                if (err != null) {
+                    Log.e("MURO", "Código $code: $err")
+                    mensajeError = "Error $code al cargar solicitudes"
                 } else {
-                    val err = res.errorBody()?.string()
-                    Log.e("MURO", "Código ${res.code()}: $err")
-                    mensajeError = "Error ${res.code()} al cargar solicitudes"
+                    solicitudes = listaPub
                 }
 
                 // 2. Cargar solicitudes directas (Sobrecito ✉️)
@@ -162,18 +171,25 @@ class MuroSolicitudesViewModel(
         val token = SessionManager.token ?: return
         viewModelScope.launch {
             try {
-                val res = RetrofitClient.instance.crearPostulacion(
-                    "Bearer $token",
-                    CrearPostulacionRequest(solicitudId, precio, tiempo, mensaje)
-                )
-                if (res.isSuccessful) {
+                val (ok, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.crearPostulacion(
+                        "Bearer $token",
+                        CrearPostulacionRequest(solicitudId, precio, tiempo, mensaje)
+                    )
+                    if (res.isSuccessful) {
+                        Triple(true, null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(false, e, res.code())
+                    }
+                }
+                if (ok) {
                     mensajeExito = "Postulación enviada"
                     ignorar(solicitudId)
                 } else {
-                    val err = res.errorBody()?.string()
-                    Log.e("POSTULACION", "Código ${res.code()}: $err")
-                    mensajeError = if (res.code() == 409) "Ya te postulaste a esta solicitud"
-                    else "Error ${res.code()} al postularte"
+                    Log.e("POSTULACION", "Código $code: $err")
+                    mensajeError = if (code == 409) "Ya te postulaste a esta solicitud"
+                    else "Error $code al postularte"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"

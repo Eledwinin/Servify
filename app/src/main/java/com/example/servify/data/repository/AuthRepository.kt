@@ -59,49 +59,55 @@ class AuthRepository(
     }
 
     suspend fun solicitarRecuperacion(correo: String): Result<String> {
-        return try {
-            val respuesta = apiService.solicitarRecuperacion(
-                SolicitarRecuperacionRequest(correo)
-            )
-            if (respuesta.isSuccessful) {
-                Result.success(respuesta.body()?.mensaje ?: "Código enviado exitosamente")
-            } else {
-                val errorText = respuesta.errorBody()?.string() ?: "Sin detalle"
-                Result.failure(Exception("Error HTTP ${respuesta.code()}: $errorText"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.solicitarRecuperacion(
+                    SolicitarRecuperacionRequest(correo)
+                )
+                if (respuesta.isSuccessful) {
+                    Result.success(respuesta.body()?.mensaje ?: "Código enviado exitosamente")
+                } else {
+                    val errorText = respuesta.errorBody()?.string() ?: "Sin detalle"
+                    Result.failure(Exception("Error HTTP ${respuesta.code()}: $errorText"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
         }
     }
 
     suspend fun cambiarPassword(correo: String, codigo: String, nuevaPassword: String): Result<String> {
-        return try {
-            val respuesta = apiService.cambiarPassword(
-                CambiarPasswordRequest(correo, codigo, nuevaPassword)
-            )
-            if (respuesta.isSuccessful) {
-                Result.success(respuesta.body()?.mensaje ?: "Contraseña actualizada exitosamente")
-            } else {
-                Result.failure(Exception("El código es incorrecto o ha expirado"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.cambiarPassword(
+                    CambiarPasswordRequest(correo, codigo, nuevaPassword)
+                )
+                if (respuesta.isSuccessful) {
+                    Result.success(respuesta.body()?.mensaje ?: "Contraseña actualizada exitosamente")
+                } else {
+                    Result.failure(Exception("El código es incorrecto o ha expirado"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Error de red: ${e.localizedMessage}"))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("Error de red: ${e.localizedMessage}"))
         }
     }
 
     suspend fun verificarCodigoOtp(correo: String, codigo: String): Result<String> {
-        return try {
-            val respuesta = apiService.verificarCodigoOtp(
-                CambiarPasswordRequest(correo = correo, codigo = codigo, nuevaPassword = "")
-            )
-            if (respuesta.isSuccessful) {
-                Result.success(respuesta.body()?.mensaje ?: "Código válido")
-            } else {
-                val errorText = respuesta.errorBody()?.string() ?: "Código incorrecto"
-                Result.failure(Exception(errorText))
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.verificarCodigoOtp(
+                    CambiarPasswordRequest(correo = correo, codigo = codigo, nuevaPassword = "")
+                )
+                if (respuesta.isSuccessful) {
+                    Result.success(respuesta.body()?.mensaje ?: "Código válido")
+                } else {
+                    val errorText = respuesta.errorBody()?.string() ?: "Código incorrecto"
+                    Result.failure(Exception(errorText))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
             }
-        } catch (e: Exception) {
-            Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
         }
     }
 }

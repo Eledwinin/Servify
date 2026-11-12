@@ -2,6 +2,8 @@ package com.example.servify.ui.modulos.modulos_compartidos.messages
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,8 +33,10 @@ import com.example.servify.data.agora.AgoraManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.ui.theme.*
 import io.agora.rtc2.IRtcEngineEventHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun CallScreen(
@@ -41,6 +45,7 @@ fun CallScreen(
     esVideo: Boolean
 ) {
     val context = LocalContext.current
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val conversacionId = remember { channelName.removePrefix("chat_").toIntOrNull() ?: 0 }
 
     var estaSilenciado by remember { mutableStateOf(false) }
@@ -56,15 +61,17 @@ fun CallScreen(
     val agoraManager = remember {
         val handler = object : IRtcEngineEventHandler() {
             override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
-                estadoConexion = "Llamando..."
+                mainHandler.post { estadoConexion = "Llamando..." }
             }
             override fun onUserJoined(uid: Int, elapsed: Int) {
-                uidRemoto = uid
-                alguienSeUnio = true
-                estadoConexion = "En llamada"
+                mainHandler.post {
+                    uidRemoto = uid
+                    alguienSeUnio = true
+                    estadoConexion = "En llamada"
+                }
             }
             override fun onUserOffline(uid: Int, reason: Int) {
-                finalizada = true
+                mainHandler.post { finalizada = true }
             }
             override fun onError(err: Int) {
                 android.util.Log.e("AGORA", "onError: $err")
@@ -79,29 +86,38 @@ fun CallScreen(
     suspend fun unirse() {
         try {
             val auth = "Bearer ${SessionManager.token}"
-            val res = RetrofitClient.instance.obtenerTokenLlamada(auth, conversacionId)
+            val res = withContext(Dispatchers.IO) {
+                RetrofitClient.instance.obtenerTokenLlamada(auth, conversacionId)
+            }
 
             if (res.isSuccessful && res.body()?.token != null) {
                 val body = res.body()!!
                 val canal = body.canal ?: "chat_$conversacionId"
 
-                agoraManager.unirseCanal(canal, body.token, esVideo)
+                withContext(Dispatchers.IO) {
+                    agoraManager.unirseCanal(canal, body.token, esVideo)
+                }
             } else {
-                Toast.makeText(context, "No se pudo iniciar la llamada (${res.code()})", Toast.LENGTH_LONG).show()
-                navController.popBackStack()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "No se pudo iniciar la llamada (${res.code()})", Toast.LENGTH_LONG).show()
+                    navController.popBackStack()
+                }
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "Error de conexión con el servidor", Toast.LENGTH_LONG).show()
-            navController.popBackStack()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Error de conexión con el servidor", Toast.LENGTH_LONG).show()
+                navController.popBackStack()
+            }
         }
     }
 
     fun colgar() {
-        if (alguienSeUnio) LlamadasManager.finalizar(conversacionId)
-        else LlamadasManager.cancelar(conversacionId)
+        scope.launch(Dispatchers.IO) {
+            if (alguienSeUnio) LlamadasManager.finalizar(conversacionId)
+            else LlamadasManager.cancelar(conversacionId)
+        }
         navController.popBackStack()
     }
-
 
     // Permisos
     val permisos = remember {
@@ -173,8 +189,10 @@ fun CallScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            agoraManager.salirCanal()
-            agoraManager.destruir()
+            scope.launch(Dispatchers.IO) {
+                agoraManager.salirCanal()
+                agoraManager.destruir()
+            }
         }
     }
 

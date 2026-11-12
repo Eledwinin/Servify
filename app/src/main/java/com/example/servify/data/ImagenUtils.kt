@@ -6,27 +6,29 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import kotlin.io.use
 import kotlin.use
 
-fun uriAJpegBytes(
+suspend fun uriAJpegBytes(
     resolver: ContentResolver,
     uri: Uri,
     maxLado: Int = 1280,
     calidad: Int = 80
-): ByteArray? {
-    // 1) Leer solo las dimensiones
+): ByteArray? = withContext(Dispatchers.IO) {
+    // 1) Leer solo las dimensiones en I/O
     val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, limites) }
-    if (limites.outWidth <= 0) return null
+    if (limites.outWidth <= 0) return@withContext null
 
-    // dcodifica reducido para no gastar memoria
+    // decodifica reducido para no gastar memoria
     var muestra = 1
     while (limites.outWidth / muestra > maxLado * 2 || limites.outHeight / muestra > maxLado * 2) muestra *= 2
     val opciones = BitmapFactory.Options().apply { inSampleSize = muestra }
     var bmp = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) }
-        ?: return null
+        ?: return@withContext null
 
     // Corrige rotación según EXIF
     val grados = try {
@@ -40,18 +42,21 @@ fun uriAJpegBytes(
         } ?: 0f
     } catch (e: Exception) { 0f }
 
-    if (grados != 0f) {
-        val m = Matrix().apply { postRotate(grados) }
-        bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, m, true)
+    // Procesamiento y compresión de imagen intensivos en CPU fuera del hilo principal
+    withContext(Dispatchers.Default) {
+        if (grados != 0f) {
+            val m = Matrix().apply { postRotate(grados) }
+            bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, m, true)
+        }
+
+        // ajusta al tamaño máximo y comprimir a JPEG
+        val escala = minOf(1f, maxLado.toFloat() / maxOf(bmp.width, bmp.height))
+        val final = if (escala < 1f)
+            Bitmap.createScaledBitmap(bmp, (bmp.width * escala).toInt(), (bmp.height * escala).toInt(), true)
+        else bmp
+
+        val salida = ByteArrayOutputStream()
+        final.compress(Bitmap.CompressFormat.JPEG, calidad, salida)
+        salida.toByteArray()
     }
-
-    // ajusta al tamaño máximo y comprimir a JPEG
-    val escala = minOf(1f, maxLado.toFloat() / maxOf(bmp.width, bmp.height))
-    val final = if (escala < 1f)
-        Bitmap.createScaledBitmap(bmp, (bmp.width * escala).toInt(), (bmp.height * escala).toInt(), true)
-    else bmp
-
-    val salida = ByteArrayOutputStream()
-    final.compress(Bitmap.CompressFormat.JPEG, calidad, salida)
-    return salida.toByteArray()
 }

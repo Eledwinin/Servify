@@ -126,6 +126,10 @@ fun MapaScreen(
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var mapLibreInstance by remember { mutableStateOf<MapLibreMap?>(null) }
 
+    // Memorizar iconos para evitar recrear Bitmaps en cada actualización de ubicación
+    val iconoRojo = remember { crearIconoTinte(context, android.R.drawable.ic_menu_mapmode, android.graphics.Color.RED) }
+    val iconoAzul = remember { crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, Color.Blue.toArgb()) }
+
     DisposableEffect(Unit) {
         onDispose {
             mapViewRef?.onStop()
@@ -139,8 +143,6 @@ fun MapaScreen(
 
         if (latDestino != null && lngDestino != null) {
             // CASO A: Venimos desde los detalles de una Solicitud -> Mostrar pin de la avería
-            // Cambia esta línea en tu MapaScreen.kt:
-            val iconoRojo = crearIconoTinte(context, android.R.drawable.ic_menu_mapmode, android.graphics.Color.RED)
             map.addMarker(
                 MarkerOptions()
                     .position(ubicacionPrincipal)
@@ -150,8 +152,6 @@ fun MapaScreen(
             )
         } else {
             // CASO B: Modo normal (Home) -> Mostrar ubicación del usuario y técnicos cercanos
-            val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, Color.Blue.toArgb())
-
             map.addMarker(
                 MarkerOptions()
                     .position(ubicacionPrincipal)

@@ -7,10 +7,12 @@ import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.RegisterRequest
 import com.example.servify.data.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 sealed class RegistroState {
     object Idle : RegistroState()
@@ -40,20 +42,24 @@ class RegistroViewModel(
         viewModelScope.launch {
             _cargandoCategorias.value = true
             try {
-                val response = RetrofitClient.instance.getCategories()
-                Log.d("CATEGORIAS_DEBUG", "Status Code: ${response.code()}")
-
-                if (response.isSuccessful) {
-                    val lista = response.body()
-                    Log.d("CATEGORIAS_DEBUG", "Categorias recibidas: $lista")
-                    if (!lista.isNullOrEmpty()) {
-                        _categorias.value = lista
+                val (lista, errorStr, code) = withContext(Dispatchers.IO) {
+                    val response = RetrofitClient.instance.getCategories()
+                    if (response.isSuccessful) {
+                        Triple(response.body(), null, response.code())
                     } else {
-                        Log.w("CATEGORIAS_DEBUG", "La lista llegó vacía o nula")
+                        val e = response.errorBody()?.string()
+                        Triple(null, e, response.code())
                     }
+                }
+                Log.d("CATEGORIAS_DEBUG", "Status Code: $code")
+
+                if (!lista.isNullOrEmpty()) {
+                    Log.d("CATEGORIAS_DEBUG", "Categorias recibidas: $lista")
+                    _categorias.value = lista
+                } else if (errorStr != null) {
+                    Log.e("CATEGORIAS_DEBUG", "Error HTTP $code: $errorStr")
                 } else {
-                    val errorStr = response.errorBody()?.string()
-                    Log.e("CATEGORIAS_DEBUG", "Error HTTP ${response.code()}: $errorStr")
+                    Log.w("CATEGORIAS_DEBUG", "La lista llegó vacía o nula")
                 }
             } catch (e: Exception) {
                 Log.e("CATEGORIAS_DEBUG", "Excepción al cargar categorías: ${e.message}", e)
@@ -82,14 +88,21 @@ class RegistroViewModel(
                     rol = rol
                 )
 
-                val response = repository.registrarUsuario(request)
+                val (isSuccess, mensajeExito, errorBody) = withContext(Dispatchers.IO) {
+                    val response = repository.registrarUsuario(request)
+                    if (response.isSuccessful && response.body() != null) {
+                        Triple(true, response.body()!!.mensaje, null)
+                    } else {
+                        val err = response.errorBody()?.string() ?: "Error al registrar"
+                        Triple(false, null, err)
+                    }
+                }
 
-                if (response.isSuccessful && response.body() != null) {
-                    _estadoRegistro.value = RegistroState.Success(response.body()!!.mensaje)
+                if (isSuccess && mensajeExito != null) {
+                    _estadoRegistro.value = RegistroState.Success(mensajeExito)
                     onSuccess()
                 } else {
-                    val errorBody = response.errorBody()?.string() ?: "Error al registrar"
-                    _estadoRegistro.value = RegistroState.Error(errorBody)
+                    _estadoRegistro.value = RegistroState.Error(errorBody ?: "Error al registrar")
                 }
             } catch (e: Exception) {
                 _estadoRegistro.value = RegistroState.Error("Error de conexión: ${e.localizedMessage}")

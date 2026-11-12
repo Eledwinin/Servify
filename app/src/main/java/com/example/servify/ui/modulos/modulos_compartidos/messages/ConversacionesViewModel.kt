@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ConversacionItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ConversacionesViewModel : ViewModel() {
     var conversaciones by mutableStateOf<List<ConversacionItem>>(emptyList())
@@ -20,12 +22,20 @@ class ConversacionesViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
-                val res = RetrofitClient.instance.obtenerConversaciones("Bearer $token")
-                if (res.isSuccessful) {
-                    conversaciones = res.body() ?: emptyList()
+                val (lista, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerConversaciones("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<ConversacionItem>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    conversaciones = lista
                 } else {
-                    android.util.Log.e("CONVERSACIONES", "Código ${res.code()} - ${res.errorBody()?.string()}")
-                    mensajeError = "Error ${res.code()} al cargar tus mensajes"
+                    android.util.Log.e("CONVERSACIONES", "Código $code - $err")
+                    mensajeError = "Error $code al cargar tus mensajes"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"

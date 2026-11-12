@@ -10,7 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.Mensaje
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class ChatViewModel : ViewModel() {
@@ -31,9 +33,9 @@ class ChatViewModel : ViewModel() {
         if (conversacionId == id) return
         conversacionId = id
         val token = SessionManager.token ?: return
-        miId = idDesdeToken(token)
 
         viewModelScope.launch {
+            miId = withContext(Dispatchers.Default) { idDesdeToken(token) }
             isLoading = true
             sincronizar()
             isLoading = false
@@ -61,7 +63,6 @@ class ChatViewModel : ViewModel() {
             }
         }
 
-
         s.onLlamadaEntrante = { convId, esVideo ->
             if (convId == conversacionId) {
                 viewModelScope.launch {
@@ -79,14 +80,20 @@ class ChatViewModel : ViewModel() {
         val token = SessionManager.token ?: return
         try {
             val ultimo = mensajes.lastOrNull()?.id
-            val res = RetrofitClient.instance.obtenerMensajes("Bearer $token", conversacionId, ultimo)
-            if (res.isSuccessful) {
-                val body = res.body()
-                activa = body?.activa ?: true
-                body?.mensajes?.forEach { agregar(it) }
+            val (body, ok, code) = withContext(Dispatchers.IO) {
+                val res = RetrofitClient.instance.obtenerMensajes("Bearer $token", conversacionId, ultimo)
+                if (res.isSuccessful) {
+                    Triple(res.body(), true, res.code())
+                } else {
+                    Triple(null, false, res.code())
+                }
+            }
+            if (ok && body != null) {
+                activa = body.activa
+                body.mensajes.forEach { agregar(it) }
                 marcarLeidos()
             } else {
-                mensajeError = "Error ${res.code()} al cargar el chat"
+                mensajeError = "Error $code al cargar el chat"
             }
         } catch (e: Exception) {
             mensajeError = "Error de conexión: ${e.message}"
@@ -96,7 +103,9 @@ class ChatViewModel : ViewModel() {
     private suspend fun marcarLeidos() {
         val token = SessionManager.token ?: return
         try {
-            RetrofitClient.instance.marcarLeidos("Bearer $token", conversacionId)
+            withContext(Dispatchers.IO) {
+                RetrofitClient.instance.marcarLeidos("Bearer $token", conversacionId)
+            }
         } catch (_: Exception) { }
     }
 

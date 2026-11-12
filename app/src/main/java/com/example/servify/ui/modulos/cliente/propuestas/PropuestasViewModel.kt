@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.PropuestaItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 class PropuestasViewModel : ViewModel() {
@@ -25,12 +27,20 @@ class PropuestasViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
-                val res = RetrofitClient.instance.obtenerPropuestas("Bearer $token", solicitudId)
-                if (res.isSuccessful) {
-                    propuestas = res.body() ?: emptyList()
+                val (lista, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerPropuestas("Bearer $token", solicitudId)
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<PropuestaItem>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    propuestas = lista
                 } else {
-                    android.util.Log.e("PROPUESTAS", "Código ${res.code()} - ${res.errorBody()?.string()}")
-                    mensajeError = "Error ${res.code()} al cargar las propuestas"
+                    android.util.Log.e("PROPUESTAS", "Código $code - $err")
+                    mensajeError = "Error $code al cargar las propuestas"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"
@@ -56,14 +66,21 @@ class PropuestasViewModel : ViewModel() {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
             try {
-                val res = llamada("Bearer $token")
-                if (res.isSuccessful) {
+                val (exitoLlamada, err, code) = withContext(Dispatchers.IO) {
+                    val res = llamada("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(true, null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(false, e, res.code())
+                    }
+                }
+                if (exitoLlamada) {
                     mensajeExito = exito
                     cargar(solicitudActual)
                 } else {
-                    val err = res.errorBody()?.string()
-                    android.util.Log.e("PROPUESTAS", "Código ${res.code()} - $err")
-                    mensajeError = "Error ${res.code()}: ${err ?: "no se pudo completar"}"
+                    android.util.Log.e("PROPUESTAS", "Código $code - $err")
+                    mensajeError = "Error $code: ${err ?: "no se pudo completar"}"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"

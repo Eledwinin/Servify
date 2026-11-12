@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.repository.UsuarioRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeViewModel(
     private val repository: UsuarioRepository = UsuarioRepository()
@@ -77,48 +79,60 @@ class HomeViewModel(
         aplicarFiltrosYOrden()
     }
 
-
     fun seleccionarCategoria(categoria: String?) {
         _categoriaSeleccionada.value = if (_categoriaSeleccionada.value == categoria) null else categoria
         aplicarFiltrosYOrden()
     }
 
     private fun aplicarFiltrosYOrden() {
-        var listaFiltrada = listaOriginal
+        viewModelScope.launch {
+            val query = _queryBusqueda.value.trim()
+            val cat = _categoriaSeleccionada.value
+            val lat = latCliente
+            val lng = lngCliente
+            val original = listaOriginal
 
-        // 1. Filtrar por texto de búsqueda (nombre u oficio)
-        val query = _queryBusqueda.value.trim()
-        if (query.isNotEmpty()) {
-            listaFiltrada = listaFiltrada.filter { tecnico ->
-                tecnico.nombreCompleto.contains(query, ignoreCase = true) ||
-                        tecnico.oficio.contains(query, ignoreCase = true)
+            val listaFiltrada = withContext(Dispatchers.Default) {
+                var temp = original
+
+                // 1. Filtrar por texto de búsqueda (nombre u oficio)
+                if (query.isNotEmpty()) {
+                    temp = temp.filter { tecnico ->
+                        tecnico.nombreCompleto.contains(query, ignoreCase = true) ||
+                                tecnico.oficio.contains(query, ignoreCase = true)
+                    }
+                }
+
+                // 2. Filtrar por categoría / oficio seleccionado
+                if (cat != null) {
+                    temp = temp.filter { tecnico ->
+                        tecnico.oficio.equals(cat, ignoreCase = true)
+                    }
+                }
+
+                // 3. Ordenar por distancia si hay coordenadas GPS activas
+                if (lat != 0.0 && lng != 0.0) {
+                    temp = temp.sortedBy { tecnico ->
+                        calcularDistanciaMetros(lat, lng, tecnico.latitud, tecnico.longitud)
+                    }
+                }
+                temp
             }
-        }
 
-        // 2. Filtrar por categoría / oficio seleccionado
-        val cat = _categoriaSeleccionada.value
-        if (cat != null) {
-            listaFiltrada = listaFiltrada.filter { tecnico ->
-                tecnico.oficio.equals(cat, ignoreCase = true)
-            }
+            _listaProfesionales.value = listaFiltrada
         }
-
-        // 3. Ordenar por distancia si hay coordenadas GPS activas
-        if (latCliente != 0.0 && lngCliente != 0.0) {
-            listaFiltrada = listaFiltrada.sortedBy { tecnico ->
-                calcularDistanciaMetros(tecnico.latitud, tecnico.longitud)
-            }
-        }
-
-        _listaProfesionales.value = listaFiltrada
     }
 
-    fun calcularDistanciaMetros(latTecnico: Double?, lngTecnico: Double?): Float {
+    fun calcularDistanciaMetros(latCliente: Double, lngCliente: Double, latTecnico: Double?, lngTecnico: Double?): Float {
         if (latCliente == 0.0 || lngCliente == 0.0 || latTecnico == null || lngTecnico == null) {
             return Float.MAX_VALUE
         }
         val resultado = FloatArray(1)
         Location.distanceBetween(latCliente, lngCliente, latTecnico, lngTecnico, resultado)
         return resultado[0]
+    }
+
+    fun calcularDistanciaMetros(latTecnico: Double?, lngTecnico: Double?): Float {
+        return calcularDistanciaMetros(latCliente, lngCliente, latTecnico, lngTecnico)
     }
 }

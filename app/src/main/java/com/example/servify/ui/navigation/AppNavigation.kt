@@ -120,6 +120,20 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
 fun AppNavigation() {
     val navController = rememberNavController()
 
+    // Manejar navegación automática si se presionó una notificación nativa
+    val rutaPendiente = com.example.servify.MainActivity.rutaDestinoPendiente.value
+    LaunchedEffect(rutaPendiente) {
+        if (!rutaPendiente.isNullOrBlank()) {
+            try {
+                navController.navigate(rutaPendiente)
+            } catch (e: Exception) {
+                android.util.Log.e("NAV_NOTIF", "Error navegando a la ruta de notificación: $rutaPendiente", e)
+            } finally {
+                com.example.servify.MainActivity.rutaDestinoPendiente.value = null
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = Rutas.Login.ruta) {
             composable(route = Rutas.Login.ruta) {

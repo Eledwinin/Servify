@@ -129,6 +129,9 @@ fun MapaSolicitudesScreen(
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var mapLibreInstance by remember { mutableStateOf<MapLibreMap?>(null) }
 
+    // Memorizar icono para evitar recrear Bitmaps en cada actualización de ubicación
+    val iconoAzul = remember { crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, ServifyBluePrimary.toArgb()) }
+
     DisposableEffect(Unit) {
         onDispose {
             mapViewRef?.onStop()
@@ -139,8 +142,6 @@ fun MapaSolicitudesScreen(
     LaunchedEffect(listaSolicitudes, mapLibreInstance, userLat, userLng) {
         val map = mapLibreInstance ?: return@LaunchedEffect
         map.clear()
-
-        val iconoAzul = crearIconoTinte(context, android.R.drawable.ic_menu_myplaces, ServifyBluePrimary.toArgb())
 
         map.addMarker(
             MarkerOptions()

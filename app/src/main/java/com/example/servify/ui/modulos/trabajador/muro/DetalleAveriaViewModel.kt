@@ -1,6 +1,5 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
-import android.R.attr.timeZone
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,7 +9,9 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.DetalleSolicitud
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -26,12 +27,20 @@ class DetalleAveriaViewModel : ViewModel() {
         viewModelScope.launch {
             isLoading = true
             try {
-                val res = RetrofitClient.instance.obtenerDetalleSolicitud("Bearer $token", id)
-                if (res.isSuccessful) {
-                    detalle = res.body()
+                val (det, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerDetalleSolicitud("Bearer $token", id)
+                    if (res.isSuccessful) {
+                        Triple(res.body(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(null, e, res.code())
+                    }
+                }
+                if (det != null) {
+                    detalle = det
                 } else {
-                    android.util.Log.e("DETALLE", "Código ${res.code()} - ${res.errorBody()?.string()}")
-                    mensajeError = "Error ${res.code()} al cargar la solicitud"
+                    android.util.Log.e("DETALLE", "Código $code - $err")
+                    mensajeError = "Error $code al cargar la solicitud"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"
@@ -46,16 +55,24 @@ class DetalleAveriaViewModel : ViewModel() {
         val d = detalle ?: return
         viewModelScope.launch {
             try {
-                val res = RetrofitClient.instance.crearPostulacion(
-                    "Bearer $token",
-                    CrearPostulacionRequest(d.id, precio, tiempo, mensaje)
-                )
-                if (res.isSuccessful) {
+                val (ok, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.crearPostulacion(
+                        "Bearer $token",
+                        CrearPostulacionRequest(d.id, precio, tiempo, mensaje)
+                    )
+                    if (res.isSuccessful) {
+                        Triple(true, null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(false, e, res.code())
+                    }
+                }
+                if (ok) {
                     postulacionExitosa = true
                 } else {
-                    android.util.Log.e("POSTULACION", "Código ${res.code()} - ${res.errorBody()?.string()}")
-                    mensajeError = if (res.code() == 409) "Ya te postulaste a esta solicitud"
-                    else "Error ${res.code()} al postularte"
+                    android.util.Log.e("POSTULACION", "Código $code - $err")
+                    mensajeError = if (code == 409) "Ya te postulaste a esta solicitud"
+                    else "Error $code al postularte"
                 }
             } catch (e: Exception) {
                 mensajeError = "Error de conexión: ${e.message}"
@@ -102,6 +119,4 @@ class DetalleAveriaViewModel : ViewModel() {
             0
         }
     }
-
-
 }

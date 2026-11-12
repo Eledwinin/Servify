@@ -10,7 +10,9 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.repository.SolicitudesRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MisSolicitudesViewModel(
     private val solicitudesRepository: SolicitudesRepository = SolicitudesRepository()
@@ -39,12 +41,20 @@ class MisSolicitudesViewModel(
         viewModelScope.launch {
             isLoading = true
             try {
-                val res = RetrofitClient.instance.obtenerMisSolicitudes("Bearer $token")
-                if (res.isSuccessful) {
-                    solicitudes = res.body() ?: emptyList()
+                val (resultado, errorTexto, codigo) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerMisSolicitudes("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val err = res.errorBody()?.string()
+                        Triple(emptyList<MiSolicitud>(), err, res.code())
+                    }
+                }
+                if (errorTexto == null) {
+                    solicitudes = resultado
                 } else {
-                    Log.e("MIS_SOL", "Código ${res.code()}: ${res.errorBody()?.string()}")
-                    mensajeError = "Error ${res.code()} al cargar tus solicitudes"
+                    Log.e("MIS_SOL", "Código $codigo: $errorTexto")
+                    mensajeError = "Error $codigo al cargar tus solicitudes"
                 }
             } catch (e: Exception) {
                 Log.e("MIS_SOL", "Excepción al cargar solicitudes: ${e.message}", e)
