@@ -36,7 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
+import com.example.servify.ui.componentes.feedback.DialogoPoliticaPrivacidad
+import com.example.servify.ui.componentes.feedback.DialogoTerminosCondiciones
 import com.example.servify.ui.componentes.inputs.CampoTexto
+import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +61,10 @@ fun RegistroTrabajadorScreen(
     var especialidad by remember { mutableStateOf("") }
     var menuCategoriasExpandido by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
+    var aceptoTerminos by remember { mutableStateOf(false) }
+
+    var mostrarModalTerminos by remember { mutableStateOf(false) }
+    var mostrarModalPoliticas by remember { mutableStateOf(false)}
 
     LaunchedEffect(Unit) {
         if (categoriasDisponibles.isEmpty()) {
@@ -65,8 +72,6 @@ fun RegistroTrabajadorScreen(
         }
     }
 
-    var pdfUri by remember { mutableStateOf<Uri?>(null) }
-    var pdfNombre by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(estadoRegistro) {
         when (val estado = estadoRegistro) {
@@ -80,28 +85,13 @@ fun RegistroTrabajadorScreen(
         }
     }
 
-    val selectorPdf = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        pdfUri = uri
-        if (uri != null) {
-            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (cursor.moveToFirst() && nameIndex >= 0) {
-                    pdfNombre = cursor.getString(nameIndex)
-                }
-            }
-        } else {
-            pdfNombre = null
-        }
-    }
-
     val scrollState = rememberScrollState()
 
     val formularioValido = nombre.isNotBlank() &&
             email.isNotBlank() &&
             telefono.isNotBlank() &&
             especialidad.isNotBlank() &&
+            aceptoTerminos &&
             password.isNotBlank() &&
             estadoRegistro !is RegistroState.Loading
 
@@ -333,92 +323,40 @@ fun RegistroTrabajadorScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Sección de Currículum
-            Text(
-                text = "CURRÍCULUM O CERTIFICADOS (OPCIONAL)",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = ServifyBluePrimary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
 
-            if (pdfUri == null) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { selectorPdf.launch("application/pdf") },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ServifyCianSoft.copy(alpha = 0.4f)),
-                    border = BorderStroke(1.dp, ServifyBluePrimary.copy(alpha = 0.6f))
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Checkbox(
+                    checked = aceptoTerminos,
+                    onCheckedChange = { aceptoTerminos = it }
+                )
+
+                // Contenedor para los textos de los enlaces
+                Row(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.UploadFile,
-                            contentDescription = "Subir PDF",
-                            tint = ServifyBluePrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Adjuntar CV en formato PDF",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ServifyBluePrimary
-                        )
-                    }
-                }
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
-                    border = BorderStroke(1.dp, ServifyBorder)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Description,
-                            contentDescription = "PDF adjunto",
-                            tint = ServifyBluePrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = pdfNombre ?: "documento.pdf",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = ServifyTextTitle,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1
-                        )
-                        IconButton(
-                            onClick = {
-                                pdfUri = null
-                                pdfNombre = null
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Close,
-                                contentDescription = "Eliminar PDF",
-                                tint = ServifyTextMuted
-                            )
-                        }
-                    }
+                    Text(text = "Acepto los ", fontSize = 12.sp, color = ServifyTextBody)
+                    Text(
+                        text = "Términos",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { mostrarModalTerminos = true }
+                    )
+                    Text(text = " y las ", fontSize = 12.sp, color = ServifyTextBody)
+                    Text(
+                        text = "Políticas",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { mostrarModalPoliticas = true }
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
 
             if (estadoRegistro is RegistroState.Loading) {
                 Box(
@@ -460,6 +398,26 @@ fun RegistroTrabajadorScreen(
                     modifier = Modifier.clickable { onIrALogin() }
                 )
             }
+        }
+        if (mostrarModalTerminos) {
+            DialogoTerminosCondiciones(
+                rol = "TECNICO",
+                onDismiss = { mostrarModalTerminos = false },
+                onAceptar = {
+                    aceptoTerminos = true
+                    mostrarModalTerminos = false
+                }
+            )
+        }
+
+        if (mostrarModalPoliticas){
+            DialogoPoliticaPrivacidad(
+                onDismiss = {mostrarModalPoliticas=false},
+                onAceptar = {
+                    aceptoTerminos = true
+                    mostrarModalPoliticas=false
+                }
+            )
         }
     }
 }

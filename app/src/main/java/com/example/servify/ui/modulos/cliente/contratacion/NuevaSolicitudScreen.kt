@@ -74,16 +74,9 @@ fun NuevaSolicitudScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.padding(end = 16.dp)
                     ) {
-                        Text(
-                            text = "MODO CLIENTE",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ServifyTextMuted
-                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifyBackground),
                 windowInsets = WindowInsets(0.dp)
             )
         },

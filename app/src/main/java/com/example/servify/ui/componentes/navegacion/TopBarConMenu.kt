@@ -118,6 +118,8 @@ fun TopBarConMenu(
                         },
                         onClick = {
                             expanded = false
+                            val rolActual = if (SessionManager.esTecnico) "TECNICO" else "CLIENTE"
+                            navController.navigate(Rutas.TerminosCondiciones.crearRuta(rolActual))
                         },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )

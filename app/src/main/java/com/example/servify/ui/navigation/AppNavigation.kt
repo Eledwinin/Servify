@@ -49,6 +49,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.messages.Conversacione
 import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.TerminosCondicionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
@@ -246,7 +247,7 @@ fun AppNavigation() {
                 )
             }
 
-            // 🚀 DETALLE TÉCNICO CON PARAMETRO MOSTRARBOTON PASADO CORRECTAMENTE
+            // DETALLE TÉCNICO CON PARAMETRO MOSTRARBOTON PASADO CORRECTAMENTE
             composable(
                 route = Rutas.DetalleTecnico.ruta,
                 arguments = listOf(
@@ -282,6 +283,19 @@ fun AppNavigation() {
                 DetalleAveriaScreen(
                     idSolicitud = idSolicitud,
                     navController = navController,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Rutas.TerminosCondiciones.ruta,
+                arguments = listOf(
+                    navArgument("role") { type = NavType.StringType; defaultValue = "CLIENTE" }
+                )
+            ) { backStackEntry ->
+                val role = backStackEntry.arguments?.getString("role") ?: "CLIENTE"
+                TerminosCondicionesScreen(
+                    userRole = role,
                     onBackClick = { navController.popBackStack() }
                 )
             }

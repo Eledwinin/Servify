@@ -13,10 +13,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.ui.componentes.botones.BotonPrincipal
+import com.example.servify.ui.componentes.feedback.DialogoPoliticaPrivacidad
+import com.example.servify.ui.componentes.feedback.DialogoTerminosCondiciones
 import com.example.servify.ui.componentes.inputs.CampoTexto
 import com.example.servify.ui.theme.*
 
@@ -44,6 +43,11 @@ fun RegistroClienteScreen(
     var telefono by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmarPassword by remember { mutableStateOf("") }
+    var aceptoTerminos by remember { mutableStateOf(false) }
+
+    // Estado para controlar la visibilidad del modal de Términos y Condiciones
+    var mostrarModalTerminos by remember { mutableStateOf(false) }
+    var mostrarModalPoliticas by remember {mutableStateOf(false)}
 
     val context = LocalContext.current
     val estadoRegistro by viewModel.estadoRegistro.collectAsState()
@@ -61,17 +65,20 @@ fun RegistroClienteScreen(
     }
 
     val scrollState = rememberScrollState()
+
+    // Validación blindada que ahora exige marcar obligatoriamente el checkbox de términos
     val formularioValido = nombre.isNotBlank() &&
             email.isNotBlank() &&
             telefono.isNotBlank() &&
             password.isNotBlank() &&
             password == confirmarPassword &&
+            aceptoTerminos &&
             estadoRegistro !is RegistroState.Loading
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ServifyBackground) // Fondo celeste pastel luminoso (#E5FCFF)
+            .background(ServifyBackground)
             .padding(horizontal = 24.dp)
     ) {
         Column(
@@ -104,7 +111,7 @@ fun RegistroClienteScreen(
                     )
                 }
 
-                // Icono / Emoji a la derecha
+                // Icono a la derecha
                 Box(
                     modifier = Modifier
                         .size(52.dp)
@@ -192,7 +199,44 @@ fun RegistroClienteScreen(
                 tipoTeclado = KeyboardType.Password
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
+
+
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Checkbox(
+                    checked = aceptoTerminos,
+                    onCheckedChange = { aceptoTerminos = it }
+                )
+
+                // Contenedor para los textos de los enlaces
+                Row(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Acepto los ", fontSize = 12.sp, color = ServifyTextBody)
+                    Text(
+                        text = "Términos",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { mostrarModalTerminos = true }
+                    )
+                    Text(text = " y las ", fontSize = 12.sp, color = ServifyTextBody)
+                    Text(
+                        text = "Políticas",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { mostrarModalPoliticas = true }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
 
             if (estadoRegistro is RegistroState.Loading) {
                 Box(
@@ -234,6 +278,26 @@ fun RegistroClienteScreen(
                     modifier = Modifier.clickable { onIrALogin() }
                 )
             }
+        }
+
+        if (mostrarModalTerminos) {
+            DialogoTerminosCondiciones(
+                rol = "CLIENTE",
+                onDismiss = { mostrarModalTerminos = false },
+                onAceptar = {
+                    aceptoTerminos = true
+                    mostrarModalTerminos = false
+                }
+            )
+        }
+        if (mostrarModalPoliticas){
+            DialogoPoliticaPrivacidad(
+                onDismiss = {mostrarModalPoliticas=false},
+                onAceptar = {
+                    aceptoTerminos = true
+                    mostrarModalPoliticas=false
+                }
+            )
         }
     }
 }
