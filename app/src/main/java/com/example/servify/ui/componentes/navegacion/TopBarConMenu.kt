@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -120,6 +121,25 @@ fun TopBarConMenu(
                             expanded = false
                             val rolActual = if (SessionManager.esTecnico) "TECNICO" else "CLIENTE"
                             navController.navigate(Rutas.TerminosCondiciones.crearRuta(rolActual))
+                        },
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.PrivacyTip, // Asegúrate de importar este icono o usar uno similar
+                                    contentDescription = null,
+                                    tint = ServifyTextMuted,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("Políticas de Privacidad", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            }
+                        },
+                        onClick = {
+                            expanded = false
+                            navController.navigate(Rutas.PoliticasPrivacidad.ruta)
                         },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )

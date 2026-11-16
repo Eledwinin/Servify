@@ -1,16 +1,25 @@
 package com.example.servify.ui.modulos.modulos_compartidos.auth
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,20 +40,14 @@ fun TerminosCondicionesScreen(
 
         Artículo 2. Declaraciones y Requisitos del Profesional
         Declaras y garantizas formalmente que:
-            - Cuentas con la capacidad, conocimientos y, cuando la ley de la República de El Salvador lo exija, los permisos, licencias o certificaciones oficiales para el servicio que ofreces.
-            
-            - La información proporcionada en tu perfil (oficio, años de experiencia, descripción y especialidades) es verdadera y comprobable.
-            
-            - Actúas como profesional independiente, por lo que eres el único responsable de tus impuestos, seguros y obligaciones legales o tributarias.
-
+        - Cuentas con la capacidad, conocimientos y, cuando la ley de la República de El Salvador lo exija, los permisos, licencias o certificaciones oficiales para el servicio que ofreces.
+        - La información proporcionada en tu perfil (oficio, años de experiencia, descripción y especialidades) es verdadera y comprobable.
+        - Actúas como profesional independiente, por lo que eres el único responsable de tus impuestos, seguros y obligaciones legales o tributarias.
 
         Artículo 3. Postulaciones, Negociación y Ejecución de Servicios
-            - Postulaciones: Debes postularte de buena fe, ofertando un precio y un tiempo que puedas cumplir responsablemente. No puedes postularte dos veces a una misma solicitud. Tiene la facultad de ignorar solicitudes, lo cual únicamente las ocultará de su vista.
-            
-            - Negociación: Puedes proponer en el chat un precio distinto al estimado inicialmente. Una oferta aceptada por ambas partes obliga a respetar rigurosamente dicho monto final.
-            
-            - Ejecución: Debes realizar la labor con diligencia profesional, acatar las normas de seguridad y dejar el área de trabajo limpia. Respondes civil y legalmente por daños causados por negligencia comprobada.
-
+        - Postulaciones: Debes postularte de buena fe, ofertando un precio y un tiempo que puedas cumplir responsablemente. No puedes postularte dos veces a una misma solicitud. Tiene la facultad de ignorar solicitudes, lo cual únicamente las ocultará de su vista.
+        - Negociación: Puedes proponer en el chat un precio distinto al estimado inicialmente. Una oferta aceptada por ambas partes obliga a respetar rigurosamente dicho monto final.
+        - Ejecución: Debes realizar la labor con diligencia profesional, acatar las normas de seguridad y dejar el área de trabajo limpia. Respondes civil y legalmente por daños causados por negligencia comprobada.
 
         Artículo 4. Ubicación Geográfica y Monitoreo GPS
         Autorizas de manera expresa el uso y rastreo de tu ubicación mediante el dispositivo móvil para calcular tu distancia exacta respecto a las solicitudes activas, optimizar la asignación de trabajos cercanos y permitir que el cliente verifique tu proximidad durante tu desplazamiento.
@@ -54,25 +57,18 @@ fun TerminosCondicionesScreen(
 
         Artículo 6. Prohibiciones y Restricciones Operativas
         Queda terminantemente prohibido:
-            - Cobrar montos distintos al acordado o solicitar pagos adelantados sin debida justificación.
-            
-            - Utilizar los datos personales del cliente para fines ajenos a la prestación del servicio.
-            
-            - Contactar al cliente fuera de los canales oficiales con fines de acoso, hostigamiento o publicidad no solicitada.
-            
-            - Ofrecer servicios ilícitos o de carácter peligroso.
-
+        - Cobrar montos distintos al acordado o solicitar pagos adelantados sin debida justificación.  
+        - Utilizar los datos personales del cliente para fines ajenos a la prestación del servicio.
+        - Contactar al cliente fuera de los canales oficiales con fines de acoso, hostigamiento o publicidad no solicitada.
+        - Ofrecer servicios ilícitos o de carácter peligroso.
 
         Artículo 7. Portafolio, Membresía Semanal y VIP
-            - Portafolio: Las fotos de trabajos deben ser de tu autoría exclusiva. Otorgas a Servify una licencia limitada para exhibirlas en tu perfil público.
-            
-            - Membresías Semanales y VIP: Servify ofrece de manera optativa planes de membresía con renovación semanal o categoría VIP para potenciar la visibilidad del perfil, destacar en los listados de búsqueda y acceder a beneficios preferenciales de asignación. 
-            
-            - Condiciones de los Planes: Las tarifas aplicables, los métodos de pago autorizados, la vigencia exacta de cada ciclo semanal y las políticas de cancelación o renovación de estos planes se notificarán de forma transparente al técnico antes de confirmar su contratación. La falta de pago o vencimiento del período contratado retornará automáticamente el perfil a su visibilidad estándar sin derecho a reembolso de días no transcurridos.
+        - Portafolio: Las fotos de trabajos deben ser de tu autoría exclusiva. Otorgas a Servify una licencia limitada para exhibirlas en tu perfil público.
+        - Membresías Semanales y VIP: Servify ofrece de manera optativa planes de membresía con renovación semanal o categoría VIP para potenciar la visibilidad del perfil, destacar en los listados de búsqueda y acceder a beneficios preferenciales de asignación. 
+        - Condiciones de los Planes: Las tarifas aplicables, los métodos de pago autorizados, la vigencia exacta de cada ciclo semanal y las políticas de cancelación o renovación de estos planes se notificarán de forma transparente al técnico antes de confirmar su contratación. La falta de pago o vencimiento del período contratado retornará automáticamente el perfil a su visibilidad estándar sin derecho a reembolso de días no transcurridos.
         """.trimIndent()
     } else {
-        """
-           
+        """  
         PARTE 2: TÉRMINOS Y CONDICIONES: CLIENTE - SERVIFY
         
         Artículo 1. Objeto y Aceptación de los Términos
@@ -83,40 +79,28 @@ fun TerminosCondicionesScreen(
 
         Artículo 3. Geolocalización y Rastreo GPS
         Autorizas de manera expresa el acceso y rastreo de tu ubicación geográfica precisa mediante el GPS del dispositivo con los siguientes fines:
-            - Ubicar con exactitud la dirección física donde requieres el servicio técnico.
-            
-            - Calcular distancias de proximidad y optimizar tiempos de llegada.
-            
-            - Conectarte con los técnicos calificados más cercanos a tu zona.
-
+        - Ubicar con exactitud la dirección física donde requieres el servicio técnico.
+        - Calcular distancias de proximidad y optimizar tiempos de llegada.
+        - Conectarte con los técnicos calificados más cercanos a tu zona.
 
         Artículo 4. Comunicaciones en Vivo (Agora y WebRTC SDKs)
         Autorizas el uso de cámara y micrófono para llamadas y videollamadas en tiempo real:
-            - Propósito: Evaluación técnica preliminar, recepción de presupuestos y diagnóstico de averías en vivo sin visitas presenciales inmediatas.
-            
-            - Privacidad garantizada: No se realizan grabaciones ni almacenamiento digital del contenido audiovisual, protegiendo la intimidad de tu hogar.
-
+        - Propósito: Evaluación técnica preliminar, recepción de presupuestos y diagnóstico de averías en vivo sin visitas presenciales inmediatas.
+        - Privacidad garantizada: No se realizan grabaciones ni almacenamiento digital del contenido audiovisual, protegiendo la intimidad de tu hogar.
 
         Artículo 5. Obligaciones y Compromisos del Cliente
         Te comprometes a:
-            - Describir solicitudes con claridad, honestidad y fotos reales.
-            
-            - Publicar exclusivamente servicios lícitos.
-            
-            - Tratar con respeto al técnico, estar disponible en la fecha acordada y permitir un acceso seguro.
-
+        - Describir solicitudes con claridad, honestidad y fotos reales.
+        - Publicar exclusivamente servicios lícitos.
+        - Tratar con respeto al técnico, estar disponible en la fecha acordada y permitir un acceso seguro.
 
         Artículo 6. Negociación, Acuerdos y Precios
-            - Elección y acuerdo: Puedes aceptar o rechazar propuestas libremente. Al aceptar, se abre un chat exclusivo y la solicitud pasa a estado "en proceso".
-            
-            - Precio acordado: El monto aceptado de mutuo acuerdo en el chat es el valor final que las partes se comprometen a respetar.
-
+        - Elección y acuerdo: Puedes aceptar o rechazar propuestas libremente. Al aceptar, se abre un chat exclusivo y la solicitud pasa a estado "en proceso".
+        - Precio acordado: El monto aceptado de mutuo acuerdo en el chat es el valor final que las partes se comprometen a respetar.
 
         Artículo 7. Cancelaciones, Reseñas y Responsabilidad
-            - Queda prohibido cancelar reiteradamente o dejar de responder al profesional. Las reseñas deben basarse en experiencias reales y respetuosas.
-            
-            - Eres el único responsable de verificar la identidad del técnico antes de permitirle el ingreso a tu domicilio.
-
+        - Queda prohibido cancelar reiteradamente o dejar de responder al profesional. Las reseñas deben basarse en experiencias reales y respetuosas.
+        - Eres el único responsable de verificar la identidad del técnico antes de permitirle el ingreso a tu domicilio.
 
         Artículo 8. Derechos ARCO
         Conservas tu derecho irrenunciable a ejercer tus Derechos ARCO (Acceso, Rectificación, Cancelación y Oposición) directamente a través del soporte de la app.
@@ -139,40 +123,79 @@ fun TerminosCondicionesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Icono superior representativo
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(ServifyBluePrimary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Gavel,
+                    contentDescription = null,
+                    tint = ServifyBluePrimary,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = titulo,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                fontWeight = FontWeight.ExtraBold,
+                color = ServifyTextTitle,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // PRIMERO: Llamamos a los términos generales
-            TerminosGenerales()
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Tarjeta principal contenedora para un diseño ordenado y corporativo
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = ServifySurface,
+                border = BorderStroke(1.dp, ServifyBorder.copy(alpha = 0.5f)),
+                tonalElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    // PRIMERO: Llamamos a los términos generales dentro de la tarjeta
+                    TerminosGeneralesEnTarjeta()
 
-            // SEGUNDO: Imprimimos el contenido específico del rol
-            Text(
-                text = contenidoTexto,
-                fontSize = 14.sp,
-                lineHeight = 22.sp
-            )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // SEGUNDO: Imprimimos el contenido específico del rol con color claro uniforme
+                    Text(
+                        text = contenidoTexto,
+                        fontSize = 13.5.sp,
+                        lineHeight = 21.sp,
+                        color = ServifyTextBody,
+                        textAlign = TextAlign.Start
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
+
 @Composable
-fun TerminosGenerales() {
+fun TerminosGeneralesEnTarjeta() {
     val textoGenerales = """
         TÉRMINOS Y CONDICIONES GENERALES DE USO - SERVIFY
 
         Artículo 1. Definiciones
-        1.1 Servify («la Plataforma», «nosotros»): aplicación móvil que facilita el contacto entre personas que necesitan un servicio técnico y personas que lo ofrecen.
+        1.1 Servify: aplicación móvil que facilita el contacto entre personas que necesitan un servicio técnico y personas que lo ofrecen.
         1.2 Cliente: usuario que publica solicitudes de servicio y elige a un técnico.
         1.3 Técnico: usuario que ofrece servicios, consulta solicitudes y se postula a ellas con una propuesta.
         1.4 Administrador: personal autorizado de Servify con acceso a funciones de supervisión.
@@ -208,12 +231,12 @@ fun TerminosGenerales() {
         6.3 Servify puede retirar contenido que infrinja estos Términos o la ley.
 
         Artículo 7. Conductas prohibidas
-        • Fraude, estafa o engaño a otros usuarios, incluido el uso de ofertas falsas.
-        • Suplantar identidad, crear perfiles falsos o manipular calificaciones.
-        • Acceder sin autorización a cuentas, sistemas o datos; intentar vulnerar la seguridad de la app o del servidor.
-        • Usar bots, automatizaciones o ingeniería inversa para extraer datos de la plataforma.
-        • Recopilar datos de otros usuarios con fines distintos al servicio.
-        • Usar la plataforma para actividades ilícitas, o para acosar, amenazar o discriminar.
+        - Fraude, estafa o engaño a otros usuarios, incluido el uso de ofertas falsas.
+        - Suplantar identidad, crear perfiles falsos o manipular calificaciones.
+        - Acceder sin autorización a cuentas, sistemas o datos; intentar vulnerar la seguridad de la app o del servidor.
+        - Usar bots, automatizaciones o ingeniería inversa para extraer datos de la plataforma.
+        - Recopilar datos de otros usuarios con fines distintos al servicio.
+        - Usar la plataforma para actividades ilícitas, o para acosar, amenazar o discriminar.
 
         Artículo 8. Seguridad personal
         8.1 Los servicios se prestan, en muchos casos, en el domicilio del cliente. Se recomienda a ambas partes: verificar la identidad de la otra persona, acordar el alcance y el precio por escrito en el chat antes de iniciar, y avisar a un familiar o conocido de la visita.
@@ -243,16 +266,18 @@ fun TerminosGenerales() {
 
     Column {
         Text(
-            text = "Disposiciones Generales (Aplica para Clientes y Técnicos)",
-            fontSize = 18.sp,
+            text = "Disposiciones Generales",
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.secondary
+            color = ServifyBluePrimary
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = textoGenerales,
-            fontSize = 14.sp,
-            lineHeight = 22.sp
+            fontSize = 13.5.sp,
+            lineHeight = 21.sp,
+            color = ServifyTextBody,
+            textAlign = TextAlign.Start
         )
     }
 }

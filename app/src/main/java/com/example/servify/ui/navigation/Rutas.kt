@@ -13,6 +13,8 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(role: String) = "terminos_condiciones/$role"
     }
 
+    object PoliticasPrivacidad: Rutas ("politicas_privacidad")
+
     // Pestañas principales
     object Home : Rutas("home")
     object Actividad : Rutas("actividad")

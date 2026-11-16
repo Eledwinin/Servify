@@ -49,6 +49,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.messages.Conversacione
 import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.PoliticasdePrivacidadLegalScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TerminosCondicionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
@@ -296,6 +297,12 @@ fun AppNavigation() {
                 val role = backStackEntry.arguments?.getString("role") ?: "CLIENTE"
                 TerminosCondicionesScreen(
                     userRole = role,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = Rutas.PoliticasPrivacidad.ruta) {
+                PoliticasdePrivacidadLegalScreen(
                     onBackClick = { navController.popBackStack() }
                 )
             }

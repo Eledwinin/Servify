@@ -147,7 +147,7 @@ fun DialogoTerminosCondiciones(
         """.trimIndent()
     } else {
         """
-         PARTE 2: TÉRMINOS Y CONDICIONES: CLIENTE - SERVIFY
+        PARTE 2: TÉRMINOS Y CONDICIONES: CLIENTE - SERVIFY
         
         Artículo 1. Objeto y Aceptación de los Términos
         Los presentes términos regulan el uso de Servify por parte del Cliente. Al registrarte y presionar continuar, declaras formalmente que eres mayor de edad y otorgas tu consentimiento libre, previo e informado para el uso de la plataforma.
