@@ -11,6 +11,7 @@ import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.ContratacionDirectaRequest
 import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.data.model.ConversacionItem
+import com.example.servify.data.model.CrearPaymentSheetRequest
 import com.example.servify.data.model.CrearPostulacionRequest
 import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.CrearSolicitudRespuesta
@@ -27,6 +28,7 @@ import com.example.servify.data.model.MensajeResponse
 import com.example.servify.data.model.MensajesRespuesta
 import com.example.servify.data.model.MiPostulacion
 import com.example.servify.data.model.MiSolicitud
+import com.example.servify.data.model.PaymentSheetResponse
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
@@ -202,6 +204,16 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<DetalleSolicitud>
+
+    // ==========================================
+    // PAGOS CON STRIPE (PaymentSheet)
+    // ==========================================
+
+    @POST("api/pagos/crear-payment-sheet")
+    suspend fun crearPaymentSheet(
+        @Header("Authorization") token: String,
+        @Body request: CrearPaymentSheetRequest
+    ): Response<PaymentSheetResponse>
 
     // ==========================================
     // CIERRE DE SERVICIO, QR Y RESEÑAS

@@ -112,4 +112,7 @@ dependencies {
     implementation("com.google.mlkit:face-detection:16.1.7")
 
     implementation("io.agora.rtc:full-sdk:4.3.0")
+
+    // Stripe Android SDK para PaymentSheet
+    implementation("com.stripe:stripe-android:20.50.0")
 }
