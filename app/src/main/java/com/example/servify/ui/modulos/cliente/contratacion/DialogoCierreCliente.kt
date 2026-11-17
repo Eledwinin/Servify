@@ -107,7 +107,7 @@ fun DialogoCierreCliente(
                             selected = (metodoSeleccionado == "tarjeta"),
                             onClick = { metodoSeleccionado = "tarjeta" }
                         )
-                        Text(text = "💳 Tarjeta (Simulada / Stripe)")
+                        Text(text = "💳 Tarjeta (Stripe PaymentSheet)")
                     }
                 } else {
                     Text(

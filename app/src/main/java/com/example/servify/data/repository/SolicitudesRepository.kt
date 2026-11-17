@@ -1,13 +1,17 @@
 package com.example.servify.data.repository
 
+import android.util.Log
 import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ContratacionDirectaRequest
 import com.example.servify.data.model.ContratacionDirectaResponse
+import com.example.servify.data.model.CrearPaymentSheetRequest
+import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.GenericResponse
 import com.example.servify.data.model.IniciarCierreRequest
 import com.example.servify.data.model.IniciarCierreResponse
 import com.example.servify.data.model.MensajeResponse
+import com.example.servify.data.model.PaymentSheetResponse
 import com.example.servify.data.model.ResenaRequest
 import com.example.servify.data.model.ResponderContratacionRequest
 import com.example.servify.data.model.ValidarQrRequest
@@ -153,6 +157,64 @@ class SolicitudesRepository(
                     Result.success(respuesta.body()!!)
                 } else {
                     Result.failure(Exception("Error al guardar la reseña (${respuesta.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    // ==========================================
+    // 7. Pagos con Stripe (PaymentSheet)
+    // ==========================================
+    suspend fun crearPaymentSheet(
+        token: String,
+        solicitudId: Int,
+        monto: Double
+    ): Result<PaymentSheetResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                Log.d("PAGOS_REPO", "Iniciando creación de PaymentSheet para solicitud $solicitudId, monto: $$monto")
+                val req = CrearPaymentSheetRequest(solicitudId = solicitudId, monto = monto)
+                val respuesta = apiService.crearPaymentSheet("Bearer $token", req)
+                val codigo = respuesta.code()
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    val body = respuesta.body()!!
+                    Log.d("PAGOS_REPO", "PaymentSheet creado exitosamente (Customer: ${body.customer})")
+                    Result.success(body)
+                } else {
+                    val errBody = respuesta.errorBody()?.string() ?: "Sin detalle"
+                    Log.e("PAGOS_REPO", "Error HTTP al crear PaymentSheet ($codigo): $errBody")
+                    val mensaje = when (codigo) {
+                        400 -> "Parámetros de pago inválidos: $errBody"
+                        401 -> "Sesión expirada. Por favor vuelve a iniciar sesión."
+                        404 -> "Solicitud de servicio no encontrada para pago."
+                        500 -> "Error interno del servidor de pagos. Intenta nuevamente."
+                        else -> "Error ($codigo) al preparar el pago: $errBody"
+                    }
+                    Result.failure(Exception(mensaje))
+                }
+            } catch (e: Exception) {
+                Log.e("PAGOS_REPO", "Excepción al crear PaymentSheet: ${e.message}", e)
+                Result.failure(Exception("Fallo de conexión con la pasarela de pagos: ${e.localizedMessage}"))
+            }
+        }
+    }
+
+    // ==========================================
+    // 8. Obtener Detalle de Solicitud
+    // ==========================================
+    suspend fun obtenerDetalleSolicitud(
+        token: String,
+        solicitudId: Int
+    ): Result<DetalleSolicitud> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val respuesta = apiService.obtenerDetalleSolicitud("Bearer $token", solicitudId)
+                if (respuesta.isSuccessful && respuesta.body() != null) {
+                    Result.success(respuesta.body()!!)
+                } else {
+                    Result.failure(Exception("Error al cargar detalle de solicitud (${respuesta.code()})"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
