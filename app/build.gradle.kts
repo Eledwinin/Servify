@@ -104,5 +104,12 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
+    val camerax = "1.3.4"
+    implementation("androidx.camera:camera-core:$camerax")
+    implementation("androidx.camera:camera-camera2:$camerax")
+    implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.camera:camera-view:$camerax")
+    implementation("com.google.mlkit:face-detection:16.1.7")
+
     implementation("io.agora.rtc:full-sdk:4.3.0")
 }

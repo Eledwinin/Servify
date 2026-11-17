@@ -63,6 +63,7 @@ data class ProfesionalPerfil(
 
     @SerializedName("longitud")
     val longitud: Double? = null,
+    @SerializedName("fotoUrl") val fotoUrl: String? = null,
     @SerializedName("tipoPlan", alternate = ["tipo_plan"])
     val tipoPlan: String? = null,
 

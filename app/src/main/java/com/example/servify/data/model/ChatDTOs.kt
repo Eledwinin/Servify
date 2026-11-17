@@ -10,6 +10,7 @@ data class ConversacionItem(
     @SerializedName("otro_id") val otroId: Int,
     @SerializedName("otro_nombre") val otroNombre: String,
     @SerializedName("ultimo_mensaje") val ultimoMensaje: String? = null,
+    @SerializedName("otro_foto") val otroFoto: String? = null,
     @SerializedName("ultimo_mensaje_en") val ultimoMensajeEn: String? = null,
     @SerializedName("no_leidos") val noLeidos: Int = 0
 )
@@ -32,5 +33,7 @@ data class LlamadaItem(
     @SerializedName("estado") val estado: String,
     @SerializedName("iniciada_en") val iniciadaEn: String? = null,
     @SerializedName("duracion_seg") val duracionSeg: Int? = null,
-    @SerializedName("otro_nombre") val otroNombre: String
+    @SerializedName("otro_nombre") val otroNombre: String,
+    @SerializedName("otro_foto") val otroFoto: String? = null //
+
 )

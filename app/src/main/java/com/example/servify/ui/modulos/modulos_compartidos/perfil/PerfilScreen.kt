@@ -45,6 +45,7 @@ fun PerfilScreen(
     onIrAPlanes: () -> Unit,
     onCerrarSesion: () -> Unit,
     onVerTodasResenas: () -> Unit,
+    onIrACapturarFoto: () -> Unit,
     viewModel: PerfilViewModel = viewModel()
 ) {
     val c = PerfilColores
@@ -62,13 +63,25 @@ fun PerfilScreen(
         selectorFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(token) {
         if (token.isNotBlank()) {
-            viewModel.cargarPerfil(token)
+
+
             viewModel.cargarPortafolio()
             viewModel.cargarResenas(token)
         }
     }
+    DisposableEffect(lifecycleOwner) {
+        val observador = androidx.lifecycle.LifecycleEventObserver { _, evento ->
+            if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME && token.isNotBlank()) {
+                viewModel.cargarPerfil(token)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observador)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observador) }
+    }
+
     LaunchedEffect(ui.error) {
         ui.error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -182,7 +195,7 @@ fun PerfilScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                CabeceraPerfil(user, esTecnico, esVip)
+                CabeceraPerfil(user, esTecnico, esVip, onCambiarFoto = onIrACapturarFoto)
 
                 // Componentes visibles solo para trabajadores técnicos
                 if (esTecnico) {

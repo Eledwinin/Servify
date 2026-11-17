@@ -216,6 +216,26 @@ class UsuarioRepository(
         }
     }
 
+    suspend fun subirFotoPerfil(context: Context, token: String, uri: Uri): Result<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val bytes = uriAJpegBytes(context.contentResolver, uri, maxLado = 800)
+                    ?: return@withContext Result.failure(Exception("No se pudo procesar la foto"))
+                val body = MultipartBody.Part.createFormData(
+                    "foto", "perfil.jpg", bytes.toRequestBody("image/jpeg".toMediaType())
+                )
+                val r = apiService.subirFotoPerfil("Bearer $token", body)
+                val url = r.body()?.fotoUrl
+                if (r.isSuccessful && url != null) Result.success(url)
+                else {
+                    android.util.Log.e("FOTO_PERFIL", "Código ${r.code()} - ${r.errorBody()?.string()}")
+                    Result.failure(Exception("Error al subir la foto (${r.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
+            }
+        }
+
     // ==========================================
     // FUNCIÓN AUXILIAR: URI A ARCHIVO
     // ==========================================

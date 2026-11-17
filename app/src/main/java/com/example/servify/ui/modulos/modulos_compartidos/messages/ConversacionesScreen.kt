@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.LlamadaItem
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -183,21 +184,11 @@ fun ConversacionesScreen(
                                         .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(ServifyCianSoft),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = c.otroNombre.split(" ").filter { it.isNotBlank() }.take(2)
-                                                .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                                            color = ServifyBluePrimary,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp
-                                        )
-                                    }
+                                    AvatarUsuario(
+                                        nombre = c.otroNombre,
+                                        fotoUrl = c.otroFoto, // Asegúrate de que el modelo de conversación devuelva la foto (ej: otroFoto)
+                                        tamano = 48.dp
+                                    )
 
                                     Spacer(modifier = Modifier.width(14.dp))
 
@@ -332,21 +323,11 @@ fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Avatar con iniciales o icono flotante moderno
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(if (fallida && !saliente) Color(0xFFFEE2E2) else ServifyCianSoft),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = l.otroNombre.split(" ").filter { it.isNotBlank() }.take(2)
-                    .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                color = if (fallida && !saliente) Color(0xFFEF4444) else ServifyBluePrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-        }
+        AvatarUsuario(
+            nombre = l.otroNombre,
+            fotoUrl = l.otroFoto, // Asegúrate de que LlamadaItem incluya la foto de la contraparte
+            tamano = 50.dp
+        )
 
         Spacer(modifier = Modifier.width(14.dp))
 

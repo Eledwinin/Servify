@@ -28,6 +28,7 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.api.FotoPortafolioResponse
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.cards.TarjetaBase
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatConfig
 import com.example.servify.ui.theme.*
 
@@ -57,6 +58,7 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
     val pasos = buildList {
         add("Teléfono" to !u.telefono.isNullOrBlank())
         add("Dirección" to !u.direccionTexto.isNullOrBlank())
+        add("Foto de perfil" to !u.fotoUrl.isNullOrBlank())
         if (esTecnico) {
             add("Descripción «Sobre mí»" to !u.biografia.isNullOrBlank())
             add("Años de experiencia" to ((u.anosExperiencia ?: 0) > 0))
@@ -68,7 +70,7 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
 }
 
 @Composable
-fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
+fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean, onCambiarFoto: () -> Unit) {
     val c = PerfilColores
 
     val tipoPlanActual = user?.tipoPlan ?: SessionManager.tipoPlanActivo ?: ""
@@ -106,19 +108,16 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean) {
             )
             .padding(16.dp)
     ) {
-        Box(
-            Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(fondoAvatar),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = iniciales(user?.nombre),
-                color = if (esVip || esSemanal) colorAcento else c.verde,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+        Box(Modifier.clickable { onCambiarFoto() }) {
+            AvatarUsuario(
+                nombre = user?.nombre, fotoUrl = user?.fotoUrl, tamano = 72.dp,
+                fondo = if (esVip) c.doradoClaro else c.verdeClaro,
+                colorTexto = if (esVip) c.dorado else c.verde
             )
+            Box(
+                Modifier.align(Alignment.BottomEnd).size(24.dp).clip(CircleShape).background(ServifyBluePrimary),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Default.PhotoCamera, "Cambiar foto", tint = Color.White, modifier = Modifier.size(14.dp)) }
         }
 
         Spacer(Modifier.width(16.dp))

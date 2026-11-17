@@ -16,6 +16,7 @@ import com.example.servify.data.model.CrearSolicitudRequest
 import com.example.servify.data.model.CrearSolicitudRespuesta
 import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
+import com.example.servify.data.model.FotoPerfilRespuesta
 import com.example.servify.data.model.GenericResponse
 import com.example.servify.data.model.IniciarCierreRequest
 import com.example.servify.data.model.IniciarCierreResponse
@@ -339,6 +340,15 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<TokenLlamadaRespuesta>
+
+
+    @Multipart
+    @POST("api/users/perfil/foto")
+    suspend fun subirFotoPerfil(
+        @Header("Authorization") token: String,
+        @Part foto: MultipartBody.Part
+    ): Response<FotoPerfilRespuesta>
+
 }
 
 // ==========================================

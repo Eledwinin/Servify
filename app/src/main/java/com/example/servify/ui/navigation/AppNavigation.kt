@@ -51,7 +51,9 @@ import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.PoliticasdePrivacidadLegalScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TerminosCondicionesScreen
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.CapturaRostroScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.FotoPerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
@@ -111,7 +113,8 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
                         SessionManager.cerrarSesion()
                         navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
                     },
-                    onVerTodasResenas = { navController.navigate(Rutas.Resenas.ruta) }
+                    onVerTodasResenas = { navController.navigate(Rutas.Resenas.ruta) },
+                    onIrACapturarFoto = { navController.navigate(Rutas.CapturaRostro.ruta) },
                 )
             }
         }
@@ -402,6 +405,29 @@ fun AppNavigation() {
                         navController.navigate(Rutas.Chat.crearRuta(convId, nombre))
                     },
                     navController = navController
+                )
+            }
+
+            composable(Rutas.CapturaRostro.ruta) {
+                val vm: FotoPerfilViewModel = viewModel()
+                val context = androidx.compose.ui.platform.LocalContext.current
+
+                LaunchedEffect(vm.listo) {
+                    if (vm.listo) {
+                        android.widget.Toast.makeText(context, "Foto de perfil actualizada", android.widget.Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    }
+                }
+                LaunchedEffect(vm.error) {
+                    vm.error?.let {
+                        android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
+                        vm.error = null
+                    }
+                }
+                CapturaRostroScreen(
+                    subiendo = vm.subiendo,
+                    onCancelar = { navController.popBackStack() },
+                    onFotoLista = { uri -> vm.subir(context, uri) }
                 )
             }
 

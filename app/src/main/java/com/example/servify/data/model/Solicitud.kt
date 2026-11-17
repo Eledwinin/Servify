@@ -28,6 +28,7 @@ data class SolicitudItemTecnico(
     @SerializedName("distancia_km") val distanciaKm: Double? = null,
     @SerializedName("latitud") val latitud: Double? = null,
     @SerializedName("longitud") val longitud: Double? = null,
+    @SerializedName("cliente_foto") val clienteFoto: String? = null,
     @SerializedName("creado_en") val creadoEn: String? = null
 )
 
@@ -79,6 +80,7 @@ data class PropuestaItem(
     @SerializedName("monto_propuesto") val montoPropuesto: Double,
     @SerializedName("mensaje") val mensaje: String? = null,
     @SerializedName("estado") val estado: String,
+    @SerializedName("tecnico_foto") val tecnicoFoto: String? = null,
     @SerializedName("presupuesto_estimado") val presupuestoEstimado: Double? = null,
     @SerializedName("conversacion_id") val conversacionId: Int? = null
 )
@@ -116,6 +118,8 @@ data class DetalleSolicitud(
     @SerializedName("estado") val estado: String? = null,
     @SerializedName("ya_postulado") val yaPostulado: Boolean = false,
     @SerializedName("fotos") val fotos: List<String> = emptyList(),
+
+    @SerializedName("cliente_foto") val clienteFoto: String? = null,
     @SerializedName("creado_en") val creadoEn: String? = null,
     @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null
 )

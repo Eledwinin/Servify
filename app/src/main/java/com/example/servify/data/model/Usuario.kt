@@ -61,4 +61,9 @@ data class UsuarioModel(
     val fechaVencimientoVip: String? = null,
 )
 
+data class FotoPerfilRespuesta(
+    @SerializedName("mensaje") val mensaje: String? = null,
+    @SerializedName("foto_url") val fotoUrl: String? = null
+)
+
 typealias Usuario = UsuarioModel
