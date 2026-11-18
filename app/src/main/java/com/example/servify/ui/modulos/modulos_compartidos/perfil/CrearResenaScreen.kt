@@ -46,9 +46,17 @@ fun CrearResenaScreen(
         }
     }
 
+    LaunchedEffect(solicitudId) { viewModel.cargarExistente(solicitudId) }
+
     LaunchedEffect(viewModel.mensajeError) {
-        viewModel.mensajeError?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        viewModel.mensajeError?.let { mensaje ->
+            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+
+            // 🌟 Si el backend dice que ya la calificó, podemos activar un estado local de bloqueo
+            if (mensaje.contains("anteriormente", ignoreCase = true)) {
+                viewModel.yaCalificado = true
+            }
+
             viewModel.mensajeError = null
         }
     }
@@ -58,7 +66,7 @@ fun CrearResenaScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (esTecnico) "Calificar al Cliente" else "Calificar al Técnico",
+                        text = if (esTecnico) "Calificación del Cliente" else "Calificación del Técnico",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -74,6 +82,12 @@ fun CrearResenaScreen(
             )
         }
     ) { paddingValues ->
+        if (viewModel.verificando) {
+            Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = ServifyBluePrimary)
+            }
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,14 +97,16 @@ fun CrearResenaScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "¿Cómo fue tu experiencia?",
+                text = if (viewModel.yaCalificado) "¡Servicio Calificado!" else "¿Cómo fue tu experiencia?",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = ServifyTextTitle
             )
 
             Text(
-                text = if (esTecnico)
+                text = if (viewModel.yaCalificado)
+                    "Ya has enviado una valoración para este servicio anteriormente."
+                else if (esTecnico)
                     "Tu opinión sobre el cliente ayuda a mantener una comunidad segura en Servify."
                 else
                     "Tu valoración ayuda a mejorar la calidad del servicio de nuestros profesionales.",
@@ -100,7 +116,7 @@ fun CrearResenaScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Selector interactivo de 1 a 5 estrellas
+            // Selector de estrellas (Interactivo si no ha calificado, Fijo si ya calificó)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -112,7 +128,13 @@ fun CrearResenaScreen(
                         tint = if (i <= viewModel.calificacion) Color(0xFFFFB800) else ServifyTextMuted,
                         modifier = Modifier
                             .size(44.dp)
-                            .clickable { viewModel.calificacion = i }
+                            .then(
+                                if (!viewModel.yaCalificado) {
+                                    Modifier.clickable { viewModel.calificacion = i }
+                                } else {
+                                    Modifier // 🚫 Sin clic si ya está calificado
+                                }
+                            )
                     )
                 }
             }
@@ -121,8 +143,9 @@ fun CrearResenaScreen(
 
             OutlinedTextField(
                 value = viewModel.comentario,
-                onValueChange = { viewModel.comentario = it },
-                label = { Text("Escribe un comentario u opinión...") },
+                onValueChange = { if (!viewModel.yaCalificado) viewModel.comentario = it },
+                label = { Text(if (viewModel.yaCalificado) "Tu comentario registrado" else "Escribe un comentario u opinión...") },
+                readOnly = viewModel.yaCalificado, // 🚫 Bloqueado si ya calificó
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp),
@@ -132,26 +155,46 @@ fun CrearResenaScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Button(
-                onClick = { viewModel.enviarResena(solicitudId, destinatarioId) },
-                enabled = !viewModel.cargando && viewModel.calificacion > 0,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
-            ) {
-                if (viewModel.cargando) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Text(
-                        text = "Enviar Calificación",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            // Botón de envío (Se oculta o deshabilita si ya fue calificado)
+            if (!viewModel.yaCalificado) {
+                Button(
+                    onClick = { viewModel.enviarResena(solicitudId, destinatarioId) },
+                    enabled = !viewModel.cargando && viewModel.calificacion > 0,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
+                ) {
+                    if (viewModel.cargando) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Enviar Calificación",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = ServifyInputBackground
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "⭐ Ya has calificado este trabajo",
+                            fontWeight = FontWeight.Bold,
+                            color = ServifyTextMuted,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }

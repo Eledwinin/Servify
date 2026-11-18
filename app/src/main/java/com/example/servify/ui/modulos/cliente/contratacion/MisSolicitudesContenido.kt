@@ -184,12 +184,36 @@ fun MisSolicitudesContenido(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                // 🌟 NAVEGACIÓN INTELIGENTE AL PERFIL DEL TÉCNICO O A SUS PROPUESTAS:
-                                val idTecnico = s.tecnicoId
-                                if (idTecnico != null && idTecnico > 0) {
-                                    navController.navigate(Rutas.DetalleTecnico.crearRuta(idTecnico))
-                                } else {
-                                    navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
+                                val estadoLower = s.estado.lowercase()
+
+
+                                when {
+                                    // Si la solicitud está completada, lo mandamos a calificar (o prevenimos doble reseña si ya tiene)
+                                    estadoLower in listOf("completado", "completada") -> {
+                                        val idTecnico = s.tecnicoId ?: 1
+
+                                        // Opcional: Validar si ya fue calificada o abrir directo la reseña
+                                        if (idTecnico > 0) {
+                                            navController.navigate(Rutas.CrearResena.crearRuta(s.id, idTecnico))
+                                        } else {
+                                            Toast.makeText(context, "No se encontró el técnico asociado", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+
+                                    // Si está esperando pago o en proceso, abrimos el modal de cierre/QR
+                                    estadoLower in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre") -> {
+                                        solicitudParaCerrar = s
+                                    }
+
+                                    // Para solicitudes normales publicadas, vamos al detalle de propuestas
+                                    else -> {
+                                        val idTecnico = s.tecnicoId
+                                        if (idTecnico != null && idTecnico > 0) {
+                                            navController.navigate(Rutas.DetalleTecnico.crearRuta(idTecnico))
+                                        } else {
+                                            navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
+                                        }
+                                    }
                                 }
                             },
                         shape = RoundedCornerShape(16.dp),
@@ -301,7 +325,7 @@ fun MisSolicitudesContenido(
         }
     }
 
-    // 🚀 MODAL DE CIERRE CON RESCATE DE ID DE TÉCNICO Y NAVEGACIÓN GARANTIZADA
+
     solicitudParaCerrar?.let { solicitud ->
         DialogoCierreCliente(
             solicitudId = solicitud.id,
@@ -313,8 +337,13 @@ fun MisSolicitudesContenido(
             onConfirmarPago = { metodoPago ->
                 if (metodoPago == "tarjeta") {
                     val idActual = solicitud.id
+
+                    val idTecnicoSeguro = solicitud.tecnicoId ?: viewModel.tecnicoIdParaCalificar ?: 0
+
                     solicitudParaCerrar = null
                     viewModel.limpiarEstadoCierre()
+
+                    // Navegamos al checkout pasando el ID de la solicitud
                     navController.navigate(Rutas.CheckoutPago.crearRuta(idActual))
                 } else {
                     viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo", solicitud.tecnicoId)

@@ -121,7 +121,8 @@ data class DetalleSolicitud(
 
     @SerializedName("cliente_foto") val clienteFoto: String? = null,
     @SerializedName("creado_en") val creadoEn: String? = null,
-    @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null
+    @SerializedName("cliente_creado_en") val clienteCreadoEn: String? = null,
+    @SerializedName("tecnico_id") val tecnicoId: Int? = null
 )
 
 data class CrearSolicitudRespuesta(

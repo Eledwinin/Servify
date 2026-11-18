@@ -27,6 +27,7 @@ import com.example.servify.data.model.LoginResponse
 import com.example.servify.data.model.MensajeResponse
 import com.example.servify.data.model.MensajesRespuesta
 import com.example.servify.data.model.MiPostulacion
+import com.example.servify.data.model.MiResenaRespuesta
 import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.PaymentSheetResponse
 import com.example.servify.data.model.ProfesionalPerfil
@@ -360,6 +361,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Part foto: MultipartBody.Part
     ): Response<FotoPerfilRespuesta>
+
+    @GET("api/solicitudes/{id}/mi-resena")
+    suspend fun obtenerMiResena(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<MiResenaRespuesta>
 
 }
 

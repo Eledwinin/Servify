@@ -84,7 +84,11 @@ class CheckoutPagoViewModel(
 
         viewModelScope.launch {
             try {
-                Log.d("CHECKOUT_VM", "Llamando a crear-payment-sheet para solicitud $solicitudId, monto $montoDouble")
+
+                val tecnicoIdReal = solicitud?.tecnicoId
+
+                Log.d("CHECKOUT_VM", "Llamando a crear-payment-sheet para solicitud $solicitudId, técnico: $tecnicoIdReal, monto $montoDouble")
+
                 val resultado = repository.crearPaymentSheet(
                     token = token,
                     solicitudId = solicitudId,
@@ -135,23 +139,21 @@ class CheckoutPagoViewModel(
     private fun finalizarPagoYCierre(solicitudId: Int) {
         val token = SessionManager.token ?: return
         val montoDouble = montoTexto.toDoubleOrNull()
+        val tecnicoIdSeguro = solicitud?.tecnicoId
 
         viewModelScope.launch {
             try {
-                // Inicia el cierre en el backend registrando método tarjeta y monto
+                // Pasamos el tecnicoId real en lugar de null
                 val resCierre = repository.iniciarCierre(
                     token = token,
                     solicitudId = solicitudId,
                     metodoPago = "tarjeta",
-                    tecnicoId = null,
+                    tecnicoId = tecnicoIdSeguro,
                     monto = montoDouble
                 )
                 if (resCierre.isSuccess) {
                     qrTokenGenerado = resCierre.getOrNull()?.qrToken
                 }
-
-                // Recargamos el estado actualizado de la solicitud
-                cargarDetalle(solicitudId)
             } catch (e: Exception) {
                 Log.e("CHECKOUT_VM", "Error tras completar pago: ${e.message}", e)
             }

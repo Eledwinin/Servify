@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.servify.data.SessionManager
+import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ResenaRequest
 import com.example.servify.data.repository.SolicitudesRepository
 import kotlinx.coroutines.launch
@@ -21,6 +22,9 @@ class CrearResenaViewModel(
     var cargando by mutableStateOf(false)
     var mensajeError by mutableStateOf<String?>(null)
     var resenaEnviada by mutableStateOf(false)
+
+    // 🌟 NUEVAS VARIABLES PARA EL BLOQUEO ANTIDOBLE RESEÑA
+    var yaCalificado by mutableStateOf(false)
 
     fun enviarResena(solicitudId: Int, destinatarioId: Int) {
         val token = SessionManager.token
@@ -56,14 +60,43 @@ class CrearResenaViewModel(
                     resenaEnviada = true
                 } else {
                     val error = resultado.exceptionOrNull()
-                    Log.e("CREAR_RESENA", "Falla backend: ${error?.message}", error)
-                    mensajeError = error?.message ?: "Error al guardar la reseña (HTTP 404/500)"
+                    val errorMessage = error?.message ?: "Error al guardar la reseña"
+
+                    Log.e("CREAR_RESENA", "Falla backend: $errorMessage", error)
+
+                    // 🌟 Si el backend avisa que ya se calificó, activamos el estado de bloqueo visual
+                    if (errorMessage.contains("anteriormente", ignoreCase = true)) {
+                        yaCalificado = true
+                    }
+
+                    mensajeError = errorMessage
                 }
             } catch (e: Exception) {
                 Log.e("CREAR_RESENA", "Excepción al enviar reseña: ${e.message}", e)
                 mensajeError = e.localizedMessage ?: "Error de conexión"
             } finally {
                 cargando = false
+            }
+        }
+    }
+
+    var verificando by mutableStateOf(true)
+
+    fun cargarExistente(solicitudId: Int) {
+        val token = SessionManager.token ?: run { verificando = false; return }
+        viewModelScope.launch {
+            try {
+                val res = RetrofitClient.instance.obtenerMiResena("Bearer $token", solicitudId)
+                val b = res.body()
+                if (res.isSuccessful && b?.yaCalifico == true) {
+                    yaCalificado = true
+                    calificacion = b.calificacion ?: 0
+                    comentario = b.comentario.orEmpty()
+                }
+            } catch (e: Exception) {
+                Log.e("CREAR_RESENA", "No se pudo verificar la reseña: ${e.message}")
+            } finally {
+                verificando = false
             }
         }
     }

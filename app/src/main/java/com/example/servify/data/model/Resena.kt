@@ -13,3 +13,9 @@ data class Resena(
     @SerializedName("creado_en") val creadoEn: String? = null,
     @SerializedName("nombre_cliente") val nombreCliente: String? = null // <- Agregado para pintar el nombre real del cliente
 )
+
+data class MiResenaRespuesta(
+    @SerializedName("ya_califico") val yaCalifico: Boolean = false,
+    @SerializedName("calificacion") val calificacion: Int? = null,
+    @SerializedName("comentario") val comentario: String? = null
+)
