@@ -12,3 +12,13 @@ data class Postulacion(
     @SerializedName("creado_en") val creadoEn: String? = null
 )
 
+data class GananciasResumen(
+    @SerializedName("total_semana") val totalSemana: Double = 0.0,
+    @SerializedName("trabajos_semana") val trabajosSemana: Int = 0,
+    @SerializedName("total_mes") val totalMes: Double = 0.0,
+    @SerializedName("trabajos_mes") val trabajosMes: Int = 0,
+    @SerializedName("total_mes_anterior") val totalMesAnterior: Double = 0.0,
+    @SerializedName("total_historico") val totalHistorico: Double = 0.0,
+    @SerializedName("trabajos_historico") val trabajosHistorico: Int = 0
+)
+

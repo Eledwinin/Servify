@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,14 +25,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
+import com.example.servify.data.model.MiPostulacion
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
-import com.example.servify.ui.componentes.navegacion.TopBarPrincipal
 import com.example.servify.ui.modulos.cliente.contratacion.MisSolicitudesContenido
 import com.example.servify.ui.navigation.Rutas
-import com.example.servify.ui.theme.* // Importamos la paleta de colores azul corporativa
+import com.example.servify.ui.theme.*
 
 @Composable
 fun ActividadScreen(
@@ -39,6 +44,7 @@ fun ActividadScreen(
 ) {
     val esTecnico = SessionManager.esTecnico
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val launcherPermisos = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -57,6 +63,18 @@ fun ActividadScreen(
         }
     }
 
+    DisposableEffect(lifecycleOwner, esTecnico) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && esTecnico) {
+                viewModel.cargarPostulaciones(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(esTecnico) {
         if (esTecnico) viewModel.cargarPostulaciones(context)
     }
@@ -70,8 +88,10 @@ fun ActividadScreen(
 
     Scaffold(
         topBar = {
-            TopBarConMenu(navController = navController,
-                titulo = if (esTecnico) "Mis Trabajos" else "Mis Solicitudes")
+            TopBarConMenu(
+                navController = navController,
+                titulo = if (esTecnico) "Mis Trabajos" else "Mis Solicitudes"
+            )
         },
         containerColor = ServifyBackground
     ) { padding ->
@@ -85,21 +105,42 @@ fun ActividadScreen(
     }
 }
 
+private val ESTADOS_HISTORIAL_POSTULACION = setOf(
+    "rechazada", "finalizada", "cancelada", "completada", "completado"
+)
+
+private val ESTADOS_HISTORIAL_SOLICITUD = setOf(
+    "completado", "completada", "finalizada", "cancelada", "cancelado"
+)
+
+private val ESTADOS_COMPLETADO = setOf(
+    "completado", "completada", "finalizada"
+)
+
+private val ESTADOS_CANCELADO = setOf(
+    "cancelado", "cancelada"
+)
+
+private fun esPostulacionDeHistorial(p: MiPostulacion): Boolean {
+    val estPost = p.estado.lowercase()
+    val estSol = p.estadoSolicitud?.lowercase().orEmpty()
+    return estPost in ESTADOS_HISTORIAL_POSTULACION || estSol in ESTADOS_HISTORIAL_SOLICITUD
+}
+
 @Composable
 private fun PostulacionesTecnico(
     navController: NavController,
     viewModel: ActividadViewModel
 ) {
-    // Estado para controlar las pestañas superiores
+    val context = LocalContext.current
     var pestañaSeleccionada by remember { mutableStateOf(0) } // 0 = En Curso, 1 = Historial
 
-    // Clasificación de postulaciones según diseño Figma
-    val postulacionesEnCurso = viewModel.postulaciones.filter {
-        it.estado.equals("aceptada", ignoreCase = true) || it.estado.equals("revision", ignoreCase = true) || it.estado.equals("pendiente", ignoreCase = true)
+    val postulacionesHistorial = remember(viewModel.postulaciones) {
+        viewModel.postulaciones.filter { esPostulacionDeHistorial(it) }
     }
 
-    val postulacionesHistorial = viewModel.postulaciones.filter {
-        it.estado.equals("rechazada", ignoreCase = true) || it.estado.equals("finalizada", ignoreCase = true) || it.estado.equals("cancelada", ignoreCase = true)
+    val postulacionesEnCurso = remember(viewModel.postulaciones) {
+        viewModel.postulaciones.filter { !esPostulacionDeHistorial(it) }
     }
 
     val listaActual = if (pestañaSeleccionada == 0) postulacionesEnCurso else postulacionesHistorial
@@ -111,53 +152,77 @@ private fun PostulacionesTecnico(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Pestañas superiores tipo píldora
-        TabRow(
-            selectedTabIndex = pestañaSeleccionada,
-            containerColor = ServifyInputBackground,
-            contentColor = ServifyBluePrimary,
-            indicator = {}, // Sin indicador predeterminado para usar diseño de superficies
-            divider = {},
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .clip(RoundedCornerShape(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Tab(
-                selected = pestañaSeleccionada == 0,
-                onClick = { pestañaSeleccionada = 0 },
+            TabRow(
+                selectedTabIndex = pestañaSeleccionada,
+                containerColor = ServifyInputBackground,
+                contentColor = ServifyBluePrimary,
+                indicator = {},
+                divider = {},
                 modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(if (pestañaSeleccionada == 0) ServifySurface else Color.Transparent),
-                text = {
-                    Text(
-                        "En Curso",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = if (pestañaSeleccionada == 0) ServifyBluePrimary else ServifyTextMuted
-                    )
-                }
-            )
-            Tab(
-                selected = pestañaSeleccionada == 1,
-                onClick = { pestañaSeleccionada = 1 },
+            ) {
+                Tab(
+                    selected = pestañaSeleccionada == 0,
+                    onClick = {
+                        pestañaSeleccionada = 0
+                        viewModel.cargarPostulaciones(context)
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(if (pestañaSeleccionada == 0) ServifySurface else Color.Transparent),
+                    text = {
+                        Text(
+                            "En Curso",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = if (pestañaSeleccionada == 0) ServifyBlueLight else ServifyTextMuted
+                        )
+                    }
+                )
+                Tab(
+                    selected = pestañaSeleccionada == 1,
+                    onClick = {
+                        pestañaSeleccionada = 1
+                        viewModel.cargarPostulaciones(context)
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(if (pestañaSeleccionada == 1) ServifySurface else Color.Transparent),
+                    text = {
+                        Text(
+                            "Historial",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = if (pestañaSeleccionada == 1) ServifyBlueLight else ServifyTextMuted
+                        )
+                    }
+                )
+            }
+
+            IconButton(
+                onClick = { viewModel.cargarPostulaciones(context) },
                 modifier = Modifier
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (pestañaSeleccionada == 1) ServifySurface else Color.Transparent),
-                text = {
-                    Text(
-                        "Historial",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = if (pestañaSeleccionada == 1) ServifyBluePrimary else ServifyTextMuted
-                    )
-                }
-            )
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(ServifySurface)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Actualizar lista",
+                    tint = ServifyBlueLight
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Contenido de la lista según la pestaña activa
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -180,9 +245,17 @@ private fun PostulacionesTecnico(
                 }
             } else {
                 items(listaActual, key = { it.id }) { p ->
-                    val (textoEstado, fondoEstado, colorTextoEstado) = when (p.estado.lowercase()) {
-                        "aceptada" -> Triple("EN PROGRESO", ServifyCianSoft, ServifyBluePrimary)
-                        "rechazada" -> Triple("NO SELECCIONADA", ServifyDangerBg, ServifyDanger)
+                    val estPost = p.estado.lowercase()
+                    val estSol = p.estadoSolicitud?.lowercase().orEmpty()
+                    val estaCompletado = estSol in ESTADOS_COMPLETADO || estPost in ESTADOS_COMPLETADO
+                    val estaCancelado = estSol in ESTADOS_CANCELADO || estPost == "cancelada"
+
+                    val (textoEstado, fondoEstado, colorTextoEstado) = when {
+                        estaCompletado -> Triple("COMPLETADO", ServifyCianSoft, ServifyBluePrimary)
+                        estaCancelado -> Triple("CANCELADA", ServifyDangerBg, ServifyDanger)
+                        estPost == "rechazada" -> Triple("NO SELECCIONADA", ServifyDangerBg, ServifyDanger)
+                        estSol == "esperando_pago" -> Triple("ESPERANDO PAGO", ServifyPendingBg, ServifyPendingText)
+                        estPost == "aceptada" -> Triple("EN PROGRESO", ServifyCianSoft, ServifyBluePrimary)
                         else -> Triple("EN REVISIÓN", ServifyPendingBg, ServifyPendingText)
                     }
 
@@ -247,12 +320,11 @@ private fun PostulacionesTecnico(
                                 color = ServifyTextMuted
                             )
 
-                            // Botón de acción si está aceptada (Ir al Chat o Ver detalles)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                if (p.estado.lowercase() == "aceptada" && p.conversacionId != null) {
+                                if (estPost == "aceptada" && !estaCompletado && !estaCancelado && p.conversacionId != null) {
                                     Button(
                                         onClick = { navController.navigate(Rutas.Chat.crearRuta(p.conversacionId, "Cliente")) },
                                         modifier = Modifier.weight(1f).height(42.dp),
@@ -269,7 +341,7 @@ private fun PostulacionesTecnico(
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         containerColor = ServifyInputBackground,
-                                        contentColor = ServifyBluePrimary
+                                        contentColor = ServifyBlueLight
                                     ),
                                     border = null
                                 ) {

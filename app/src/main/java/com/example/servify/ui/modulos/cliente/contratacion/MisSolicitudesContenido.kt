@@ -198,7 +198,7 @@ fun MisSolicitudesContenido(
                                     }
 
                                     estadoLower in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre") -> {
-                                        solicitudParaCerrar = s
+                                        navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
                                     }
 
                                     estadoLower in listOf("cancelado", "cancelada") -> {

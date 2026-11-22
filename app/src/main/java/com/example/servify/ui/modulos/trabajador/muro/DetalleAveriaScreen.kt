@@ -84,7 +84,7 @@ fun DetalleAveriaScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atrás",
-                            tint = ServifyBluePrimary
+                            tint = ServifyBlueLight
                         )
                     }
                 },
@@ -124,7 +124,7 @@ fun DetalleAveriaScreen(
     ) { padding ->
         if (viewModel.isLoading || detalle == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                if (viewModel.isLoading) CircularProgressIndicator(color = ServifyBluePrimary)
+                if (viewModel.isLoading) CircularProgressIndicator(color = ServifyBlueLight)
                 else Text("No se pudo cargar la solicitud", color = ServifyTextMuted)
             }
         } else {
@@ -155,14 +155,14 @@ fun DetalleAveriaScreen(
                         modifier = Modifier
                             .size(50.dp)
                             .clip(CircleShape)
-                            .background(ServifyCianSoft),
+                            .background(ServifyCianSoft.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = detalle.clienteNombre.firstOrNull()?.uppercase() ?: "C",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = ServifyBluePrimary
+                            color = ServifyBlueLight
                         )
                     }
                     Spacer(modifier = Modifier.width(14.dp))
@@ -226,7 +226,7 @@ fun DetalleAveriaScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
-                        color = ServifyCianSoft,
+                        color = ServifyCianSoft.copy(alpha = 0.2f),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
@@ -234,7 +234,7 @@ fun DetalleAveriaScreen(
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ServifyBluePrimary
+                            color = ServifyBlueLight
                         )
                     }
 
@@ -282,7 +282,7 @@ fun DetalleAveriaScreen(
                                     Icon(
                                         imageVector = Icons.Default.LocationOn,
                                         contentDescription = null,
-                                        tint = ServifyBluePrimary,
+                                        tint = ServifyBlueLight,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -314,7 +314,7 @@ fun DetalleAveriaScreen(
                                     Icon(
                                         imageVector = Icons.Default.Map,
                                         contentDescription = null,
-                                        tint = ServifyBluePrimary,
+                                        tint = ServifyBlueLight,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -322,7 +322,7 @@ fun DetalleAveriaScreen(
                                         text = "Ver mapa",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = ServifyBluePrimary
+                                        color = ServifyBlueLight
                                     )
                                 }
                             }
@@ -413,4 +413,3 @@ fun DetalleAveriaScreen(
         }
     }
 }
-

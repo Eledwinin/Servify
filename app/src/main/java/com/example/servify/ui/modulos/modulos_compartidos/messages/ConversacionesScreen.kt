@@ -74,7 +74,7 @@ fun ConversacionesScreen(
             TabRow(
                 selectedTabIndex = pestañaActiva,
                 containerColor = ServifyInputBackground,
-                contentColor = ServifyBluePrimary,
+                contentColor = ServifyBlueLight,
                 indicator = {},
                 divider = {},
                 modifier = Modifier
@@ -93,7 +93,7 @@ fun ConversacionesScreen(
                             "Chats",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = if (pestañaActiva == 0) ServifyBluePrimary else ServifyTextMuted
+                            color = if (pestañaActiva == 0) ServifyBlueLight else ServifyTextMuted
                         )
                     }
                 )
@@ -111,7 +111,7 @@ fun ConversacionesScreen(
                             "Llamadas",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = if (pestañaActiva == 1) ServifyBluePrimary else ServifyTextMuted
+                            color = if (pestañaActiva == 1) ServifyBlueLight else ServifyTextMuted
                         )
                     }
                 )
@@ -133,7 +133,9 @@ fun ConversacionesScreen(
                         focusedContainerColor = ServifySurface,
                         unfocusedContainerColor = ServifySurface,
                         disabledContainerColor = ServifySurface,
-                        focusedBorderColor = ServifyBluePrimary,
+                        focusedTextColor = ServifyTextTitle,
+                        unfocusedTextColor = ServifyTextTitle,
+                        focusedBorderColor = ServifyBlueLight,
                         unfocusedBorderColor = ServifyBorder
                     ),
                     singleLine = true
@@ -153,7 +155,7 @@ fun ConversacionesScreen(
                     if (viewModel.isLoading && viewModel.conversaciones.isEmpty()) {
                         item {
                             Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = ServifyBluePrimary)
+                                CircularProgressIndicator(color = ServifyBlueLight)
                             }
                         }
                     } else if (conversacionesFiltradas.isEmpty()) {
@@ -186,7 +188,7 @@ fun ConversacionesScreen(
                                 ) {
                                     AvatarUsuario(
                                         nombre = c.otroNombre,
-                                        fotoUrl = c.otroFoto, // Asegúrate de que el modelo de conversación devuelva la foto (ej: otroFoto)
+                                        fotoUrl = c.otroFoto,
                                         tamano = 48.dp
                                     )
 
@@ -217,7 +219,7 @@ fun ConversacionesScreen(
                                             text = c.solicitudTitulo,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = ServifyBluePrimary,
+                                            color = ServifyBlueLight,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -260,7 +262,7 @@ fun ConversacionesScreen(
 
                 if (llamadasViewModel.isLoading && llamadasViewModel.llamadas.isEmpty()) {
                     Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = ServifyBluePrimary)
+                        CircularProgressIndicator(color = ServifyBlueLight)
                     }
                 } else if (llamadasViewModel.llamadas.isEmpty()) {
                     Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
@@ -298,14 +300,12 @@ fun ConversacionesScreen(
 @Composable
 fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
     val saliente = l.emisorId == miId
-    val fallida = l.estado in listOf("perdida", "rechazada", "cancelada")
 
-    // Colores e iconos dinámicos según el estado
     val colorEstado = when (l.estado) {
-        "completada" -> Color(0xFF0D9488) // Esmeralda si fue exitosa
-        "rechazada" -> Color(0xFFEF4444)  // Rojo si fue rechazada
-        "cancelada" -> Color(0xFFF59E0B)  // Naranja si fue cancelada
-        else -> Color(0xFFEF4444)         // Rojo para perdidas
+        "completada" -> Color(0xFF0D9488)
+        "rechazada" -> Color(0xFFEF4444)
+        "cancelada" -> Color(0xFFF59E0B)
+        else -> Color(0xFFEF4444)
     }
 
     val estadoTexto = when (l.estado) {
@@ -322,16 +322,14 @@ fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
             .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar con iniciales o icono flotante moderno
         AvatarUsuario(
             nombre = l.otroNombre,
-            fotoUrl = l.otroFoto, // Asegúrate de que LlamadaItem incluya la foto de la contraparte
+            fotoUrl = l.otroFoto,
             tamano = 50.dp
         )
 
         Spacer(modifier = Modifier.width(14.dp))
 
-        // Textos descriptivos principales
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = l.otroNombre,
@@ -346,7 +344,6 @@ fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Icono chiquito indicando si fue entrante/saliente y voz/video
                 Icon(
                     imageVector = if (l.esVideo == 1) Icons.Default.Videocam else Icons.Default.Call,
                     contentDescription = null,
@@ -362,7 +359,6 @@ fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
             }
         }
 
-        // Hora alineada a la derecha
         Text(
             text = horaDe(l.iniciadaEn),
             fontSize = 11.sp,

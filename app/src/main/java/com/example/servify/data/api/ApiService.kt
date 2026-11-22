@@ -19,6 +19,7 @@ import com.example.servify.data.model.CrearSolicitudRespuesta
 import com.example.servify.data.model.DashboardStatsResponse
 import com.example.servify.data.model.DetalleSolicitud
 import com.example.servify.data.model.FotoPerfilRespuesta
+import com.example.servify.data.model.GananciasResumen
 import com.example.servify.data.model.GenericResponse
 import com.example.servify.data.model.IniciarCierreRequest
 import com.example.servify.data.model.IniciarCierreResponse
@@ -320,6 +321,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MensajeResponse>
+
+    @GET("api/solicitudes/ganancias")
+    suspend fun obtenerGanancias(
+        @Header("Authorization") token: String
+    ): Response<GananciasResumen>
 
     // ==========================================
     // MÓDULO ADMINISTRADOR

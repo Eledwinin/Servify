@@ -99,6 +99,7 @@ data class MiPostulacion(
     @SerializedName("categoria_nombre") val categoriaNombre: String,
     @SerializedName("monto_propuesto") val montoPropuesto: Double,
     @SerializedName("estado") val estado: String,
+    @SerializedName("estado_solicitud") val estadoSolicitud: String? = null,
     @SerializedName("conversacion_id") val conversacionId: Int? = null,
     @SerializedName("creado_en") val creadoEn: String? = null,
     @SerializedName("acepta_presupuesto") val aceptaPresupuesto: Int = 0

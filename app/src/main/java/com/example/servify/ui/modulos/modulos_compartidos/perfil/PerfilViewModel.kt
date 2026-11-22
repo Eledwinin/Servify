@@ -13,6 +13,7 @@ import com.example.servify.data.repository.UsuarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PerfilUiState(
@@ -39,8 +40,9 @@ class PerfilViewModel(
 
     fun cargarPerfil(token: String) {
         if (token.isBlank()) return
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             val resultado = repository.obtenerPerfil(token)
             resultado.onSuccess { usuario ->
                 Log.d("DEBUG_PERFIL", "Usuario recibido: $usuario")
@@ -48,17 +50,21 @@ class PerfilViewModel(
 
                 SessionManager.guardarSesion(token, usuario)
 
-                _uiState.value = _uiState.value.copy(
-                    usuario = usuario,
-                    isLoading = false
-                )
+                _uiState.update {
+                    it.copy(
+                        usuario = usuario,
+                        isLoading = false
+                    )
+                }
                 cargarResenas(token)
             }.onFailure { err ->
                 Log.e("DEBUG_PERFIL", "Error al cargar perfil: ${err.message}")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = err.message
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = err.message
+                    )
+                }
             }
         }
     }

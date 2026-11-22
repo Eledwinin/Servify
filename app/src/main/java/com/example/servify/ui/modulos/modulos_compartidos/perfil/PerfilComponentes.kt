@@ -1,6 +1,5 @@
 package com.example.servify.ui.modulos.modulos_compartidos.perfil
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,17 +31,30 @@ import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatConfig
 import com.example.servify.ui.theme.*
 
-object PerfilColores {
-    val verde = ServifyBluePrimary
-    val verdeClaro = ServifyCianSoft
-    val texto = ServifyTextTitle
-    val gris = ServifyTextMuted
-    val borde = ServifyBorder
-    val rojo = ServifyDanger
-    val rojoClaro = ServifyDangerBg
-    val dorado = ServifyStarYellow
-    val doradoClaro = ServifyPendingBg
-}
+data class ColoresPerfilUi(
+    val verde: Color,
+    val verdeClaro: Color,
+    val texto: Color,
+    val gris: Color,
+    val borde: Color,
+    val rojo: Color,
+    val rojoClaro: Color,
+    val dorado: Color,
+    val doradoClaro: Color
+)
+
+@Composable
+fun rememberPerfilColores(): ColoresPerfilUi = ColoresPerfilUi(
+    verde = ServifyBlueLight,
+    verdeClaro = ServifyCianSoft,
+    texto = ServifyTextTitle,
+    gris = ServifyTextMuted,
+    borde = ServifyBorder,
+    rojo = ServifyDanger,
+    rojoClaro = ServifyDangerBg,
+    dorado = ServifyStarYellow,
+    doradoClaro = ServifyPendingBg
+)
 
 fun iniciales(nombre: String?): String {
     val partes = (nombre ?: "Usuario").trim().split(" ").filter { it.isNotBlank() }
@@ -71,22 +83,15 @@ fun calcularCompletitud(u: UsuarioModel?, fotosPortafolio: Int, esTecnico: Boole
 
 @Composable
 fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean, onCambiarFoto: () -> Unit) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
 
     val tipoPlanActual = user?.tipoPlan ?: SessionManager.tipoPlanActivo ?: ""
     val esSemanal = tipoPlanActual.contains("Semanal", ignoreCase = true)
 
-    // Color de acento para VIP o Semanal, pero NEGRO/OSCURO para cuando no tenga plan
     val colorAcento = when {
-        esSemanal -> Color(0xFF0284C7) // Celeste para el semanal
-        esVip -> c.dorado            // Dorado para el PRO
-        else -> c.texto              // <--- CAMBIO AQUÍ: Usamos el color de texto principal para que no se pierda
-    }
-
-    val fondoAvatar = when {
-        esSemanal -> Color(0xFFE0F2FE)
-        esVip -> c.doradoClaro
-        else -> c.verdeClaro
+        esSemanal -> Color(0xFF38BDF8)
+        esVip -> c.dorado
+        else -> c.texto
     }
 
     val textoSubtitulo = when {
@@ -110,14 +115,22 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean, onCa
     ) {
         Box(Modifier.clickable { onCambiarFoto() }) {
             AvatarUsuario(
-                nombre = user?.nombre, fotoUrl = user?.fotoUrl, tamano = 72.dp,
+                nombre = user?.nombre,
+                fotoUrl = user?.fotoUrl,
+                tamano = 72.dp,
                 fondo = if (esVip) c.doradoClaro else c.verdeClaro,
                 colorTexto = if (esVip) c.dorado else c.verde
             )
             Box(
-                Modifier.align(Alignment.BottomEnd).size(24.dp).clip(CircleShape).background(ServifyBluePrimary),
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(ServifyBluePrimary),
                 contentAlignment = Alignment.Center
-            ) { Icon(Icons.Default.PhotoCamera, "Cambiar foto", tint = Color.White, modifier = Modifier.size(14.dp)) }
+            ) {
+                Icon(Icons.Default.PhotoCamera, "Cambiar foto", tint = Color.White, modifier = Modifier.size(14.dp))
+            }
         }
 
         Spacer(Modifier.width(16.dp))
@@ -136,15 +149,14 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean, onCa
                         Icons.Default.WorkspacePremium,
                         contentDescription = "VIP",
                         tint = colorAcento,
-                        modifier = Modifier.size(18.sp.value.dp) // o 18.dp
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            // TEXTO DEL SUBTÍTULO CON BUEN CONTRASTE
             Text(
                 text = textoSubtitulo,
-                color = colorAcento, // Si no tiene plan, ahora usará c.texto (oscuro y legible)
+                color = colorAcento,
                 fontSize = 13.sp,
                 fontWeight = if (esVip || esSemanal) FontWeight.Bold else FontWeight.Medium
             )
@@ -167,7 +179,7 @@ fun CabeceraPerfil(user: UsuarioModel?, esTecnico: Boolean, esVip: Boolean, onCa
 
 @Composable
 fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: () -> Unit) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     TarjetaBase(Modifier.clickable { onCompletar() }) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Perfil completo", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = c.texto)
@@ -192,9 +204,8 @@ fun TarjetaCompletitud(porcentaje: Int, faltantes: List<String>, onCompletar: ()
 
 @Composable
 fun TarjetaVip(tipoPlan: String?, onCancelar: () -> Unit) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
 
-    // Validamos si es el plan semanal o el pro para cambiar el texto y estilo
     val esSemanal = tipoPlan?.contains("Semanal", ignoreCase = true) == true
 
     val tituloPlan = if (esSemanal) "Plan Semanal Activo" else "Plan Servify PRO"
@@ -288,7 +299,7 @@ fun TarjetaVip(tipoPlan: String?, onCancelar: () -> Unit) {
 
 @Composable
 fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Unit) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     TarjetaBase {
         Row(
             Modifier.fillMaxWidth(),
@@ -309,7 +320,7 @@ fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Un
             biografia?.takeIf { it.isNotBlank() }
                 ?: "Cuéntales a los clientes quién eres y qué tipo de trabajos haces. Una buena descripción genera confianza.",
             fontSize = 13.sp,
-            color = if (biografia.isNullOrBlank()) c.gris else Color.DarkGray,
+            color = if (biografia.isNullOrBlank()) c.gris else ServifyTextBody,
             lineHeight = 19.sp
         )
         if ((anosExperiencia ?: 0) > 0) {
@@ -319,7 +330,7 @@ fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Un
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = c.verde
+                    color = ServifyBluePrimary
                 )
             }
         }
@@ -328,10 +339,9 @@ fun TarjetaSobreMi(biografia: String?, anosExperiencia: Int?, onEditar: () -> Un
 
 @Composable
 fun TarjetaContacto(user: UsuarioModel?) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     val esTecnico = SessionManager.esTecnico || (user?.rol?.lowercase() in listOf("tecnico", "trabajador", "ambos"))
 
-    // Obtenemos el nombre del oficio/categoría únicamente si viene con texto real desde la BD
     val categoriaNombre = user?.categoriaNombre?.takeIf { it.isNotBlank() }
         ?: SessionManager.categoriaNombre?.takeIf { it.isNotBlank() }
 
@@ -339,7 +349,6 @@ fun TarjetaContacto(user: UsuarioModel?) {
         Text("Información de contacto", color = c.texto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
 
-        // SOLO se renderiza si es técnico Y la categoría NO es nula ni vacía
         if (esTecnico && !categoriaNombre.isNullOrBlank()) {
             DatoContacto(
                 icono = Icons.Default.Build,
@@ -359,17 +368,20 @@ fun TarjetaContacto(user: UsuarioModel?) {
 
 @Composable
 private fun DatoContacto(icono: ImageVector, titulo: String, valor: String) {
+    val c = rememberPerfilColores()
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     ) {
-        Icon(icono, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp))
+        Icon(icono, null, tint = c.verde, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(titulo, color = PerfilColores.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(titulo, color = c.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             Text(
                 valor,
-                color = PerfilColores.texto,
+                color = c.texto,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -381,7 +393,7 @@ private fun DatoContacto(icono: ImageVector, titulo: String, valor: String) {
 
 @Composable
 fun SeccionResenasCliente() {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     TarjetaBase {
         Text("Reseñas como Cliente", color = c.texto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
@@ -400,7 +412,7 @@ fun TarjetaPortafolio(
     onSubir: () -> Unit,
     onEliminar: (Int) -> Unit
 ) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     TarjetaBase {
         Row(
             Modifier.fillMaxWidth(),
@@ -423,7 +435,9 @@ fun TarjetaPortafolio(
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = ServifyInputBackground,
-                modifier = Modifier.fillMaxWidth().clickable { onSubir() }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSubir() }
             ) {
                 Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.AddPhotoAlternate, null, tint = c.gris, modifier = Modifier.size(30.dp))
