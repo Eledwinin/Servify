@@ -173,6 +173,7 @@ fun MisSolicitudesContenido(
                     val (textoEstado, colorFondo, colorTexto) = when (s.estado.lowercase()) {
                         "aceptada", "aceptado" -> Triple("ACEPTADA", ServifyCianSoft, ServifyBluePrimary)
                         "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
+                        "cancelado", "cancelada" -> Triple("CANCELADO", ServifyDangerBg, ServifyDanger)
                         "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
                         "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary)
                         "esperando_pago", "pendiente_pago", "en_cierre" -> Triple("ESPERANDO ESCANEO QR", ServifyPendingBg, ServifyPendingText)
@@ -186,13 +187,9 @@ fun MisSolicitudesContenido(
                             .clickable {
                                 val estadoLower = s.estado.lowercase()
 
-
                                 when {
-                                    // Si la solicitud está completada, lo mandamos a calificar (o prevenimos doble reseña si ya tiene)
                                     estadoLower in listOf("completado", "completada") -> {
                                         val idTecnico = s.tecnicoId ?: 1
-
-                                        // Opcional: Validar si ya fue calificada o abrir directo la reseña
                                         if (idTecnico > 0) {
                                             navController.navigate(Rutas.CrearResena.crearRuta(s.id, idTecnico))
                                         } else {
@@ -200,12 +197,14 @@ fun MisSolicitudesContenido(
                                         }
                                     }
 
-                                    // Si está esperando pago o en proceso, abrimos el modal de cierre/QR
                                     estadoLower in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre") -> {
                                         solicitudParaCerrar = s
                                     }
 
-                                    // Para solicitudes normales publicadas, vamos al detalle de propuestas
+                                    estadoLower in listOf("cancelado", "cancelada") -> {
+                                        // Solicitud dada de baja: no navega a propuestas
+                                    }
+
                                     else -> {
                                         val idTecnico = s.tecnicoId
                                         if (idTecnico != null && idTecnico > 0) {
@@ -264,14 +263,50 @@ fun MisSolicitudesContenido(
                                 color = ServifyTextTitle
                             )
 
-                            Text(
-                                text = s.descripcion,
-                                fontSize = 13.sp,
-                                color = ServifyTextMuted,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                lineHeight = 18.sp
-                            )
+                            val partesDesc = s.descripcion.split("[Dada de baja por Administración — Motivo:")
+                            val descripcionLimpia = partesDesc[0].trim()
+                            val motivoBajaAdmin = if (partesDesc.size > 1) {
+                                partesDesc[1].removeSuffix("]").trim()
+                            } else {
+                                null
+                            }
+
+                            if (descripcionLimpia.isNotBlank()) {
+                                Text(
+                                    text = descripcionLimpia,
+                                    fontSize = 13.sp,
+                                    color = ServifyTextMuted,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    lineHeight = 18.sp
+                                )
+                            }
+
+                            if (!motivoBajaAdmin.isNullOrBlank()) {
+                                Surface(
+                                    color = Color(0xFFFEF2F2),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "⚠️ Dada de baja por Administración",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626)
+                                        )
+                                        Text(
+                                            text = "Motivo: $motivoBajaAdmin",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF7F1D1D),
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
@@ -325,7 +360,6 @@ fun MisSolicitudesContenido(
         }
     }
 
-
     solicitudParaCerrar?.let { solicitud ->
         DialogoCierreCliente(
             solicitudId = solicitud.id,
@@ -337,13 +371,8 @@ fun MisSolicitudesContenido(
             onConfirmarPago = { metodoPago ->
                 if (metodoPago == "tarjeta") {
                     val idActual = solicitud.id
-
-                    val idTecnicoSeguro = solicitud.tecnicoId ?: viewModel.tecnicoIdParaCalificar ?: 0
-
                     solicitudParaCerrar = null
                     viewModel.limpiarEstadoCierre()
-
-                    // Navegamos al checkout pasando el ID de la solicitud
                     navController.navigate(Rutas.CheckoutPago.crearRuta(idActual))
                 } else {
                     viewModel.iniciarCierreSolicitud(solicitud.id, "efectivo", solicitud.tecnicoId)
@@ -351,16 +380,12 @@ fun MisSolicitudesContenido(
             },
             onCalificarClick = {
                 val idSolFinal = solicitud.id
-
-                // Rescatamos el técnicoId desde la solicitud o el ViewModel (si viniera 0/null asigna 1 de salvavidas)
                 val idTecnicoBruto = solicitud.tecnicoId ?: viewModel.tecnicoIdParaCalificar ?: 0
                 val idTecnicoFinal = if (idTecnicoBruto > 0) idTecnicoBruto else 1
 
-                // 1. Ocultar modal y limpiar
                 solicitudParaCerrar = null
                 viewModel.limpiarEstadoCierre()
 
-                // 2. Navegar directamente sin bloqueos ni errores
                 if (idSolFinal > 0) {
                     navController.navigate(Rutas.CrearResena.crearRuta(idSolFinal, idTecnicoFinal))
                 } else {

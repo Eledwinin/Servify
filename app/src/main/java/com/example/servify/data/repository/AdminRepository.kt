@@ -1,10 +1,12 @@
 package com.example.servify.data.repository
 
+import android.util.Log
 import com.example.servify.data.api.ApiService
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.AdminSolicitudItem
 import com.example.servify.data.model.AdminUsuarioItem
 import com.example.servify.data.model.CambiarRolRequest
+import com.example.servify.data.model.CancelarSolicitudRequest
 import com.example.servify.data.model.DashboardData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,10 +71,14 @@ class AdminRepository(
         }
     }
 
-    suspend fun obtenerSolicitudes(token: String): Result<List<AdminSolicitudItem>> {
+    suspend fun obtenerSolicitudes(
+        token: String,
+        categoria: String? = null
+    ): Result<List<AdminSolicitudItem>> {
         return withContext(Dispatchers.IO) {
             try {
-                val respuesta = apiService.getSolicitudesAdmin("Bearer $token")
+                val filtro = categoria?.takeIf { it.isNotBlank() }
+                val respuesta = apiService.getSolicitudesAdmin("Bearer $token", filtro)
                 if (respuesta.isSuccessful && respuesta.body()?.success == true) {
                     Result.success(respuesta.body()!!.solicitudes)
                 } else {
@@ -84,16 +90,27 @@ class AdminRepository(
         }
     }
 
-    suspend fun cancelarSolicitud(token: String, solicitudId: Int): Result<String> {
+    suspend fun cancelarSolicitud(
+        token: String,
+        solicitudId: Int,
+        motivo: String
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                val respuesta = apiService.cancelarSolicitudAdmin("Bearer $token", solicitudId)
+                val respuesta = apiService.cancelarSolicitudAdmin(
+                    "Bearer $token",
+                    solicitudId,
+                    CancelarSolicitudRequest(motivo)
+                )
                 if (respuesta.isSuccessful) {
-                    Result.success(respuesta.body()?.mensaje ?: "Solicitud dada de baja correctamente")
+                    Result.success(respuesta.body()?.mensaje ?: "Solicitud dada de baja y usuario notificado")
                 } else {
-                    Result.failure(Exception("No se pudo cancelar la solicitud (${respuesta.code()})"))
+                    val errorDetalle = respuesta.errorBody()?.string() ?: "Sin detalle"
+                    Log.e("ADMIN_BAJA", "Código ${respuesta.code()}: $errorDetalle")
+                    Result.failure(Exception("Error ${respuesta.code()}: $errorDetalle"))
                 }
             } catch (e: Exception) {
+                Log.e("ADMIN_BAJA", "Excepción al cancelar", e)
                 Result.failure(Exception("Fallo de conexión: ${e.localizedMessage}"))
             }
         }

@@ -7,6 +7,7 @@ import com.example.servify.data.model.AdminUsuariosResponse
 import com.example.servify.data.model.AuthResponse
 import com.example.servify.data.model.CambiarPasswordRequest
 import com.example.servify.data.model.CambiarRolRequest
+import com.example.servify.data.model.CancelarSolicitudRequest
 import com.example.servify.data.model.Categoria
 import com.example.servify.data.model.ContratacionDirectaRequest
 import com.example.servify.data.model.ContratacionDirectaResponse
@@ -339,13 +340,15 @@ interface ApiService {
 
     @GET("api/admin/solicitudes")
     suspend fun getSolicitudesAdmin(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String,
+        @Query("categoria") categoria: String? = null
     ): Response<AdminSolicitudesResponse>
 
     @PUT("api/admin/solicitudes/{id}/cancelar")
     suspend fun cancelarSolicitudAdmin(
         @Header("Authorization") token: String,
-        @Path("id") idSolicitud: Int
+        @Path("id") idSolicitud: Int,
+        @Body body: CancelarSolicitudRequest
     ): Response<MensajeResponse>
 
     @GET("api/chat/conversaciones/{id}/token-llamada")
@@ -353,7 +356,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<TokenLlamadaRespuesta>
-
 
     @Multipart
     @POST("api/users/perfil/foto")
@@ -367,7 +369,6 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MiResenaRespuesta>
-
 }
 
 // ==========================================

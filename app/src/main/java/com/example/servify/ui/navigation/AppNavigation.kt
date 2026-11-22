@@ -451,7 +451,12 @@ fun AppNavigation() {
                     onIrAUsuarios = { rolFiltro ->
                         navController.navigate(Rutas.AdminUsuarios.crearRuta(rolFiltro))
                     },
-                    onIrASolicitudes = { navController.navigate(Rutas.AdminSolicitudes.ruta) },
+                    onIrASolicitudes = { categoriaFiltro ->
+                        navController.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("categoria_filtro", categoriaFiltro)
+                        navController.navigate(Rutas.AdminSolicitudes.ruta)
+                    },
                     onCerrarSesion = {
                         LlamadasManager.desconectar()
                         SessionManager.cerrarSesion()
@@ -471,7 +476,15 @@ fun AppNavigation() {
             }
 
             composable(Rutas.AdminSolicitudes.ruta) {
-                AdminSolicitudesScreen(onVolver = { navController.popBackStack() })
+                val categoriaInicial = navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<String>("categoria_filtro")
+                    ?: ""
+
+                AdminSolicitudesScreen(
+                    categoriaInicial = categoriaInicial,
+                    onVolver = { navController.popBackStack() }
+                )
             }
 
             composable(

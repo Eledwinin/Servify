@@ -57,10 +57,16 @@ data class AdminSolicitudItem(
     @SerializedName("presupuesto_estimado") val presupuestoEstimado: String? = null,
     @SerializedName("creado_en") val creadoEn: String? = null,
     @SerializedName("cliente_nombre") val clienteNombre: String? = null,
-    @SerializedName("cliente_correo") val clienteCorreo: String? = null
+    @SerializedName("cliente_correo") val clienteCorreo: String? = null,
+    @SerializedName("categoria_id") val categoriaId: Int? = null,
+    @SerializedName("categoria_nombre") val categoriaNombre: String? = null
 )
 
 data class AdminSolicitudesResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("solicitudes") val solicitudes: List<AdminSolicitudItem>
+)
+
+data class CancelarSolicitudRequest(
+    @SerializedName("motivo") val motivo: String
 )
