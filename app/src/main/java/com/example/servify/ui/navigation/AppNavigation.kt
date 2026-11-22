@@ -37,11 +37,14 @@ import com.example.servify.ui.modulos.cliente.home.MapaScreen
 import com.example.servify.ui.modulos.cliente.profesional.DetalleTecnicoScreen
 import com.example.servify.ui.modulos.cliente.propuestas.PropuestasScreen
 import com.example.servify.ui.modulos.modulos_compartidos.actividad.ActividadScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.AyudaSoporteScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.LoginScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.OlvidePasswordScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.PoliticasdePrivacidadLegalScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroClienteScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.RegistroTrabajadorScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.SeleccionRolScreen
+import com.example.servify.ui.modulos.modulos_compartidos.auth.TerminosCondicionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.auth.TipoRol
 import com.example.servify.ui.modulos.modulos_compartidos.messages.CallScreen
 import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatScreen
@@ -49,8 +52,6 @@ import com.example.servify.ui.modulos.modulos_compartidos.messages.Conversacione
 import com.example.servify.modulos_compartidos.pagos.MetodosPagoScreen
 import com.example.servify.modulos_compartidos.pagos.PagoExitosoScreen
 import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
-import com.example.servify.ui.modulos.modulos_compartidos.auth.PoliticasdePrivacidadLegalScreen
-import com.example.servify.ui.modulos.modulos_compartidos.auth.TerminosCondicionesScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CapturaRostroScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.FotoPerfilViewModel
@@ -125,7 +126,6 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Manejar navegación automática si se presionó una notificación nativa
     val rutaPendiente = com.example.servify.MainActivity.rutaDestinoPendiente.value
     LaunchedEffect(rutaPendiente) {
         if (!rutaPendiente.isNullOrBlank()) {
@@ -251,7 +251,6 @@ fun AppNavigation() {
                 )
             }
 
-            // DETALLE TÉCNICO CON PARAMETRO MOSTRARBOTON PASADO CORRECTAMENTE
             composable(
                 route = Rutas.DetalleTecnico.ruta,
                 arguments = listOf(
@@ -310,6 +309,12 @@ fun AppNavigation() {
                 )
             }
 
+            composable(route = Rutas.AyudaSoporte.ruta) {
+                AyudaSoporteScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
             composable(
                 route = "enviar_propuesta/{idSolicitud}/{titulo}?presupuesto={presupuesto}",
                 arguments = listOf(
@@ -336,7 +341,6 @@ fun AppNavigation() {
                 )
             }
 
-            //membresias
             composable(Rutas.PlanesMembresia.ruta) {
                 PlanesMembresiaScreen(
                     onSeleccionarPlan = { tipoPlan, monto ->

@@ -159,6 +159,7 @@ fun TopBarConMenu(
                         },
                         onClick = {
                             expanded = false
+                            navController.navigate(Rutas.AyudaSoporte.ruta)
                         },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )

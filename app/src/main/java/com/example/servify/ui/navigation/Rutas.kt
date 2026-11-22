@@ -8,14 +8,15 @@ sealed class Rutas(val ruta: String) {
     object RegistroCliente : Rutas("registro_cliente")
     object RegistroTrabajador : Rutas("registro_trabajador")
 
-
     object TerminosCondiciones : Rutas("terminos_condiciones/{role}") {
         fun crearRuta(role: String) = "terminos_condiciones/$role"
     }
 
     object CapturaRostro : Rutas("captura_rostro")
 
-    object PoliticasPrivacidad: Rutas ("politicas_privacidad")
+    object PoliticasPrivacidad : Rutas("politicas_privacidad")
+
+    object AyudaSoporte : Rutas("ayuda_soporte")
 
     // Pestañas principales
     object Home : Rutas("home")
