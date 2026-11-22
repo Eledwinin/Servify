@@ -22,10 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.UsuarioModel
@@ -49,7 +53,7 @@ fun PerfilScreen(
     viewModel: PerfilViewModel = viewModel()
 ) {
     val c = rememberPerfilColores()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val ui by viewModel.uiState.collectAsState()
 
     var dialogoVip by remember { mutableStateOf(false) }
@@ -63,16 +67,17 @@ fun PerfilScreen(
         selectorFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(token) {
         if (token.isNotBlank()) {
+            viewModel.cargarPerfil(token)
             viewModel.cargarPortafolio()
             viewModel.cargarResenas(token)
         }
     }
-    DisposableEffect(lifecycleOwner) {
-        val observador = androidx.lifecycle.LifecycleEventObserver { _, evento ->
-            if (evento == androidx.lifecycle.Lifecycle.Event.ON_RESUME && token.isNotBlank()) {
+    DisposableEffect(lifecycleOwner, token) {
+        val observador = LifecycleEventObserver { _, evento ->
+            if (evento == Lifecycle.Event.ON_RESUME && token.isNotBlank()) {
                 viewModel.cargarPerfil(token)
             }
         }
@@ -87,7 +92,8 @@ fun PerfilScreen(
         }
     }
 
-    val user = ui.usuario
+    // Usa el usuario cargado del servidor o, mientras llega, el de sesión para evitar el flash de "No registrado"
+    val user = ui.usuario ?: SessionManager.usuarioActual
 
     val rolDetectado = (user?.rol ?: SessionManager.usuarioActual?.rol ?: "").lowercase().trim()
     val esCliente = rolDetectado == "cliente"
@@ -181,7 +187,7 @@ fun PerfilScreen(
             )
         }
     ) { padding ->
-        if (ui.isLoading && user == null) {
+        if (user == null && (ui.isLoading || token.isNotBlank())) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = ServifyBlueLight)
             }
