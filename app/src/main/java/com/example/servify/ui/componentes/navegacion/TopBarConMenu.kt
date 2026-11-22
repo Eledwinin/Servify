@@ -4,11 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PersonOutline
-import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,7 +43,7 @@ fun TopBarConMenu(
         // Título de la app a la izquierda
         Text(
             text = titulo,
-            color = ServifyBluePrimary,
+            color = ServifyBlueLight,
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold
         )
@@ -69,7 +69,7 @@ fun TopBarConMenu(
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Menú de opciones",
-                            tint = ServifyBluePrimary,
+                            tint = ServifyBlueLight,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -90,7 +90,7 @@ fun TopBarConMenu(
                                 Icon(
                                     imageVector = Icons.Default.PersonOutline,
                                     contentDescription = null,
-                                    tint = ServifyBluePrimary,
+                                    tint = ServifyBlueLight,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -124,11 +124,12 @@ fun TopBarConMenu(
                         },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
+
                     DropdownMenuItem(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.PrivacyTip, // Asegúrate de importar este icono o usar uno similar
+                                    imageVector = Icons.Default.PrivacyTip,
                                     contentDescription = null,
                                     tint = ServifyTextMuted,
                                     modifier = Modifier.size(20.dp)
@@ -164,7 +165,7 @@ fun TopBarConMenu(
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
 
-                    Divider(
+                    HorizontalDivider(
                         color = ServifyBorder,
                         thickness = 1.dp,
                         modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
@@ -194,7 +195,6 @@ fun TopBarConMenu(
         }
     }
 
-    // Diálogo de alerta para cerrar sesión con diseño moderno
     if (mostrarDialogoCierre) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCierre = false },
@@ -235,7 +235,7 @@ fun TopBarConMenu(
                 OutlinedButton(
                     onClick = { mostrarDialogoCierre = false },
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ServifyBluePrimary)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ServifyBlueLight)
                 ) {
                     Text("Cancelar", fontWeight = FontWeight.SemiBold)
                 }

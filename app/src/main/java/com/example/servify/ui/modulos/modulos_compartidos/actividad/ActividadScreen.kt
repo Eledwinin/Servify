@@ -134,7 +134,7 @@ private fun PostulacionesTecnico(
                         "En Curso",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = if (pestañaSeleccionada == 0) ServifyBluePrimary else ServifyTextMuted
+                        color = if (pestañaSeleccionada == 0) ServifyBlueLight else ServifyTextMuted
                     )
                 }
             )
@@ -149,7 +149,7 @@ private fun PostulacionesTecnico(
                         "Historial",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = if (pestañaSeleccionada == 1) ServifyBluePrimary else ServifyTextMuted
+                        color = if (pestañaSeleccionada == 1) ServifyBlueLight else ServifyTextMuted
                     )
                 }
             )
@@ -269,7 +269,7 @@ private fun PostulacionesTecnico(
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         containerColor = ServifyInputBackground,
-                                        contentColor = ServifyBluePrimary
+                                        contentColor = ServifyBlueLight
                                     ),
                                     border = null
                                 ) {

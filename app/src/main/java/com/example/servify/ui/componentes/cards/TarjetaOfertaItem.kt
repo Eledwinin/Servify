@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.data.model.Mensaje
+import com.example.servify.ui.theme.*
 import java.util.Locale
 
 @Composable
@@ -33,39 +34,65 @@ fun TarjetaOfertaItem(
         horizontalArrangement = if (esMio) Arrangement.End else Arrangement.Start
     ) {
         Surface(
-            color = Color.White,
+            color = ServifySurface,
             shape = RoundedCornerShape(16.dp),
             shadowElevation = 3.dp,
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+            border = BorderStroke(1.dp, ServifyBorder),
             modifier = Modifier.widthIn(min = 260.dp, max = 310.dp)
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.LocalOffer, null, tint = Color(0xFF0F2C59), modifier = Modifier.size(16.dp))
-                        Text("Propuesta Económica", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F2C59))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.LocalOffer,
+                            null,
+                            tint = ServifyBlueLight,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            "Propuesta Económica",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ServifyBlueLight
+                        )
                     }
-                    Text(horaFormateada, fontSize = 10.sp, color = Color(0xFF94A3B8))
+                    Text(horaFormateada, fontSize = 10.sp, color = ServifyTextMuted)
                 }
 
                 Text(
                     text = "$${String.format(Locale.US, "%.2f", mensaje.monto ?: 0.0)}",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF0F172A)
+                    color = ServifyTextTitle
                 )
 
                 when (estado) {
                     "pendiente" -> {
                         if (esMio) {
-                            Text("Esperando respuesta del usuario...", fontSize = 12.sp, color = Color(0xFF64748B), fontStyle = FontStyle.Italic)
+                            Text(
+                                "Esperando respuesta del usuario...",
+                                fontSize = 12.sp,
+                                color = ServifyTextMuted,
+                                fontStyle = FontStyle.Italic
+                            )
                         } else {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedButton(
                                     onClick = onRechazar,
                                     modifier = Modifier.weight(1f).height(38.dp),
                                     shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = ServifyDangerBg,
+                                        contentColor = ServifyDanger
+                                    ),
+                                    border = null
                                 ) {
                                     Text("Rechazar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
@@ -73,7 +100,7 @@ fun TarjetaOfertaItem(
                                     onClick = onAceptar,
                                     modifier = Modifier.weight(1f).height(38.dp),
                                     shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2C59))
+                                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
                                 ) {
                                     Text("Aceptar", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
@@ -81,17 +108,39 @@ fun TarjetaOfertaItem(
                         }
                     }
                     "aceptada" -> {
-                        Surface(color = Color(0xFFCCFBF1), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            Text("✓ Oferta Aceptada (Acuerdo Cerrado)", modifier = Modifier.padding(8.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F766E), textAlign = TextAlign.Center)
+                        Surface(
+                            color = ServifyOnlineGreen.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "✓ Oferta Aceptada (Acuerdo Cerrado)",
+                                modifier = Modifier.padding(8.dp),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ServifyOnlineGreen,
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                     "rechazada" -> {
-                        Surface(color = Color(0xFFFEE2E2), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            Text("✕ Oferta Rechazada", modifier = Modifier.padding(8.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB91C1C), textAlign = TextAlign.Center)
+                        Surface(
+                            color = ServifyDangerBg,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "✕ Oferta Rechazada",
+                                modifier = Modifier.padding(8.dp),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ServifyDanger,
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                     else -> {
-                        Text("Oferta cancelada", fontSize = 11.sp, color = Color(0xFF94A3B8))
+                        Text("Oferta cancelada", fontSize = 11.sp, color = ServifyTextMuted)
                     }
                 }
             }

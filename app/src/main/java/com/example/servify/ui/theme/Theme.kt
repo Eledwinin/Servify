@@ -11,31 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColorScheme = lightColorScheme(
-    primary = ServifyBluePrimary,
-    onPrimary = Color.White,
-    primaryContainer = ServifyCianSoft,
-    onPrimaryContainer = ServifyDarkNavy,
-    secondary = ServifyTealAccent,
-    background = ServifyBackground,
-    surface = ServifySurface,
-    onBackground = ServifyTextTitle,
-    onSurface = ServifyTextTitle,
-    outline = ServifyBorder
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = ServifyBluePrimary,
-    onPrimary = Color.White,
-    primaryContainer = ServifyDarkNavy,
-    onPrimaryContainer = ServifyCianSoft,
-    secondary = ServifyTealAccent,
-    background = Color(0xFF021024),
-    surface = Color(0xFF052659),
-    onBackground = Color.White,
-    onSurface = Color.White,
-    outline = Color(0xFF548383)
-)
 
 @Composable
 fun ServifyTheme(
@@ -43,13 +18,39 @@ fun ServifyTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val lightColorScheme = lightColorScheme(
+        primary = ServifyBluePrimary,
+        onPrimary = Color.White,
+        primaryContainer = ServifyCianSoft,
+        onPrimaryContainer = ServifyDarkNavy,
+        secondary = ServifyTealAccent,
+        background = ServifyBackground,
+        surface = ServifySurface,
+        onBackground = ServifyTextTitle,
+        onSurface = ServifyTextTitle,
+        outline = ServifyBorder
+    )
+
+    val darkColorScheme = darkColorScheme(
+        primary = ServifyBlueLight,
+        onPrimary = ServifyDarkNavy,
+        primaryContainer = ServifyBluePrimary,
+        onPrimaryContainer = ServifyCianSoft,
+        secondary = ServifyTealAccent,
+        background = Color(0xFF021024),
+        surface = Color(0xFF071A38),
+        onBackground = Color(0xFFF1F5F9),
+        onSurface = Color(0xFFF1F5F9),
+        outline = Color(0xFF1E3A66)
+    )
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> darkColorScheme
+        else -> lightColorScheme
     }
 
     MaterialTheme(

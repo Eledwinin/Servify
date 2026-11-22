@@ -34,15 +34,14 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import com.example.servify.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -53,12 +52,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.R
 import com.example.servify.data.model.UsuarioModel
 import com.example.servify.ui.componentes.feedback.MensajeFeedback
 import com.example.servify.ui.theme.ServifyBackground
+import com.example.servify.ui.theme.ServifyBlueLight
 import com.example.servify.ui.theme.ServifyBluePrimary
 import com.example.servify.ui.theme.ServifyBorder
-import com.example.servify.ui.theme.ServifyCianSoft
 import com.example.servify.ui.theme.ServifyDarkNavy
 import com.example.servify.ui.theme.ServifyInputBackground
 import com.example.servify.ui.theme.ServifySurface
@@ -104,12 +104,11 @@ fun LoginScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_servi),
-                        contentDescription = "Logo Servify",
-                        modifier = Modifier.size(210.dp)
-                    )
-
+                Image(
+                    painter = painterResource(id = R.drawable.logo_servi),
+                    contentDescription = "Logo Servify",
+                    modifier = Modifier.size(210.dp)
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -140,7 +139,7 @@ fun LoginScreen(
                         text = "CORREO ELECTRÓNICO",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ServifyBluePrimary
+                        color = ServifyBlueLight
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -151,7 +150,7 @@ fun LoginScreen(
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = null,
-                                tint = ServifyBluePrimary
+                                tint = ServifyBlueLight
                             )
                         },
                         singleLine = true,
@@ -163,7 +162,7 @@ fun LoginScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = ServifyInputBackground,
                             unfocusedContainerColor = ServifyInputBackground,
-                            focusedBorderColor = ServifyBluePrimary,
+                            focusedBorderColor = ServifyBlueLight,
                             unfocusedBorderColor = ServifyBorder,
                             focusedTextColor = ServifyTextTitle,
                             unfocusedTextColor = ServifyTextBody
@@ -180,7 +179,7 @@ fun LoginScreen(
                         text = "CONTRASEÑA",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = ServifyBluePrimary
+                        color = ServifyBlueLight
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -191,7 +190,7 @@ fun LoginScreen(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = null,
-                                tint = ServifyBluePrimary
+                                tint = ServifyBlueLight
                             )
                         },
                         trailingIcon = {
@@ -199,7 +198,7 @@ fun LoginScreen(
                                 Icon(
                                     imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                     contentDescription = null,
-                                    tint = ServifyBluePrimary
+                                    tint = ServifyBlueLight
                                 )
                             }
                         },
@@ -221,7 +220,7 @@ fun LoginScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = ServifyInputBackground,
                             unfocusedContainerColor = ServifyInputBackground,
-                            focusedBorderColor = ServifyBluePrimary,
+                            focusedBorderColor = ServifyBlueLight,
                             unfocusedBorderColor = ServifyBorder,
                             focusedTextColor = ServifyTextTitle,
                             unfocusedTextColor = ServifyTextBody
@@ -245,7 +244,7 @@ fun LoginScreen(
                         Text(
                             text = "¿Olvidaste tu contraseña?",
                             style = MaterialTheme.typography.bodySmall,
-                            color = ServifyBluePrimary,
+                            color = ServifyBlueLight,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -267,14 +266,14 @@ fun LoginScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ServifyBluePrimary,
-                        contentColor = ServifySurface,
+                        contentColor = Color.White,
                         disabledContainerColor = ServifyBluePrimary.copy(alpha = 0.6f)
                     )
                 ) {
                     if (viewModel.cargando) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = ServifySurface,
+                            color = Color.White,
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -300,7 +299,7 @@ fun LoginScreen(
                         text = "Regístrate",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = ServifyBluePrimary,
+                        color = ServifyBlueLight,
                         modifier = Modifier.clickable(enabled = !viewModel.cargando) {
                             onIrARegistro()
                         }

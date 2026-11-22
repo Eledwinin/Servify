@@ -48,7 +48,7 @@ fun PerfilScreen(
     onIrACapturarFoto: () -> Unit,
     viewModel: PerfilViewModel = viewModel()
 ) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
     val context = androidx.compose.ui.platform.LocalContext.current
     val ui by viewModel.uiState.collectAsState()
 
@@ -66,8 +66,6 @@ fun PerfilScreen(
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     LaunchedEffect(token) {
         if (token.isNotBlank()) {
-
-
             viewModel.cargarPortafolio()
             viewModel.cargarResenas(token)
         }
@@ -91,7 +89,6 @@ fun PerfilScreen(
 
     val user = ui.usuario
 
-    // Detección precisa de rol usando usuarioActual de SessionManager
     val rolDetectado = (user?.rol ?: SessionManager.usuarioActual?.rol ?: "").lowercase().trim()
     val esCliente = rolDetectado == "cliente"
     val esTecnico = !esCliente && (SessionManager.esTecnico || rolDetectado in listOf("tecnico", "trabajador", "ambos"))
@@ -120,7 +117,8 @@ fun PerfilScreen(
         DialogoConfirmacion(
             titulo = "Cancelar Membresía PRO",
             mensaje = "¿Seguro que deseas cancelar tu suscripción? Perderás el acceso prioritario y tu insignia de verificación.",
-            textoConfirmar = "Sí, cancelar plan", textoCancelar = "Mantener plan",
+            textoConfirmar = "Sí, cancelar plan",
+            textoCancelar = "Mantener plan",
             onConfirmar = {
                 viewModel.cambiarMembresiaVip(false) { exito ->
                     SessionManager.cancelarSuscripcionVip()
@@ -140,7 +138,8 @@ fun PerfilScreen(
         DialogoConfirmacion(
             titulo = "¿Eliminar tu cuenta?",
             mensaje = "Esta acción es definitiva. Se eliminarán tus datos, fotos, historial y servicios asociados.",
-            textoConfirmar = "Sí, eliminar cuenta", textoCancelar = "Cancelar",
+            textoConfirmar = "Sí, eliminar cuenta",
+            textoCancelar = "Cancelar",
             cargando = ui.isLoading,
             onConfirmar = {
                 viewModel.eliminarCuenta {
@@ -164,7 +163,7 @@ fun PerfilScreen(
                     ) {
                         Text(
                             text = "Servify",
-                            color = ServifyBluePrimary,
+                            color = c.texto,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 22.sp
                         )
@@ -184,7 +183,7 @@ fun PerfilScreen(
     ) { padding ->
         if (ui.isLoading && user == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = ServifyBluePrimary)
+                CircularProgressIndicator(color = ServifyBlueLight)
             }
         } else {
             Column(
@@ -197,7 +196,6 @@ fun PerfilScreen(
             ) {
                 CabeceraPerfil(user, esTecnico, esVip, onCambiarFoto = onIrACapturarFoto)
 
-                // Componentes visibles solo para trabajadores técnicos
                 if (esTecnico) {
                     if (!esVip) {
                         BannerPromocionPlanes(onIrAPlanes = onIrAPlanes)
@@ -217,17 +215,14 @@ fun PerfilScreen(
                     TarjetaSobreMi(user?.biografia, user?.anosExperiencia, onIrAEditarTrabajador)
                 }
 
-                // Información de contacto (omite especialidad para clientes)
                 TarjetaContactoLocal(user, esTecnico)
 
-                // Portafolio de evidencias fotográficas: exclusivo de técnicos
                 if (esTecnico) {
                     TarjetaPortafolio(ui.fotosPortafolio, ui.isUploadingFoto, abrirSelector) {
                         viewModel.eliminarFotoPortafolio(it)
                     }
                 }
 
-                // Reseñas recibidas
                 TarjetaBase {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -248,7 +243,7 @@ fun PerfilScreen(
                             ) {
                                 Text(
                                     "Ver todo",
-                                    color = ServifyBluePrimary,
+                                    color = ServifyBlueLight,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -337,7 +332,6 @@ fun PerfilScreen(
                     }
                 }
 
-                // Acciones de Perfil
                 BotonAccion(
                     texto = "Editar Perfil",
                     icono = Icons.Default.Settings,
@@ -381,7 +375,7 @@ fun PerfilScreen(
 
 @Composable
 private fun TarjetaContactoLocal(user: UsuarioModel?, esTecnico: Boolean) {
-    val c = PerfilColores
+    val c = rememberPerfilColores()
 
     val categoriaDirecta = (
             user?.categoriaNombre?.takeIf { it.isNotBlank() }
@@ -417,17 +411,20 @@ private fun TarjetaContactoLocal(user: UsuarioModel?, esTecnico: Boolean) {
 
 @Composable
 private fun DatoContactoItem(icono: ImageVector, titulo: String, valor: String) {
+    val c = rememberPerfilColores()
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     ) {
         Icon(icono, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(titulo, color = PerfilColores.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(titulo, color = c.gris, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             Text(
                 text = valor,
-                color = PerfilColores.texto,
+                color = c.texto,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,

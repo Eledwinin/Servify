@@ -144,7 +144,7 @@ fun MuroSolicitudesScreen(
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = "Solicitudes Directas",
-                            tint = ServifyBluePrimary,
+                            tint = ServifyBlueLight,
                             modifier = Modifier.size(26.dp)
                         )
                     }
@@ -246,7 +246,6 @@ fun MuroSolicitudesScreen(
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
-
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -545,11 +544,13 @@ fun MuroSolicitudesScreen(
     if (mostrarModalDirectas) {
         AlertDialog(
             onDismissRequest = { mostrarModalDirectas = false },
+            containerColor = ServifySurface,
             title = {
                 Text(
                     text = "Contrataciones Directas Recibidas ✉️",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    color = ServifyTextTitle
                 )
             },
             text = {
@@ -581,7 +582,7 @@ fun MuroSolicitudesScreen(
             },
             confirmButton = {
                 TextButton(onClick = { mostrarModalDirectas = false }) {
-                    Text("Cerrar")
+                    Text("Cerrar", color = ServifyBlueLight, fontWeight = FontWeight.Bold)
                 }
             }
         )

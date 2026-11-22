@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,7 +67,7 @@ fun EditarPerfilTrabajadorScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Editar Perfil (Trabajador)",
+                        text = "Editar Perfil",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = ServifyTextTitle
@@ -82,7 +83,7 @@ fun EditarPerfilTrabajadorScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = ServifyBluePrimary,
+                            tint = ServifyBlueLight,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -93,7 +94,7 @@ fun EditarPerfilTrabajadorScreen(
     ) { paddingValues ->
         if (uiState.isLoading && uiState.nombre.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = ServifyBluePrimary)
+                CircularProgressIndicator(color = ServifyBlueLight)
             }
         } else {
             Column(
@@ -155,12 +156,15 @@ fun EditarPerfilTrabajadorScreen(
                             OutlinedTextField(
                                 value = uiState.nombre,
                                 onValueChange = { viewModel.onNombreChange(it) },
-                                leadingIcon = { Icon(Icons.Default.Person, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp)) },
+                                leadingIcon = { Icon(Icons.Default.Person, null, tint = ServifyBlueLight, modifier = Modifier.size(20.dp)) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ServifyBluePrimary,
+                                    focusedTextColor = ServifyTextTitle,
+                                    unfocusedTextColor = ServifyTextTitle,
+                                    cursorColor = ServifyBlueLight,
+                                    focusedBorderColor = ServifyBlueLight,
                                     unfocusedBorderColor = ServifyBorder,
                                     focusedContainerColor = ServifyInputBackground,
                                     unfocusedContainerColor = ServifyInputBackground
@@ -174,13 +178,16 @@ fun EditarPerfilTrabajadorScreen(
                             OutlinedTextField(
                                 value = uiState.telefono,
                                 onValueChange = { viewModel.onTelefonoChange(it) },
-                                leadingIcon = { Icon(Icons.Default.Phone, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp)) },
+                                leadingIcon = { Icon(Icons.Default.Phone, null, tint = ServifyBlueLight, modifier = Modifier.size(20.dp)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ServifyBluePrimary,
+                                    focusedTextColor = ServifyTextTitle,
+                                    unfocusedTextColor = ServifyTextTitle,
+                                    cursorColor = ServifyBlueLight,
+                                    focusedBorderColor = ServifyBlueLight,
                                     unfocusedBorderColor = ServifyBorder,
                                     focusedContainerColor = ServifyInputBackground,
                                     unfocusedContainerColor = ServifyInputBackground
@@ -195,11 +202,14 @@ fun EditarPerfilTrabajadorScreen(
                                 value = uiState.direccion,
                                 onValueChange = { viewModel.onDireccionChange(it) },
                                 placeholder = { Text("Ingresa tu dirección...", color = ServifyTextMuted, fontSize = 13.sp) },
-                                leadingIcon = { Icon(Icons.Default.LocationOn, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp)) },
+                                leadingIcon = { Icon(Icons.Default.LocationOn, null, tint = ServifyBlueLight, modifier = Modifier.size(20.dp)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ServifyBluePrimary,
+                                    focusedTextColor = ServifyTextTitle,
+                                    unfocusedTextColor = ServifyTextTitle,
+                                    cursorColor = ServifyBlueLight,
+                                    focusedBorderColor = ServifyBlueLight,
                                     unfocusedBorderColor = ServifyBorder,
                                     focusedContainerColor = ServifyInputBackground,
                                     unfocusedContainerColor = ServifyInputBackground
@@ -213,13 +223,16 @@ fun EditarPerfilTrabajadorScreen(
                             OutlinedTextField(
                                 value = uiState.anosExperiencia,
                                 onValueChange = { viewModel.onAnosChange(it) },
-                                leadingIcon = { Icon(Icons.Default.Work, null, tint = ServifyBluePrimary, modifier = Modifier.size(20.dp)) },
+                                leadingIcon = { Icon(Icons.Default.Work, null, tint = ServifyBlueLight, modifier = Modifier.size(20.dp)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ServifyBluePrimary,
+                                    focusedTextColor = ServifyTextTitle,
+                                    unfocusedTextColor = ServifyTextTitle,
+                                    cursorColor = ServifyBlueLight,
+                                    focusedBorderColor = ServifyBlueLight,
                                     unfocusedBorderColor = ServifyBorder,
                                     focusedContainerColor = ServifyInputBackground,
                                     unfocusedContainerColor = ServifyInputBackground
@@ -239,7 +252,10 @@ fun EditarPerfilTrabajadorScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ServifyBluePrimary,
+                                    focusedTextColor = ServifyTextTitle,
+                                    unfocusedTextColor = ServifyTextTitle,
+                                    cursorColor = ServifyBlueLight,
+                                    focusedBorderColor = ServifyBlueLight,
                                     unfocusedBorderColor = ServifyBorder,
                                     focusedContainerColor = ServifyInputBackground,
                                     unfocusedContainerColor = ServifyInputBackground
@@ -271,7 +287,7 @@ fun EditarPerfilTrabajadorScreen(
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = ServifyTextTitle, containerColor = ServifySurface),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(ServifyBorder))
+                    border = ButtonDefaults.outlinedButtonBorder.copy(brush = SolidColor(ServifyBorder))
                 ) {
                     Text("Cancelar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }

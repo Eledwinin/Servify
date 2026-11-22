@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,13 +19,13 @@ fun ModalProponerPrecio(
     onDismiss: () -> Unit,
     onEnviar: (Double) -> Unit
 ) {
-    val verdePrincipal = Color(0xFF0F2C59)
     var montoStr by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color.White
+        containerColor = ServifySurface,
+        contentColor = ServifyTextTitle
     ) {
         Column(
             Modifier
@@ -34,27 +35,47 @@ fun ModalProponerPrecio(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Proponer Precio / Regatear", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-            Text("Ingresa la cantidad monetaria en dólares que propones para este servicio.", fontSize = 13.sp, color = Color(0xFF64748B))
+            Text(
+                "Proponer Precio / Regatear",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ServifyTextTitle
+            )
+            Text(
+                "Ingresa la cantidad monetaria en dólares que propones para este servicio.",
+                fontSize = 13.sp,
+                color = ServifyTextMuted
+            )
 
             OutlinedTextField(
                 value = montoStr,
                 onValueChange = { montoStr = it; error = null },
                 label = { Text("Monto en USD ($)") },
-                placeholder = { Text("Ej: 45.00") },
+                placeholder = { Text("Ej: 45.00", color = ServifyTextMuted) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = verdePrincipal,
-                    focusedLabelColor = verdePrincipal,
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                    focusedContainerColor = ServifyInputBackground,
+                    unfocusedContainerColor = ServifyInputBackground,
+                    focusedTextColor = ServifyTextTitle,
+                    unfocusedTextColor = ServifyTextTitle,
+                    focusedBorderColor = ServifyBlueLight,
+                    unfocusedBorderColor = ServifyBorder,
+                    focusedLabelColor = ServifyBlueLight,
+                    unfocusedLabelColor = ServifyTextMuted,
+                    cursorColor = ServifyBlueLight
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
 
             if (error != null) {
-                Text(error!!, color = Color(0xFFEF4444), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    error!!,
+                    color = ServifyDanger,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Button(
@@ -72,9 +93,14 @@ fun ModalProponerPrecio(
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal)
+                colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
             ) {
-                Text("Enviar Propuesta Económica", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    "Enviar Propuesta Económica",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }

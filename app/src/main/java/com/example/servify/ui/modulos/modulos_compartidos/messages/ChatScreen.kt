@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.modulos_compartidos.messages
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -34,6 +34,7 @@ import androidx.navigation.NavController
 import com.example.servify.data.LlamadasManager
 import com.example.servify.ui.componentes.cards.TarjetaOfertaItem
 import com.example.servify.ui.navigation.Rutas
+import com.example.servify.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -59,7 +60,6 @@ fun ChatScreen(
     onReportarUsuario: (motivo: String) -> Unit = {},
     onVaciarChat: () -> Unit = {}
 ) {
-    val verdePrincipal = Color(0xFF0F2C59)
     val context = LocalContext.current
     val listState = rememberLazyListState()
     var texto by remember { mutableStateOf("") }
@@ -117,29 +117,36 @@ fun ChatScreen(
                         Box(
                             Modifier
                                 .size(40.dp)
-                                .background(Color(0xFFE0F2FE), CircleShape),
+                                .background(ServifyCianSoft, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 nombreOtro.split(" ").filter { it.isNotBlank() }.take(2)
                                     .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                                color = Color(0xFF0284C7), fontWeight = FontWeight.Bold, fontSize = 14.sp
+                                color = ServifyBluePrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(verticalArrangement = Arrangement.Center) {
-                            Text(nombreOtro, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
+                            Text(
+                                nombreOtro,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = ServifyTextTitle
+                            )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(7.dp).background(Color(0xFF22C55E), CircleShape))
                                 Spacer(Modifier.width(4.dp))
-                                Text("En línea", fontSize = 11.sp, color = Color(0xFF64748B))
+                                Text("En línea", fontSize = 11.sp, color = ServifyTextMuted)
                             }
                         }
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color(0xFF334155))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = ServifyTextTitle)
                     }
                 },
                 actions = {
@@ -147,48 +154,48 @@ fun ChatScreen(
                         LlamadasManager.llamar(conversacionId, false)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", false))
                     }) {
-                        Icon(Icons.Default.Call, contentDescription = "Llamar", tint = Color(0xFF334155))
+                        Icon(Icons.Default.Call, contentDescription = "Llamar", tint = ServifyTextTitle)
                     }
 
                     IconButton(onClick = {
                         LlamadasManager.llamar(conversacionId, true)
                         navController.navigate(Rutas.Call.crearRuta("chat_${conversacionId}", true))
                     }) {
-                        Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = Color(0xFF334155))
+                        Icon(Icons.Default.Videocam, contentDescription = "Videollamada", tint = ServifyTextTitle)
                     }
 
                     Box {
                         IconButton(onClick = { menuAbierto = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Más opciones", tint = Color(0xFF334155))
+                            Icon(Icons.Default.MoreVert, contentDescription = "Más opciones", tint = ServifyTextTitle)
                         }
                         DropdownMenu(
                             expanded = menuAbierto,
                             onDismissRequest = { menuAbierto = false },
-                            containerColor = Color.White,
+                            containerColor = ServifySurface,
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Ver perfil", color = Color(0xFF1E293B)) },
-                                leadingIcon = { Icon(Icons.Default.Person, null, tint = verdePrincipal) },
+                                text = { Text("Ver perfil", color = ServifyTextTitle) },
+                                leadingIcon = { Icon(Icons.Default.Person, null, tint = ServifyBluePrimary) },
                                 onClick = { menuAbierto = false; onVerPerfil() }
                             )
                             DropdownMenuItem(
-                                text = { Text("Reportar usuario", color = Color(0xFF1E293B)) },
-                                leadingIcon = { Icon(Icons.Default.Flag, null, tint = verdePrincipal) },
+                                text = { Text("Reportar usuario", color = ServifyTextTitle) },
+                                leadingIcon = { Icon(Icons.Default.Flag, null, tint = ServifyBluePrimary) },
                                 onClick = { menuAbierto = false; mostrarDialogoReporte = true }
                             )
                             DropdownMenuItem(
-                                text = { Text("Vaciar chat", color = Color(0xFFEF4444)) },
-                                leadingIcon = { Icon(Icons.Default.DeleteSweep, null, tint = Color(0xFFEF4444)) },
+                                text = { Text("Vaciar chat", color = ServifyDanger) },
+                                leadingIcon = { Icon(Icons.Default.DeleteSweep, null, tint = ServifyDanger) },
                                 onClick = { menuAbierto = false; mostrarDialogoVaciar = true }
                             )
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ServifySurface)
             )
         },
-        containerColor = Color(0xFFF8FAFC),
+        containerColor = ServifyBackground,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Column(
@@ -217,17 +224,18 @@ fun ChatScreen(
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (viewModel.isLoading && viewModel.mensajes.isEmpty()) {
-                    CircularProgressIndicator(color = verdePrincipal, modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(color = ServifyBluePrimary, modifier = Modifier.align(Alignment.Center))
                 } else if (viewModel.mensajes.isEmpty()) {
                     Column(
                         Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("¡Empieza la conversación!", fontWeight = FontWeight.Bold, color = Color(0xFF475569), fontSize = 15.sp)
+                        Text("¡Empieza la conversación!", fontWeight = FontWeight.Bold, color = ServifyTextTitle, fontSize = 15.sp)
                         Text(
                             "Escribe el primer mensaje o haz una propuesta económica",
-                            color = Color(0xFF94A3B8), fontSize = 13.sp,
+                            color = ServifyTextMuted,
+                            fontSize = 13.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp)
                         )
@@ -246,7 +254,7 @@ fun ChatScreen(
                             when {
                                 tipoMensaje == "sistema" -> {
                                     Box(Modifier.fillMaxWidth().padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
-                                        Surface(color = Color(0xFFE2E8F0), shape = RoundedCornerShape(10.dp)) {
+                                        Surface(color = ServifySurface, shape = RoundedCornerShape(10.dp)) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -257,7 +265,7 @@ fun ChatScreen(
                                                     Icon(
                                                         if (m.contenido.contains("video", ignoreCase = true)) Icons.Default.Videocam else Icons.Default.Call,
                                                         contentDescription = null,
-                                                        tint = Color(0xFF475569),
+                                                        tint = ServifyTextMuted,
                                                         modifier = Modifier.size(14.dp)
                                                     )
                                                 }
@@ -265,7 +273,7 @@ fun ChatScreen(
                                                     text = m.contenido,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Medium,
-                                                    color = Color(0xFF475569),
+                                                    color = ServifyTextMuted,
                                                     textAlign = TextAlign.Center
                                                 )
                                             }
@@ -286,22 +294,27 @@ fun ChatScreen(
                                     val mio = m.emisorId == viewModel.miId
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mio) Arrangement.End else Arrangement.Start) {
                                         Surface(
-                                            color = if (mio) verdePrincipal else Color.White,
+                                            color = if (mio) ServifyBluePrimary else ServifySurface,
                                             shape = RoundedCornerShape(
                                                 topStart = 18.dp, topEnd = 18.dp,
                                                 bottomStart = if (mio) 18.dp else 4.dp,
                                                 bottomEnd = if (mio) 4.dp else 18.dp
                                             ),
                                             shadowElevation = 1.5.dp,
-                                            border = if (mio) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                            border = if (mio) null else BorderStroke(1.dp, ServifyBorder),
                                             modifier = Modifier.widthIn(max = 290.dp)
                                         ) {
                                             Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                                                Text(m.contenido, fontSize = 15.sp, color = if (mio) Color.White else Color(0xFF1E293B))
+                                                Text(
+                                                    m.contenido,
+                                                    fontSize = 15.sp,
+                                                    color = if (mio) Color.White else ServifyTextTitle
+                                                )
                                                 Spacer(Modifier.height(4.dp))
                                                 Text(
-                                                    horaDe(m.enviadoEn), fontSize = 10.sp,
-                                                    color = if (mio) Color.White.copy(alpha = 0.75f) else Color(0xFF94A3B8),
+                                                    horaDe(m.enviadoEn),
+                                                    fontSize = 10.sp,
+                                                    color = if (mio) Color.White.copy(alpha = 0.75f) else ServifyTextMuted,
                                                     modifier = Modifier.align(Alignment.End)
                                                 )
                                             }
@@ -315,16 +328,18 @@ fun ChatScreen(
             }
 
             if (!viewModel.activa) {
-                Surface(color = Color(0xFFFEF3C7), modifier = Modifier.fillMaxWidth()) {
+                Surface(color = ServifyPendingBg, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Esta conversación está cerrada. No se pueden enviar mensajes.",
                         modifier = Modifier.padding(14.dp),
-                        fontSize = 13.sp, color = Color(0xFFD97706), fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = ServifyStarYellow,
+                        fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center
                     )
                 }
             } else {
-                Surface(color = Color.White, shadowElevation = 8.dp, modifier = Modifier.fillMaxWidth()) {
+                Surface(color = ServifySurface, shadowElevation = 8.dp, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -332,29 +347,34 @@ fun ChatScreen(
                         OutlinedTextField(
                             value = texto,
                             onValueChange = { texto = it },
-                            placeholder = { Text("Escribe un mensaje...", color = Color(0xFF94A3B8)) },
+                            placeholder = { Text("Escribe un mensaje...", color = ServifyTextMuted) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(24.dp),
                             maxLines = 4,
                             trailingIcon = {
                                 if (!hayAcuerdoCerrado) {
                                     IconButton(onClick = { mostrarModalOferta = true }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Proponer precio", tint = Color(0xFF64748B), modifier = Modifier.size(22.dp))
+                                        Icon(Icons.Default.Add, contentDescription = "Proponer precio", tint = ServifyTextMuted, modifier = Modifier.size(22.dp))
                                     }
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFCBD5E1),
-                                unfocusedBorderColor = Color(0xFFE2E8F0),
-                                focusedContainerColor = Color(0xFFF8FAFC),
-                                unfocusedContainerColor = Color(0xFFF8FAFC)
+                                focusedTextColor = ServifyTextTitle,
+                                unfocusedTextColor = ServifyTextTitle,
+                                cursorColor = ServifyBluePrimary,
+                                focusedBorderColor = ServifyBluePrimary,
+                                unfocusedBorderColor = ServifyBorder,
+                                focusedContainerColor = ServifyInputBackground,
+                                unfocusedContainerColor = ServifyInputBackground
                             )
                         )
                         Spacer(Modifier.width(8.dp))
                         IconButton(
                             onClick = { viewModel.enviar(texto); texto = "" },
                             enabled = texto.isNotBlank(),
-                            modifier = Modifier.size(48.dp).background(if (texto.isNotBlank()) verdePrincipal else Color(0xFFE2E8F0), CircleShape)
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(if (texto.isNotBlank()) ServifyBluePrimary else ServifyBorder, CircleShape)
                         ) {
                             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = Color.White)
                         }
@@ -375,17 +395,24 @@ fun ChatScreen(
         var motivo by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { mostrarDialogoReporte = false },
-            title = { Text("Reportar usuario", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E293B)) },
+            title = { Text("Reportar usuario", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ServifyTextTitle) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Cuéntanos qué pasó con $nombreOtro para que podamos revisarlo.", fontSize = 13.sp, color = Color(0xFF64748B))
+                    Text("Cuéntanos qué pasó con $nombreOtro para que podamos revisarlo.", fontSize = 13.sp, color = ServifyTextMuted)
                     OutlinedTextField(
                         value = motivo,
                         onValueChange = { motivo = it },
-                        placeholder = { Text("Motivo del reporte", color = Color(0xFF94A3B8)) },
+                        placeholder = { Text("Motivo del reporte", color = ServifyTextMuted) },
                         shape = RoundedCornerShape(14.dp),
-                        minLines = 3, maxLines = 5,
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = verdePrincipal, unfocusedBorderColor = Color(0xFFCBD5E1), cursorColor = verdePrincipal),
+                        minLines = 3,
+                        maxLines = 5,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ServifyTextTitle,
+                            unfocusedTextColor = ServifyTextTitle,
+                            focusedBorderColor = ServifyBluePrimary,
+                            unfocusedBorderColor = ServifyBorder,
+                            cursorColor = ServifyBluePrimary
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -394,44 +421,44 @@ fun ChatScreen(
                 Button(
                     onClick = { onReportarUsuario(motivo.trim()); mostrarDialogoReporte = false; Toast.makeText(context, "Reporte enviado", Toast.LENGTH_SHORT).show() },
                     enabled = motivo.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
                     shape = RoundedCornerShape(10.dp)
                 ) { Text("Reportar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoReporte = false }) { Text("Cancelar", color = Color(0xFF64748B), fontWeight = FontWeight.Bold) }
+                TextButton(onClick = { mostrarDialogoReporte = false }) { Text("Cancelar", color = ServifyTextMuted, fontWeight = FontWeight.Bold) }
             },
             shape = RoundedCornerShape(20.dp),
-            containerColor = Color.White
+            containerColor = ServifySurface
         )
     }
 
     if (mostrarDialogoVaciar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoVaciar = false },
-            title = { Text("Vaciar chat", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E293B)) },
-            text = { Text("Se borrarán todos los mensajes de esta conversación. Esta acción no se puede deshacer.", fontSize = 14.sp, color = Color(0xFF64748B)) },
+            title = { Text("Vaciar chat", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ServifyTextTitle) },
+            text = { Text("Se borrarán todos los mensajes de esta conversación. Esta acción no se puede deshacer.", fontSize = 14.sp, color = ServifyTextMuted) },
             confirmButton = {
                 Button(
                     onClick = { mostrarDialogoVaciar = false; onVaciarChat() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyDanger),
                     shape = RoundedCornerShape(10.dp)
                 ) { Text("Vaciar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoVaciar = false }) { Text("Cancelar", color = Color(0xFF64748B), fontWeight = FontWeight.Bold) }
+                TextButton(onClick = { mostrarDialogoVaciar = false }) { Text("Cancelar", color = ServifyTextMuted, fontWeight = FontWeight.Bold) }
             },
             shape = RoundedCornerShape(20.dp),
-            containerColor = Color.White
+            containerColor = ServifySurface
         )
     }
 
     if (mostrarDialogoLLamada) {
         AlertDialog(
             onDismissRequest = { },
-            icon = { Icon(if (tipoVideoLlamadaEntrante) Icons.Default.Videocam else Icons.Default.Call, null, tint = verdePrincipal, modifier = Modifier.size(36.dp)) },
-            title = { Text(if (tipoVideoLlamadaEntrante) "Videollamada entrante" else "Llamada de voz entrante", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-            text = { Text("$nombreOtro te está llamando...", fontSize = 14.sp, color = Color(0xFF64748B), textAlign = TextAlign.Center) },
+            icon = { Icon(if (tipoVideoLlamadaEntrante) Icons.Default.Videocam else Icons.Default.Call, null, tint = ServifyBluePrimary, modifier = Modifier.size(36.dp)) },
+            title = { Text(if (tipoVideoLlamadaEntrante) "Videollamada entrante" else "Llamada de voz entrante", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ServifyTextTitle) },
+            text = { Text("$nombreOtro te está llamando...", fontSize = 14.sp, color = ServifyTextMuted, textAlign = TextAlign.Center) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -440,7 +467,7 @@ fun ChatScreen(
                         viewModel.limpiarLlamadaEntrante()
                         navController.navigate(Rutas.Call.crearRuta("chat_$conversacionId", tipoVideoLlamadaEntrante))
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = verdePrincipal),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
                     shape = RoundedCornerShape(10.dp)
                 ) { Text("Aceptar", color = Color.White, fontWeight = FontWeight.Bold) }
             },
@@ -451,12 +478,12 @@ fun ChatScreen(
                         LlamadasManager.responder(conversacionId, false)
                         viewModel.limpiarLlamadaEntrante()
                     },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ServifyDanger),
                     shape = RoundedCornerShape(10.dp)
                 ) { Text("Rechazar", fontWeight = FontWeight.Bold) }
             },
             shape = RoundedCornerShape(20.dp),
-            containerColor = Color.White
+            containerColor = ServifySurface
         )
     }
 }
