@@ -2,6 +2,8 @@ package com.example.servify.ui.modulos.trabajador.muro
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +12,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.servify.ui.theme.* // Importamos la paleta de colores azul oficial
+import com.example.servify.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +48,43 @@ fun EnviarPropuestaScreen(
     val scrollState = rememberScrollState()
 
     var precioEstimado by remember { mutableStateOf("") }
-    var tiempoEstimado by remember { mutableStateOf("") }
+    var fechaVisitaMillis by remember { mutableStateOf<Long?>(null) }
+    var fechaEntregaMillis by remember { mutableStateOf<Long?>(null) }
+    var mostrarCalendarioVisita by remember { mutableStateOf(false) }
+    var mostrarCalendarioEntrega by remember { mutableStateOf(false) }
     var mensajePropuesta by remember { mutableStateOf("") }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
+
+    // Medianoche UTC de hoy para bloquear días anteriores en el DatePicker de Material 3
+    val hoyUtcMillis = remember {
+        val localCal = Calendar.getInstance()
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(
+                localCal.get(Calendar.YEAR),
+                localCal.get(Calendar.MONTH),
+                localCal.get(Calendar.DAY_OF_MONTH)
+            )
+        }.timeInMillis
+    }
+
+    val textoFechaVisita = remember(fechaVisitaMillis) {
+        fechaVisitaMillis?.let { formatearFechaUtc(it, "dd/MM/yyyy") } ?: ""
+    }
+    val textoFechaEntrega = remember(fechaEntregaMillis) {
+        fechaEntregaMillis?.let { formatearFechaUtc(it, "dd/MM/yyyy") } ?: ""
+    }
+
+    // Formato estructurado que se guarda en base de datos dentro de tiempo_estimado
+    val tiempoEstimadoFormateado = remember(fechaVisitaMillis, fechaEntregaMillis) {
+        if (fechaVisitaMillis != null && fechaEntregaMillis != null) {
+            val visitaIso = formatearFechaUtc(fechaVisitaMillis!!, "yyyy-MM-dd")
+            val entregaIso = formatearFechaUtc(fechaEntregaMillis!!, "yyyy-MM-dd")
+            "Visita: $visitaIso | Entrega: $entregaIso"
+        } else {
+            ""
+        }
+    }
 
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
@@ -91,12 +133,16 @@ fun EnviarPropuestaScreen(
                                 errorMensaje = "Por favor ingresa un presupuesto válido"
                                 return@Button
                             }
-                            if (tiempoEstimado.isBlank()) {
-                                errorMensaje = "Por favor indica un tiempo estimado"
+                            if (fechaVisitaMillis == null) {
+                                errorMensaje = "Por favor selecciona la fecha estimada de visita"
+                                return@Button
+                            }
+                            if (fechaEntregaMillis == null) {
+                                errorMensaje = "Por favor selecciona la fecha estimada de entrega"
                                 return@Button
                             }
                             errorMensaje = null
-                            viewModel.postular(idSolicitud, monto, tiempoEstimado, mensajePropuesta)
+                            viewModel.postular(idSolicitud, monto, tiempoEstimadoFormateado, mensajePropuesta)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -194,15 +240,15 @@ fun EnviarPropuestaScreen(
                         )
                         OutlinedButton(
                             onClick = {
-                                if (tiempoEstimado.isBlank()) {
-                                    errorMensaje = "Por favor indica un tiempo estimado antes de concordar con el precio"
+                                if (fechaVisitaMillis == null || fechaEntregaMillis == null) {
+                                    errorMensaje = "Selecciona la fecha de visita y la fecha de entrega antes de concordar con el precio"
                                     return@OutlinedButton
                                 }
                                 errorMensaje = null
                                 viewModel.postular(
                                     solicitudId = idSolicitud,
                                     precio = presupuestoCliente,
-                                    tiempo = tiempoEstimado,
+                                    tiempo = tiempoEstimadoFormateado,
                                     mensaje = mensajePropuesta,
                                     aceptaPresupuesto = true
                                 )
@@ -222,7 +268,7 @@ fun EnviarPropuestaScreen(
                 }
             }
 
-            // Sección de Inputs con un diseño más limpio y espaciado
+            // Sección de Inputs con selectores de fecha reales
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -262,28 +308,32 @@ fun EnviarPropuestaScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Input: Tiempo estimado
-                OutlinedTextField(
-                    value = tiempoEstimado,
-                    onValueChange = {
-                        tiempoEstimado = it
+                // Selector 1: Fecha estimada de visita
+                CampoFechaSelector(
+                    label = "Fecha estimada de visita",
+                    placeholder = "Toca para elegir fecha de visita",
+                    valorMostrado = textoFechaVisita,
+                    icono = {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = ServifyBluePrimary)
+                    },
+                    onClick = {
                         if (errorMensaje != null) errorMensaje = null
+                        mostrarCalendarioVisita = true
+                    }
+                )
+
+                // Selector 2: Fecha estimada de entrega
+                CampoFechaSelector(
+                    label = "Fecha estimada de entrega",
+                    placeholder = "Toca para elegir fecha de entrega",
+                    valorMostrado = textoFechaEntrega,
+                    icono = {
+                        Icon(Icons.Default.EventAvailable, contentDescription = null, tint = ServifyBluePrimary)
                     },
-                    label = { Text("Tiempo estimado de entrega o visita") },
-                    placeholder = { Text("Ej: 1 día, Mañana por la tarde") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Schedule, contentDescription = null, tint = ServifyBluePrimary)
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ServifyBluePrimary,
-                        focusedLabelColor = ServifyBluePrimary,
-                        unfocusedBorderColor = ServifyBorder,
-                        focusedContainerColor = ServifyInputBackground,
-                        unfocusedContainerColor = ServifyInputBackground
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = {
+                        if (errorMensaje != null) errorMensaje = null
+                        mostrarCalendarioEntrega = true
+                    }
                 )
 
                 // Input: Mensaje explicativo
@@ -322,4 +372,129 @@ fun EnviarPropuestaScreen(
             }
         }
     }
+
+    // Diálogo Calendario 1: Fecha de Visita (>= hoy)
+    if (mostrarCalendarioVisita) {
+        val datePickerStateVisita = rememberDatePickerState(
+            initialSelectedDateMillis = fechaVisitaMillis ?: hoyUtcMillis,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis >= hoyUtcMillis
+                }
+            }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendarioVisita = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val seleccionada = datePickerStateVisita.selectedDateMillis
+                        if (seleccionada != null) {
+                            fechaVisitaMillis = seleccionada
+                            // Si la entrega elegida quedó antes de la nueva visita, se limpia para obligar a actualizarla
+                            if (fechaEntregaMillis != null && fechaEntregaMillis!! < seleccionada) {
+                                fechaEntregaMillis = null
+                            }
+                        }
+                        mostrarCalendarioVisita = false
+                    }
+                ) {
+                    Text("Aceptar", fontWeight = FontWeight.Bold, color = ServifyBluePrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendarioVisita = false }) {
+                    Text("Cancelar", color = ServifyTextMuted)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerStateVisita)
+        }
+    }
+
+    // Diálogo Calendario 2: Fecha Estimada de Entrega (>= fechaVisita o >= hoy)
+    if (mostrarCalendarioEntrega) {
+        val fechaMinimaEntrega = fechaVisitaMillis ?: hoyUtcMillis
+        val datePickerStateEntrega = rememberDatePickerState(
+            initialSelectedDateMillis = fechaEntregaMillis?.takeIf { it >= fechaMinimaEntrega } ?: fechaMinimaEntrega,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis >= fechaMinimaEntrega
+                }
+            }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendarioEntrega = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val seleccionada = datePickerStateEntrega.selectedDateMillis
+                        if (seleccionada != null) {
+                            fechaEntregaMillis = seleccionada
+                        }
+                        mostrarCalendarioEntrega = false
+                    }
+                ) {
+                    Text("Aceptar", fontWeight = FontWeight.Bold, color = ServifyBluePrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendarioEntrega = false }) {
+                    Text("Cancelar", color = ServifyTextMuted)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerStateEntrega)
+        }
+    }
+}
+
+@Composable
+private fun CampoFechaSelector(
+    label: String,
+    placeholder: String,
+    valorMostrado: String,
+    icono: @Composable () -> Unit,
+    onClick: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = valorMostrado,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            leadingIcon = icono,
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ServifyBluePrimary,
+                focusedLabelColor = ServifyBluePrimary,
+                unfocusedBorderColor = ServifyBorder,
+                focusedContainerColor = ServifyInputBackground,
+                unfocusedContainerColor = ServifyInputBackground
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        // Capa transparente encima para capturar el toque en toda el área del campo sin abrir el teclado
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                )
+        )
+    }
+}
+
+private fun formatearFechaUtc(utcMillis: Long, patron: String): String {
+    val formatter = SimpleDateFormat(patron, Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    return formatter.format(Date(utcMillis))
 }
