@@ -10,6 +10,7 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.ContratacionDirectaResponse
 import com.example.servify.data.model.CrearPostulacionRequest
+import com.example.servify.data.model.GananciasResumen
 import com.example.servify.data.model.SolicitudItemTecnico
 import com.example.servify.data.repository.SolicitudesRepository
 import com.example.servify.data.repository.UsuarioRepository
@@ -37,6 +38,9 @@ class MuroSolicitudesViewModel(
 
     var gananciasSemana by mutableStateOf("0.00")
     var totalTrabajos by mutableStateOf(0)
+
+    var ganancias by mutableStateOf(GananciasResumen())
+        private set
 
     var totalResenasTecnico by mutableStateOf(0)
 
@@ -94,6 +98,24 @@ class MuroSolicitudesViewModel(
         }
     }
 
+
+
+    fun cargarGanancias() {
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            try {
+                val r = RetrofitClient.instance.obtenerGanancias("Bearer $token")
+                if (r.isSuccessful) {
+                    ganancias = r.body() ?: GananciasResumen()
+                } else {
+                    android.util.Log.e("GANANCIAS", "Código ${r.code()} - ${r.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("GANANCIAS", "Error: ${e.message}")
+            }
+        }
+    }
+
     // ==========================================
     // VALIDAR QR DEL CLIENTE (TÉCNICO / TRABAJADOR)
     // ==========================================
@@ -113,9 +135,10 @@ class MuroSolicitudesViewModel(
             cargandoValidacionQr = false
 
             result.onSuccess { response ->
-                // 1. Mensaje de éxito inmediato
+                // 1. Mensaje de éxito inmediato + recarga de muro y ganancias
                 mensajeExito = response.mensaje ?: "¡Servicio completado y cerrado exitosamente!"
-                cargarSolicitudes() // Recarga la lista de solicitudes del muro
+                cargarSolicitudes()
+                cargarGanancias()
 
                 val solId = response.solicitudId ?: 0
                 val cliId = response.clienteId ?: 0

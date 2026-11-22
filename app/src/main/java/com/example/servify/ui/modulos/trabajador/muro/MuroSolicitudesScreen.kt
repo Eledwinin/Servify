@@ -81,6 +81,12 @@ fun MuroSolicitudesScreen(
         else -> "VER PLANES"
     }
 
+    var periodo by remember { mutableStateOf("mes") }
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarGanancias()
+    }
+
     LaunchedEffect(Unit) { viewModel.cargarSolicitudes() }
 
     LaunchedEffect(viewModel.mensajeError) {
@@ -103,6 +109,7 @@ fun MuroSolicitudesScreen(
             val solId = viewModel.solicitudIdParaCalificar ?: 0
             val cliId = viewModel.clienteIdParaCalificar ?: 0
 
+            viewModel.cargarGanancias()
             viewModel.resenaNavegada()
 
             navController.navigate(Rutas.CrearResena.crearRuta(solId, cliId))
@@ -188,48 +195,56 @@ fun MuroSolicitudesScreen(
             // 1. TARJETA DE GANANCIAS
             item {
                 Spacer(modifier = Modifier.height(4.dp))
+                val g = viewModel.ganancias
+                val (monto, trabajos) = when (periodo) {
+                    "semana" -> g.totalSemana to g.trabajosSemana
+                    "mes" -> g.totalMes to g.trabajosMes
+                    else -> g.totalHistorico to g.trabajosHistorico
+                }
+                val tituloPeriodo = when (periodo) {
+                    "semana" -> "GANANCIAS (SEMANA ACTUAL)"
+                    "mes" -> "GANANCIAS DE " + java.time.LocalDate.now().month
+                        .getDisplayName(java.time.format.TextStyle.FULL, Locale("es", "SV")).uppercase()
+                    else -> "GANANCIAS TOTALES"
+                }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = ServifyDarkNavy),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
+                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "GANANCIAS (SEMANA ACTUAL)",
+                                tituloPeriodo,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = ServifyBlueLight,
                                 letterSpacing = 0.5.sp
                             )
-
                             Surface(
                                 color = if (estaDisponible) ServifyOnlineGreen.copy(alpha = 0.2f) else Color(0xFF334155),
                                 shape = RoundedCornerShape(20.dp),
                                 modifier = Modifier.clickable { estaDisponible = !estaDisponible }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Box(
-                                        modifier = Modifier
+                                        Modifier
                                             .size(8.dp)
                                             .clip(CircleShape)
                                             .background(if (estaDisponible) ServifyOnlineGreen else ServifyTextMuted)
                                     )
                                     Text(
-                                        text = if (estaDisponible) "Disponible" else "Ocupado",
+                                        if (estaDisponible) "Disponible" else "Ocupado",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = Color.White
@@ -238,37 +253,92 @@ fun MuroSolicitudesScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("semana" to "Semana", "mes" to "Mes", "total" to "Total").forEach { (clave, etiqueta) ->
+                                Surface(
+                                    color = if (periodo == clave) Color.White else Color(0xFF1E293B),
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.clickable { periodo = clave }
+                                ) {
+                                    Text(
+                                        etiqueta,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (periodo == clave) ServifyDarkNavy else Color.White
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "$340.00",
+                            text = "$%.2f".format(Locale.US, monto),
                             fontSize = 32.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(14.dp))
+
+                        if (periodo == "mes") {
+                            val anterior = g.totalMesAnterior
+                            val texto = when {
+                                anterior > 0 -> {
+                                    val pct = (g.totalMes - anterior) / anterior * 100
+                                    (if (pct >= 0) "▲ " else "▼ ") + "%.0f%% vs mes anterior".format(
+                                        Locale.US,
+                                        kotlin.math.abs(pct)
+                                    )
+                                }
+                                g.totalMes > 0 -> "Primer mes con ganancias"
+                                else -> "Aún sin trabajos pagados este mes"
+                            }
+                            Text(
+                                texto,
+                                fontSize = 12.sp,
+                                color = if (anterior > 0 && g.totalMes < anterior) Color(0xFFFCA5A5) else ServifyOnlineGreen
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = ServifyOnlineGreen, modifier = Modifier.size(14.dp))
-                                    Text("${viewModel.totalTrabajos} Trabajos", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.TrendingUp,
+                                        null,
+                                        tint = ServifyOnlineGreen,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        if (trabajos == 1) "1 Trabajo" else "$trabajos Trabajos",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White
+                                    )
                                 }
                             }
-
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(14.dp))
+                                    Icon(
+                                        Icons.Default.Star,
+                                        null,
+                                        tint = ServifyStarYellow,
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                     Text(
-                                        text = "%.1f (%d)".format(
+                                        "%.1f (%d)".format(
                                             Locale.US,
                                             SessionManager.usuarioActual?.calificacionPromedio ?: 0.0,
                                             viewModel.totalResenasTecnico

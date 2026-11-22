@@ -177,20 +177,34 @@ object LlamadasManager {
     }
 
     fun llamar(conversacionId: Int, esVideo: Boolean, onTokenRecibido: ((canal: String, token: String) -> Unit)? = null) {
+        val s = socket
+        if (s == null || !s.connected()) {
+            android.util.Log.e("LLAMADAS_SOCKET", "Socket no conectado al intentar llamar")
+            return
+        }
+
+        mainHandler.post {
+            respuestaLlamada = null
+            ultimoCanalGenerado = null
+            ultimoTokenGenerado = null
+        }
+
         val data = JSONObject()
             .put("conversacionId", conversacionId)
             .put("esVideo", esVideo)
 
-        socket?.emit("llamar", data, io.socket.client.Ack { args ->
+        s.emit("llamar", data, io.socket.client.Ack { args ->
             val res = args.firstOrNull() as? JSONObject ?: return@Ack
             if (res.optBoolean("ok")) {
-                val canal = res.optString("canal")
-                val token = res.optString("token")
+                val canal = res.optString("canal").takeIf { it.isNotBlank() } ?: "chat_$conversacionId"
+                val token = res.optString("token").takeIf { it.isNotBlank() }
 
                 mainHandler.post {
                     ultimoCanalGenerado = canal
                     ultimoTokenGenerado = token
-                    onTokenRecibido?.invoke(canal, token)
+                    if (token != null) {
+                        onTokenRecibido?.invoke(canal, token)
+                    }
                 }
             }
         })

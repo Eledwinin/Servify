@@ -119,9 +119,9 @@ fun PropuestasScreen(
                             },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (esAceptada) ServifyOnlineGreen.copy(alpha = 0.12f) else ServifySurface
+                            containerColor = ServifySurface
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                             Row(

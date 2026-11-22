@@ -50,37 +50,64 @@ fun CallScreen(
 
     var estaSilenciado by remember { mutableStateOf(false) }
     var estaVideoApagado by remember { mutableStateOf(false) }
-    var estadoConexion by remember { mutableStateOf("Conectando a la llamada...") }
+    var estadoConexion by remember { mutableStateOf("Conectando...") }
     var uidRemoto by remember { mutableStateOf<Int?>(null) }
     var alguienSeUnio by remember { mutableStateOf(false) }
     var segundos by remember { mutableStateOf(0) }
     var finalizada by remember { mutableStateOf(false) }
+    var saliendo by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
     val agoraManager = remember {
         val handler = object : IRtcEngineEventHandler() {
             override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
-                mainHandler.post { estadoConexion = "Llamando..." }
-            }
-            override fun onUserJoined(uid: Int, elapsed: Int) {
                 mainHandler.post {
-                    uidRemoto = uid
-                    alguienSeUnio = true
-                    estadoConexion = "En llamada"
+                    if (!alguienSeUnio && !saliendo) {
+                        estadoConexion = "Llamando..."
+                    }
                 }
             }
-            override fun onUserOffline(uid: Int, reason: Int) {
-                mainHandler.post { finalizada = true }
+
+            override fun onUserJoined(uid: Int, elapsed: Int) {
+                mainHandler.post {
+                    if (!saliendo) {
+                        uidRemoto = uid
+                        alguienSeUnio = true
+                        estadoConexion = "En llamada"
+                    }
+                }
             }
+
+            override fun onUserOffline(uid: Int, reason: Int) {
+                mainHandler.post {
+                    if (!saliendo) {
+                        alguienSeUnio = false
+                        uidRemoto = null
+                        finalizada = true
+                    }
+                }
+            }
+
             override fun onError(err: Int) {
                 android.util.Log.e("AGORA", "onError: $err")
             }
+
             override fun onConnectionStateChanged(state: Int, reason: Int) {
                 android.util.Log.d("AGORA", "conexión: estado=$state razón=$reason")
             }
         }
         AgoraManager(context, BuildConfig.AGORA_APP_ID, handler)
+    }
+
+    fun limpiarAgoraEnHilo() {
+        Thread {
+            try {
+                agoraManager.salirCanal()
+                agoraManager.destruir()
+            } catch (_: Exception) {
+            }
+        }.start()
     }
 
     suspend fun unirse() {
@@ -89,6 +116,8 @@ fun CallScreen(
             val res = withContext(Dispatchers.IO) {
                 RetrofitClient.instance.obtenerTokenLlamada(auth, conversacionId)
             }
+
+            if (saliendo) return
 
             if (res.isSuccessful && res.body()?.token != null) {
                 val body = res.body()!!
@@ -99,23 +128,44 @@ fun CallScreen(
                 }
             } else {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "No se pudo iniciar la llamada (${res.code()})", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        "No se pudo iniciar la llamada (${res.code()})",
+                        Toast.LENGTH_LONG
+                    ).show()
                     navController.popBackStack()
                 }
             }
         } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Error de conexión con el servidor", Toast.LENGTH_LONG).show()
-                navController.popBackStack()
+            if (!saliendo) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Error de conexión con el servidor",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    navController.popBackStack()
+                }
             }
         }
     }
 
     fun colgar() {
-        scope.launch(Dispatchers.IO) {
-            if (alguienSeUnio) LlamadasManager.finalizar(conversacionId)
-            else LlamadasManager.cancelar(conversacionId)
-        }
+        if (saliendo) return
+        saliendo = true
+        val estabaEnLlamada = alguienSeUnio
+        alguienSeUnio = false
+        uidRemoto = null
+
+        Thread {
+            try {
+                if (estabaEnLlamada) LlamadasManager.finalizar(conversacionId)
+                else LlamadasManager.cancelar(conversacionId)
+            } catch (_: Exception) {
+            }
+        }.start()
+
+        limpiarAgoraEnHilo()
         navController.popBackStack()
     }
 
@@ -139,7 +189,14 @@ fun CallScreen(
     }
 
     LaunchedEffect(Unit) {
+        saliendo = false
+        finalizada = false
+        alguienSeUnio = false
+        uidRemoto = null
+        segundos = 0
+        estadoConexion = "Conectando..."
         LlamadasManager.respuestaLlamada = null
+
         val concedidos = permisos.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
@@ -150,10 +207,13 @@ fun CallScreen(
         }
     }
 
-    // El otro rechazó
+    // El otro rechazó o no contestó en backend
     LaunchedEffect(LlamadasManager.respuestaLlamada) {
-        if (LlamadasManager.respuestaLlamada == false) {
+        if (!saliendo && LlamadasManager.respuestaLlamada == false) {
+            saliendo = true
+            alguienSeUnio = false
             LlamadasManager.respuestaLlamada = null
+            limpiarAgoraEnHilo()
             Toast.makeText(context, "Llamada rechazada", Toast.LENGTH_SHORT).show()
             navController.popBackStack()
         }
@@ -161,27 +221,29 @@ fun CallScreen(
 
     // El otro colgó
     LaunchedEffect(finalizada) {
-        if (finalizada) {
+        if (finalizada && !saliendo) {
+            saliendo = true
             Toast.makeText(context, "La llamada terminó", Toast.LENGTH_SHORT).show()
             delay(800)
+            limpiarAgoraEnHilo()
             navController.popBackStack()
         }
     }
 
     // Nadie contesta en 40 segundos
-    LaunchedEffect(alguienSeUnio) {
-        if (!alguienSeUnio) {
+    LaunchedEffect(alguienSeUnio, saliendo) {
+        if (!alguienSeUnio && !saliendo) {
             delay(40_000)
-            if (!alguienSeUnio) {
+            if (!alguienSeUnio && !saliendo) {
                 Toast.makeText(context, "No contestó", Toast.LENGTH_SHORT).show()
                 colgar()
             }
         }
     }
 
-    // Cronómetro
-    LaunchedEffect(alguienSeUnio) {
-        while (alguienSeUnio) {
+    // Cronómetro: SOLO corre cuando alguienSeUnio es verdadero
+    LaunchedEffect(alguienSeUnio, saliendo) {
+        while (alguienSeUnio && !saliendo) {
             delay(1000)
             segundos++
         }
@@ -189,10 +251,7 @@ fun CallScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            scope.launch(Dispatchers.IO) {
-                agoraManager.salirCanal()
-                agoraManager.destruir()
-            }
+            limpiarAgoraEnHilo()
         }
     }
 
@@ -200,8 +259,8 @@ fun CallScreen(
 
     Box(Modifier.fillMaxSize().background(ServifyDarkNavy)) {
 
-        // Video remoto a pantalla completa
-        if (esVideo && uidRemoto != null) {
+        // Video remoto a pantalla completa solo cuando el otro se unió
+        if (esVideo && alguienSeUnio && uidRemoto != null) {
             AndroidView(
                 factory = { ctx -> agoraManager.crearVistaRemota(ctx, uidRemoto!!) },
                 modifier = Modifier.fillMaxSize()
@@ -218,18 +277,23 @@ fun CallScreen(
                 ) {
                     Icon(
                         if (esVideo) Icons.Default.Videocam else Icons.Default.Call,
-                        null, tint = Color.White, modifier = Modifier.size(48.dp)
+                        null,
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
                     )
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(
                     if (esVideo) "Videollamada Servify" else "Llamada de Voz",
-                    color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     if (alguienSeUnio) "$estadoConexion · $tiempo" else estadoConexion,
-                    color = ServifyCianSoft, fontSize = 14.sp
+                    color = ServifyCianSoft,
+                    fontSize = 14.sp
                 )
             }
         }
@@ -263,8 +327,11 @@ fun CallScreen(
             }
 
             BotonLlamada(
-                icono = Icons.Default.CallEnd, fondo = ServifyDanger, color = Color.White,
-                descripcion = "Colgar", tamano = 64
+                icono = Icons.Default.CallEnd,
+                fondo = ServifyDanger,
+                color = Color.White,
+                descripcion = "Colgar",
+                tamano = 64
             ) { colgar() }
 
             if (esVideo) {
@@ -278,8 +345,10 @@ fun CallScreen(
                     agoraManager.alternarVideo(estaVideoApagado)
                 }
                 BotonLlamada(
-                    icono = Icons.Default.Cameraswitch, fondo = ServifySurface,
-                    color = ServifyBluePrimary, descripcion = "Girar cámara"
+                    icono = Icons.Default.Cameraswitch,
+                    fondo = ServifySurface,
+                    color = ServifyBluePrimary,
+                    descripcion = "Girar cámara"
                 ) { agoraManager.cambiarCamara() }
             }
         }

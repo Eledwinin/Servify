@@ -10,8 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.servify.ui.theme.* // Importamos la paleta de colores azul oficial
+import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +74,7 @@ fun EnviarPropuestaScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = ServifyBluePrimary
+                            tint = ServifyBlueLight
                         )
                     }
                 },
@@ -146,7 +146,7 @@ fun EnviarPropuestaScreen(
                         Icon(
                             imageVector = Icons.Default.LocalOffer,
                             contentDescription = null,
-                            tint = ServifyCianSoft,
+                            tint = ServifyBlueLight,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -173,7 +173,7 @@ fun EnviarPropuestaScreen(
 
             if (presupuestoCliente != null && presupuestoCliente > 0) {
                 Surface(
-                    color = ServifyCianSoft.copy(alpha = 0.16f),
+                    color = ServifySurface,
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -210,19 +210,35 @@ fun EnviarPropuestaScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ServifyBlueLight)
                         ) {
                             Text(
                                 text = "Concuerdo con el precio",
                                 fontWeight = FontWeight.Bold,
-                                color = ServifyBluePrimary
+                                color = ServifyBlueLight
                             )
                         }
                     }
                 }
             }
 
-            // Sección de Inputs con un diseño más limpio y espaciado
+            val coloresCampo = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = ServifyTextTitle,
+                unfocusedTextColor = ServifyTextTitle,
+                focusedLabelColor = ServifyBlueLight,
+                unfocusedLabelColor = ServifyTextMuted,
+                focusedPlaceholderColor = ServifyTextMuted,
+                unfocusedPlaceholderColor = ServifyTextMuted,
+                focusedLeadingIconColor = ServifyBlueLight,
+                unfocusedLeadingIconColor = ServifyTextMuted,
+                focusedBorderColor = ServifyBlueLight,
+                unfocusedBorderColor = ServifyBorder,
+                focusedContainerColor = ServifyInputBackground,
+                unfocusedContainerColor = ServifyInputBackground
+            )
+
+            // Sección de Inputs
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -247,18 +263,12 @@ fun EnviarPropuestaScreen(
                     label = { Text("Presupuesto / Mano de obra ($)") },
                     placeholder = { Text("Ej: 25.00") },
                     leadingIcon = {
-                        Icon(Icons.Default.AttachMoney, contentDescription = null, tint = ServifyBluePrimary)
+                        Icon(Icons.Default.AttachMoney, contentDescription = null)
                     },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ServifyBluePrimary,
-                        focusedLabelColor = ServifyBluePrimary,
-                        unfocusedBorderColor = ServifyBorder,
-                        focusedContainerColor = ServifyInputBackground,
-                        unfocusedContainerColor = ServifyInputBackground
-                    ),
+                    colors = coloresCampo,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -272,17 +282,11 @@ fun EnviarPropuestaScreen(
                     label = { Text("Tiempo estimado de entrega o visita") },
                     placeholder = { Text("Ej: 1 día, Mañana por la tarde") },
                     leadingIcon = {
-                        Icon(Icons.Default.Schedule, contentDescription = null, tint = ServifyBluePrimary)
+                        Icon(Icons.Default.Schedule, contentDescription = null)
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ServifyBluePrimary,
-                        focusedLabelColor = ServifyBluePrimary,
-                        unfocusedBorderColor = ServifyBorder,
-                        focusedContainerColor = ServifyInputBackground,
-                        unfocusedContainerColor = ServifyInputBackground
-                    ),
+                    colors = coloresCampo,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -294,13 +298,7 @@ fun EnviarPropuestaScreen(
                     placeholder = { Text("Explícale al cliente cómo resolverás su problema...") },
                     minLines = 4,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ServifyBluePrimary,
-                        focusedLabelColor = ServifyBluePrimary,
-                        unfocusedBorderColor = ServifyBorder,
-                        focusedContainerColor = ServifyInputBackground,
-                        unfocusedContainerColor = ServifyInputBackground
-                    ),
+                    colors = coloresCampo,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
