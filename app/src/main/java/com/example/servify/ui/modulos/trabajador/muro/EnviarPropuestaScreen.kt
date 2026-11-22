@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -43,6 +45,9 @@ fun EnviarPropuestaScreen(
     var tiempoEstimado by remember { mutableStateOf("") }
     var mensajePropuesta by remember { mutableStateOf("") }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
+
+    // Controla si el trabajador aceptó el precio del cliente (sin enviar aún)
+    var concuerdoConPrecio by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
@@ -96,7 +101,13 @@ fun EnviarPropuestaScreen(
                                 return@Button
                             }
                             errorMensaje = null
-                            viewModel.postular(idSolicitud, monto, tiempoEstimado, mensajePropuesta)
+                            viewModel.postular(
+                                solicitudId = idSolicitud,
+                                precio = monto,
+                                tiempo = tiempoEstimado,
+                                mensaje = mensajePropuesta,
+                                aceptaPresupuesto = concuerdoConPrecio
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -188,36 +199,60 @@ fun EnviarPropuestaScreen(
                             color = ServifyTextTitle
                         )
                         Text(
-                            text = "Si el precio te parece bien, acéptalo: ese será el monto final del trabajo y no habrá que negociar.",
+                            text = if (concuerdoConPrecio) {
+                                "Aceptaste el precio ofrecido. Completa los demás detalles y presiona \"Enviar Postulación\" abajo."
+                            } else {
+                                "Si el precio te parece bien, selecciónalo: se colocará en el presupuesto y podrás enviarlo con el botón de abajo."
+                            },
                             fontSize = 12.sp,
                             color = ServifyTextBody
                         )
-                        OutlinedButton(
-                            onClick = {
-                                if (tiempoEstimado.isBlank()) {
-                                    errorMensaje = "Por favor indica un tiempo estimado antes de concordar con el precio"
-                                    return@OutlinedButton
-                                }
-                                errorMensaje = null
-                                viewModel.postular(
-                                    solicitudId = idSolicitud,
-                                    precio = presupuestoCliente,
-                                    tiempo = tiempoEstimado,
-                                    mensaje = mensajePropuesta,
-                                    aceptaPresupuesto = true
+
+                        if (!concuerdoConPrecio) {
+                            OutlinedButton(
+                                onClick = {
+                                    concuerdoConPrecio = true
+                                    precioEstimado = "%.2f".format(presupuestoCliente)
+                                    errorMensaje = null
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, ServifyBlueLight)
+                            ) {
+                                Text(
+                                    text = "Concuerdo con el precio",
+                                    fontWeight = FontWeight.Bold,
+                                    color = ServifyBlueLight
                                 )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, ServifyBlueLight)
-                        ) {
-                            Text(
-                                text = "Concuerdo con el precio",
-                                fontWeight = FontWeight.Bold,
-                                color = ServifyBlueLight
-                            )
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    concuerdoConPrecio = false
+                                    precioEstimado = ""
+                                    errorMensaje = null
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, ServifyDanger)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = ServifyDanger,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Cancelar acuerdo de precio",
+                                    fontWeight = FontWeight.Bold,
+                                    color = ServifyDanger
+                                )
+                            }
                         }
                     }
                 }
@@ -226,16 +261,21 @@ fun EnviarPropuestaScreen(
             val coloresCampo = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = ServifyTextTitle,
                 unfocusedTextColor = ServifyTextTitle,
+                disabledTextColor = ServifyTextMuted,
                 focusedLabelColor = ServifyBlueLight,
                 unfocusedLabelColor = ServifyTextMuted,
+                disabledLabelColor = ServifyTextMuted,
                 focusedPlaceholderColor = ServifyTextMuted,
                 unfocusedPlaceholderColor = ServifyTextMuted,
                 focusedLeadingIconColor = ServifyBlueLight,
                 unfocusedLeadingIconColor = ServifyTextMuted,
+                disabledLeadingIconColor = ServifyTextMuted,
                 focusedBorderColor = ServifyBlueLight,
                 unfocusedBorderColor = ServifyBorder,
+                disabledBorderColor = ServifyBorder.copy(alpha = 0.6f),
                 focusedContainerColor = ServifyInputBackground,
-                unfocusedContainerColor = ServifyInputBackground
+                unfocusedContainerColor = ServifyInputBackground,
+                disabledContainerColor = ServifyInputBackground.copy(alpha = 0.6f)
             )
 
             // Sección de Inputs
@@ -253,13 +293,16 @@ fun EnviarPropuestaScreen(
                     color = ServifyTextTitle
                 )
 
-                // Input: Presupuesto estimado
+                // Input: Presupuesto estimado (bloqueado si concuerdoConPrecio == true)
                 OutlinedTextField(
                     value = precioEstimado,
                     onValueChange = {
-                        precioEstimado = it
-                        if (errorMensaje != null) errorMensaje = null
+                        if (!concuerdoConPrecio) {
+                            precioEstimado = it
+                            if (errorMensaje != null) errorMensaje = null
+                        }
                     },
+                    enabled = !concuerdoConPrecio,
                     label = { Text("Presupuesto / Mano de obra ($)") },
                     placeholder = { Text("Ej: 25.00") },
                     leadingIcon = {
