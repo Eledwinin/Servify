@@ -32,6 +32,7 @@ import com.example.servify.ui.theme.* // Importamos la paleta de colores azul of
 fun EnviarPropuestaScreen(
     idSolicitud: Int,
     tituloTrabajo: String,
+    presupuestoCliente: Double? = null,
     navController: NavController,
     viewModel: MuroSolicitudesViewModel = viewModel()
 ) {
@@ -166,6 +167,57 @@ fun EnviarPropuestaScreen(
                             color = Color.White,
                             maxLines = 2
                         )
+                    }
+                }
+            }
+
+            if (presupuestoCliente != null && presupuestoCliente > 0) {
+                Surface(
+                    color = ServifyCianSoft.copy(alpha = 0.16f),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "El cliente ofrece $%.2f".format(presupuestoCliente),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = ServifyTextTitle
+                        )
+                        Text(
+                            text = "Si el precio te parece bien, acéptalo: ese será el monto final del trabajo y no habrá que negociar.",
+                            fontSize = 12.sp,
+                            color = ServifyTextBody
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                if (tiempoEstimado.isBlank()) {
+                                    errorMensaje = "Por favor indica un tiempo estimado antes de concordar con el precio"
+                                    return@OutlinedButton
+                                }
+                                errorMensaje = null
+                                viewModel.postular(
+                                    solicitudId = idSolicitud,
+                                    precio = presupuestoCliente,
+                                    tiempo = tiempoEstimado,
+                                    mensaje = mensajePropuesta,
+                                    aceptaPresupuesto = true
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(
+                                text = "Concuerdo con el precio",
+                                fontWeight = FontWeight.Bold,
+                                color = ServifyBluePrimary
+                            )
+                        }
                     }
                 }
             }

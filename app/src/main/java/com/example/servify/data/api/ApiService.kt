@@ -315,6 +315,12 @@ interface ApiService {
         @Path("id") id: Int
     ): Response<MensajeResponse>
 
+    @DELETE("api/postulaciones/{id}")
+    suspend fun cancelarPostulacion(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<MensajeResponse>
+
     // ==========================================
     // MÓDULO ADMINISTRADOR
     // ==========================================

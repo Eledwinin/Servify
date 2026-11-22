@@ -36,7 +36,8 @@ data class CrearPostulacionRequest(
     @SerializedName("solicitud_id") val solicitudId: Int,
     @SerializedName("monto_propuesto") val montoPropuesto: Double,
     @SerializedName("tiempo_estimado") val tiempoEstimado: String,
-    @SerializedName("mensaje") val mensaje: String
+    @SerializedName("mensaje") val mensaje: String,
+    @SerializedName("acepta_presupuesto") val aceptaPresupuesto: Boolean = false
 )
 
 data class SolicitudVipDto(
@@ -82,7 +83,8 @@ data class PropuestaItem(
     @SerializedName("estado") val estado: String,
     @SerializedName("tecnico_foto") val tecnicoFoto: String? = null,
     @SerializedName("presupuesto_estimado") val presupuestoEstimado: Double? = null,
-    @SerializedName("conversacion_id") val conversacionId: Int? = null
+    @SerializedName("conversacion_id") val conversacionId: Int? = null,
+    @SerializedName("acepta_presupuesto") val aceptaPresupuesto: Int = 0
 )
 
 data class AceptarRespuesta(
@@ -98,7 +100,8 @@ data class MiPostulacion(
     @SerializedName("monto_propuesto") val montoPropuesto: Double,
     @SerializedName("estado") val estado: String,
     @SerializedName("conversacion_id") val conversacionId: Int? = null,
-    @SerializedName("creado_en") val creadoEn: String? = null
+    @SerializedName("creado_en") val creadoEn: String? = null,
+    @SerializedName("acepta_presupuesto") val aceptaPresupuesto: Int = 0
 )
 
 data class DetalleSolicitud(
