@@ -167,14 +167,20 @@ class MuroSolicitudesViewModel(
         solicitudes = solicitudes.filter { it.id != id }
     }
 
-    fun postular(solicitudId: Int, precio: Double, tiempo: String, mensaje: String) {
+    fun postular(
+        solicitudId: Int,
+        precio: Double,
+        tiempo: String,
+        mensaje: String,
+        aceptaPresupuesto: Boolean = false
+    ) {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
             try {
                 val (ok, err, code) = withContext(Dispatchers.IO) {
                     val res = RetrofitClient.instance.crearPostulacion(
                         "Bearer $token",
-                        CrearPostulacionRequest(solicitudId, precio, tiempo, mensaje)
+                        CrearPostulacionRequest(solicitudId, precio, tiempo, mensaje, aceptaPresupuesto)
                     )
                     if (res.isSuccessful) {
                         Triple(true, null, res.code())

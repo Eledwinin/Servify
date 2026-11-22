@@ -311,19 +311,27 @@ fun AppNavigation() {
             }
 
             composable(
-                route = "enviar_propuesta/{idSolicitud}/{titulo}",
+                route = "enviar_propuesta/{idSolicitud}/{titulo}?presupuesto={presupuesto}",
                 arguments = listOf(
                     navArgument("idSolicitud") { type = NavType.IntType },
-                    navArgument("titulo") { type = NavType.StringType }
+                    navArgument("titulo") { type = NavType.StringType },
+                    navArgument("presupuesto") {
+                        type = NavType.FloatType
+                        defaultValue = 0f
+                    }
                 )
             ) { backStackEntry ->
                 val idSolicitud = backStackEntry.arguments?.getInt("idSolicitud") ?: 0
                 val tituloTrabajo = java.net.URLDecoder.decode(
                     backStackEntry.arguments?.getString("titulo") ?: "", "UTF-8"
                 )
+                val presupuestoFloat = backStackEntry.arguments?.getFloat("presupuesto") ?: 0f
+                val presupuestoCliente = if (presupuestoFloat > 0f) presupuestoFloat.toDouble() else null
+
                 EnviarPropuestaScreen(
                     idSolicitud = idSolicitud,
                     tituloTrabajo = tituloTrabajo,
+                    presupuestoCliente = presupuestoCliente,
                     navController = navController
                 )
             }

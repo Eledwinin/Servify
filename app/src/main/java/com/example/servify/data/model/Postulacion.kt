@@ -11,3 +11,4 @@ data class Postulacion(
     @SerializedName("estado") val estado: String, // "PENDIENTE", "ACEPTADA", "RECHAZADA"
     @SerializedName("creado_en") val creadoEn: String? = null
 )
+

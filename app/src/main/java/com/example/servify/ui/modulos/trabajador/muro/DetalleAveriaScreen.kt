@@ -98,7 +98,8 @@ fun DetalleAveriaScreen(
                         onClick = {
                             detalle?.let { item ->
                                 val tituloCodificado = java.net.URLEncoder.encode(item.titulo, "UTF-8")
-                                navController.navigate("enviar_propuesta/${item.id}/$tituloCodificado")
+                                val montoQuery = item.presupuestoEstimado ?: 0.0
+                                navController.navigate("enviar_propuesta/${item.id}/$tituloCodificado?presupuesto=$montoQuery")
                             }
                         },
                         enabled = detalle != null && !detalle.yaPostulado,
@@ -326,13 +327,35 @@ fun DetalleAveriaScreen(
                                 }
                             }
                         }
-
                         Text(
                             text = detalle.descripcion,
                             fontSize = 14.sp,
                             color = ServifyTextMuted,
                             lineHeight = 22.sp
                         )
+                        val presupuesto = detalle.presupuestoEstimado
+                        HorizontalDivider(color = ServifyBorder.copy(alpha = 0.5f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Presupuesto estimado:",
+                                fontSize = 13.sp,
+                                color = ServifyTextMuted
+                            )
+                            Text(
+                                text = if (presupuesto != null && presupuesto > 0.0) {
+                                    "$%.2f".format(java.util.Locale.US, presupuesto)
+                                } else {
+                                    "A convenir"
+                                },
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = ServifyTextTitle
+                            )
+                        }
                     }
                 }
 

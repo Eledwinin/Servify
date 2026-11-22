@@ -40,6 +40,8 @@ import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import java.net.URLEncoder
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +49,6 @@ fun MuroSolicitudesScreen(
     navController: NavController,
     viewModel: MuroSolicitudesViewModel = viewModel()
 ) {
-
-
-
     val esVip = SessionManager.esVip
     val context = LocalContext.current
     val listaSolicitudes = viewModel.solicitudes
@@ -168,9 +167,9 @@ fun MuroSolicitudesScreen(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = when {
-                                esSemanal -> Color(0xFF0284C7) // Un azul/celeste bonito para el semanal (o el color que prefieras)
-                                esPro -> ServifyPendingText     // El color dorado/amarillo que ya usabas para el PRO
-                                else -> Color(0xFF4338CA)      // Color por defecto para "VER PLANES"
+                                esSemanal -> Color(0xFF0284C7)
+                                esPro -> ServifyPendingText
+                                else -> Color(0xFF4338CA)
                             }
                         )
                     }
@@ -251,7 +250,6 @@ fun MuroSolicitudesScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -263,7 +261,6 @@ fun MuroSolicitudesScreen(
                                 }
                             }
 
-
                             Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(10.dp)) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -273,6 +270,7 @@ fun MuroSolicitudesScreen(
                                     Icon(Icons.Default.Star, null, tint = ServifyStarYellow, modifier = Modifier.size(14.dp))
                                     Text(
                                         text = "%.1f (%d)".format(
+                                            Locale.US,
                                             SessionManager.usuarioActual?.calificacionPromedio ?: 0.0,
                                             viewModel.totalResenasTecnico
                                         ),
@@ -300,7 +298,7 @@ fun MuroSolicitudesScreen(
                         val options = ScanOptions().apply {
                             setDesiredBarcodeFormats(ScanOptions.QR_CODE)
                             setPrompt("Escanea el código QR del cliente para confirmar el cierre")
-                            setCameraId(0) // Usar cámara trasera
+                            setCameraId(0)
                             setBeepEnabled(true)
                             setBarcodeImageEnabled(false)
                             setOrientationLocked(false)
@@ -442,7 +440,7 @@ fun MuroSolicitudesScreen(
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Text(
-                                            text = solicitud.distanciaKm?.let { "A %.1f km de ti".format(it) } ?: "Cercano",
+                                            text = solicitud.distanciaKm?.let { "A %.1f km de ti".format(Locale.US, it) } ?: "Cercano",
                                             fontSize = 11.sp,
                                             color = ServifyTextMuted
                                         )
@@ -480,13 +478,23 @@ fun MuroSolicitudesScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
+                            val presupuesto = solicitud.presupuestoEstimado
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text("Presupuesto estimado:", fontSize = 12.sp, color = ServifyTextMuted)
-                                Text("$45.00", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = ServifyTextTitle)
+                                Text(
+                                    text = if (presupuesto != null && presupuesto > 0.0) {
+                                        "$%.2f".format(Locale.US, presupuesto)
+                                    } else {
+                                        "A convenir"
+                                    },
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = ServifyTextTitle
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(14.dp))
@@ -510,8 +518,9 @@ fun MuroSolicitudesScreen(
 
                                 Button(
                                     onClick = {
-                                        val tituloCodificado = java.net.URLEncoder.encode(solicitud.titulo, "UTF-8")
-                                        navController.navigate("enviar_propuesta/${solicitud.id}/$tituloCodificado")
+                                        val tituloCodificado = URLEncoder.encode(solicitud.titulo, "UTF-8")
+                                        val montoQuery = presupuesto ?: 0.0
+                                        navController.navigate("enviar_propuesta/${solicitud.id}/$tituloCodificado?presupuesto=$montoQuery")
                                     },
                                     modifier = Modifier.weight(1.3f).height(44.dp),
                                     shape = RoundedCornerShape(12.dp),
