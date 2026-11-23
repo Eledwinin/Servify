@@ -11,9 +11,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.ui.componentes.inputs.CampoFechaCalendario
+import com.example.servify.ui.componentes.inputs.formatearFechaUtc
+import com.example.servify.ui.componentes.inputs.obtenerHoyUtcMillis
 import com.example.servify.ui.theme.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +45,22 @@ fun EnviarPropuestaScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val hoyUtcMillis = remember { obtenerHoyUtcMillis() }
 
     var precioEstimado by remember { mutableStateOf("") }
-    var tiempoEstimado by remember { mutableStateOf("") }
+    var fechaVisitaMillis by remember { mutableStateOf<Long?>(null) }
+    var fechaEntregaMillis by remember { mutableStateOf<Long?>(null) }
     var mensajePropuesta by remember { mutableStateOf("") }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
-
-    // Controla si el trabajador aceptó el precio del cliente (sin enviar aún)
     var concuerdoConPrecio by remember { mutableStateOf(false) }
+
+    val tiempoEstimadoFormateado = remember(fechaVisitaMillis, fechaEntregaMillis) {
+        if (fechaVisitaMillis != null && fechaEntregaMillis != null) {
+            val visitaIso = formatearFechaUtc(fechaVisitaMillis!!, "yyyy-MM-dd")
+            val entregaIso = formatearFechaUtc(fechaEntregaMillis!!, "yyyy-MM-dd")
+            "Visita: $visitaIso | Entrega: $entregaIso"
+        } else ""
+    }
 
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
@@ -91,36 +104,28 @@ fun EnviarPropuestaScreen(
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                     Button(
                         onClick = {
-                            val monto = precioEstimado.toDoubleOrNull()
-                            if (monto == null || monto <= 0.0) {
-                                errorMensaje = "Por favor ingresa un presupuesto válido"
-                                return@Button
+                            val monto = precioEstimado.replace(",", ".").toDoubleOrNull()
+                            when {
+                                monto == null || monto <= 0.0 -> errorMensaje = "Por favor ingresa un presupuesto válido"
+                                fechaVisitaMillis == null -> errorMensaje = "Por favor selecciona la fecha estimada de visita"
+                                fechaEntregaMillis == null -> errorMensaje = "Por favor selecciona la fecha estimada de entrega"
+                                else -> {
+                                    errorMensaje = null
+                                    viewModel.postular(
+                                        solicitudId = idSolicitud,
+                                        precio = monto,
+                                        tiempo = tiempoEstimadoFormateado,
+                                        mensaje = mensajePropuesta,
+                                        aceptaPresupuesto = concuerdoConPrecio
+                                    )
+                                }
                             }
-                            if (tiempoEstimado.isBlank()) {
-                                errorMensaje = "Por favor indica un tiempo estimado"
-                                return@Button
-                            }
-                            errorMensaje = null
-                            viewModel.postular(
-                                solicitudId = idSolicitud,
-                                precio = monto,
-                                tiempo = tiempoEstimado,
-                                mensaje = mensajePropuesta,
-                                aceptaPresupuesto = concuerdoConPrecio
-                            )
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
+                        modifier = Modifier.fillMaxWidth().height(54.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
                     ) {
-                        Text(
-                            text = "Enviar Postulación",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Text("Enviar Postulación", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
@@ -135,7 +140,6 @@ fun EnviarPropuestaScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Cabecera tipo tarjeta executive (Dark Navy) con el título del trabajo
             Card(
                 colors = CardDefaults.cardColors(containerColor = ServifyDarkNavy),
                 shape = RoundedCornerShape(20.dp),
@@ -161,7 +165,6 @@ fun EnviarPropuestaScreen(
                             modifier = Modifier.size(24.dp)
                         )
                     }
-
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "TRABAJO SOLICITADO",
@@ -193,66 +196,39 @@ fun EnviarPropuestaScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "El cliente ofrece $%.2f".format(presupuestoCliente),
+                            text = "El cliente ofrece $%.2f".format(Locale.US, presupuestoCliente),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = ServifyTextTitle
                         )
                         Text(
                             text = if (concuerdoConPrecio) {
-                                "Aceptaste el precio ofrecido. Completa los demás detalles y presiona \"Enviar Postulación\" abajo."
+                                "Aceptaste el precio ofrecido. Completa las fechas y detalles y presiona \"Enviar Postulación\" abajo."
                             } else {
                                 "Si el precio te parece bien, selecciónalo: se colocará en el presupuesto y podrás enviarlo con el botón de abajo."
                             },
                             fontSize = 12.sp,
                             color = ServifyTextBody
                         )
-
-                        if (!concuerdoConPrecio) {
-                            OutlinedButton(
-                                onClick = {
-                                    concuerdoConPrecio = true
-                                    precioEstimado = "%.2f".format(presupuestoCliente)
-                                    errorMensaje = null
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                border = BorderStroke(1.dp, ServifyBlueLight)
-                            ) {
-                                Text(
-                                    text = "Concuerdo con el precio",
-                                    fontWeight = FontWeight.Bold,
-                                    color = ServifyBlueLight
-                                )
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    concuerdoConPrecio = false
-                                    precioEstimado = ""
-                                    errorMensaje = null
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                border = BorderStroke(1.dp, ServifyDanger)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = ServifyDanger,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                        OutlinedButton(
+                            onClick = {
+                                concuerdoConPrecio = !concuerdoConPrecio
+                                precioEstimado = if (concuerdoConPrecio) "%.2f".format(Locale.US, presupuestoCliente) else ""
+                                errorMensaje = null
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, if (concuerdoConPrecio) ServifyDanger else ServifyBlueLight)
+                        ) {
+                            if (concuerdoConPrecio) {
+                                Icon(Icons.Default.CheckCircle, null, tint = ServifyDanger, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Cancelar acuerdo de precio",
-                                    fontWeight = FontWeight.Bold,
-                                    color = ServifyDanger
-                                )
                             }
+                            Text(
+                                text = if (concuerdoConPrecio) "Cancelar acuerdo de precio" else "Concuerdo con el precio",
+                                fontWeight = FontWeight.Bold,
+                                color = if (concuerdoConPrecio) ServifyDanger else ServifyBlueLight
+                            )
                         }
                     }
                 }
@@ -278,7 +254,6 @@ fun EnviarPropuestaScreen(
                 disabledContainerColor = ServifyInputBackground.copy(alpha = 0.6f)
             )
 
-            // Sección de Inputs
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -286,14 +261,8 @@ fun EnviarPropuestaScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Detalles de tu oferta",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ServifyTextTitle
-                )
+                Text("Detalles de tu oferta", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = ServifyTextTitle)
 
-                // Input: Presupuesto estimado (bloqueado si concuerdoConPrecio == true)
                 OutlinedTextField(
                     value = precioEstimado,
                     onValueChange = {
@@ -305,9 +274,7 @@ fun EnviarPropuestaScreen(
                     enabled = !concuerdoConPrecio,
                     label = { Text("Presupuesto / Mano de obra ($)") },
                     placeholder = { Text("Ej: 25.00") },
-                    leadingIcon = {
-                        Icon(Icons.Default.AttachMoney, contentDescription = null)
-                    },
+                    leadingIcon = { Icon(Icons.Default.AttachMoney, contentDescription = null) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
@@ -315,25 +282,33 @@ fun EnviarPropuestaScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Input: Tiempo estimado
-                OutlinedTextField(
-                    value = tiempoEstimado,
-                    onValueChange = {
-                        tiempoEstimado = it
-                        if (errorMensaje != null) errorMensaje = null
+                CampoFechaCalendario(
+                    label = "Fecha estimada de visita",
+                    placeholder = "Toca para elegir fecha de visita",
+                    fechaSeleccionadaMillis = fechaVisitaMillis,
+                    fechaMinimaUtcMillis = hoyUtcMillis,
+                    onFechaSeleccionada = { seleccionada ->
+                        fechaVisitaMillis = seleccionada
+                        if (fechaEntregaMillis != null && fechaEntregaMillis!! < seleccionada) {
+                            fechaEntregaMillis = null
+                        }
                     },
-                    label = { Text("Tiempo estimado de entrega o visita") },
-                    placeholder = { Text("Ej: 1 día, Mañana por la tarde") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Schedule, contentDescription = null)
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = coloresCampo,
-                    modifier = Modifier.fillMaxWidth()
+                    colores = coloresCampo,
+                    icono = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                    onAntesDeAbrir = { if (errorMensaje != null) errorMensaje = null }
                 )
 
-                // Input: Mensaje explicativo
+                CampoFechaCalendario(
+                    label = "Fecha estimada de entrega",
+                    placeholder = "Toca para elegir fecha de entrega",
+                    fechaSeleccionadaMillis = fechaEntregaMillis,
+                    fechaMinimaUtcMillis = fechaVisitaMillis ?: hoyUtcMillis,
+                    onFechaSeleccionada = { fechaEntregaMillis = it },
+                    colores = coloresCampo,
+                    icono = { Icon(Icons.Default.EventAvailable, contentDescription = null) },
+                    onAntesDeAbrir = { if (errorMensaje != null) errorMensaje = null }
+                )
+
                 OutlinedTextField(
                     value = mensajePropuesta,
                     onValueChange = { mensajePropuesta = it },
@@ -347,11 +322,7 @@ fun EnviarPropuestaScreen(
             }
 
             if (errorMensaje != null) {
-                Surface(
-                    color = ServifyDangerBg,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Surface(color = ServifyDangerBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = errorMensaje!!,
                         color = ServifyDanger,

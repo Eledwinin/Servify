@@ -58,6 +58,7 @@ import com.example.servify.ui.modulos.modulos_compartidos.perfil.FotoPerfilViewM
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
+import com.example.servify.ui.modulos.trabajador.agenda.AgendaTecnicoScreen
 import com.example.servify.ui.modulos.trabajador.gestion_perfil.EditarPerfilTrabajadorScreen
 import com.example.servify.ui.modulos.trabajador.muro.DetalleAveriaScreen
 import com.example.servify.ui.modulos.trabajador.muro.EnviarPropuestaScreen
@@ -227,6 +228,10 @@ fun AppNavigation() {
             composable(Rutas.Actividad.ruta) { MainTabScreen(navController = navController, paginaInicial = 1) }
             composable(Rutas.Mensajes.ruta) { MainTabScreen(navController = navController, paginaInicial = 2) }
             composable(Rutas.Perfil.ruta) { MainTabScreen(navController = navController, paginaInicial = 3) }
+
+            composable(Rutas.AgendaTecnico.ruta) {
+                AgendaTecnicoScreen(navController = navController)
+            }
 
             composable(Rutas.MapaSolicitudes.ruta) { MapaSolicitudesScreen(navController = navController) }
 

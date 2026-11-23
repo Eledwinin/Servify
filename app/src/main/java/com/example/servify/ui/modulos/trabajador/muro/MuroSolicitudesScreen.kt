@@ -360,7 +360,9 @@ fun MuroSolicitudesScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    BotonAccesoRapido("Mi Agenda", Icons.Default.ViewAgenda, Modifier.weight(1f)) { }
+                    BotonAccesoRapido("Mi Agenda", Icons.Default.ViewAgenda, Modifier.weight(1f)) {
+                        navController.navigate(Rutas.AgendaTecnico.ruta)
+                    }
 
                     // 📷 BOTÓN ESCANEAR QR ACTIVADO
                     BotonAccesoRapido("Escanear QR", Icons.Default.QrCodeScanner, Modifier.weight(1f)) {

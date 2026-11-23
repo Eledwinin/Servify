@@ -25,6 +25,7 @@ sealed class Rutas(val ruta: String) {
     object Perfil : Rutas("perfil")
     object MuroSolicitudes : Rutas("muro_solicitudes")
     object NuevaSolicitud : Rutas("nueva_solicitud")
+    object AgendaTecnico : Rutas("agenda_tecnico")
 
     // Subflujos de Perfil separados
     object EditarPerfilCliente : Rutas("editar_perfil_cliente")
