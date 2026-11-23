@@ -1,9 +1,11 @@
 package com.example.servify.data
 
+import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.servify.data.model.UsuarioModel
+import org.json.JSONObject
 
 object SessionManager {
     var token: String? = null
@@ -92,9 +94,32 @@ object SessionManager {
         esVip = false
         latitud = null
         longitud = null
+        PresenciaManager.limpiar()
     }
 
-    fun estaAutenticado(): Boolean = !token.isNullOrBlank()
+    /**
+     * Comprueba si el token actual tiene formato JWT válido y no ha expirado.
+     */
+    fun esTokenValido(): Boolean {
+        val t = token
+        if (t.isNullOrBlank()) return false
+        return try {
+            val partes = t.split(".")
+            if (partes.size < 2) return true
+            val jsonBytes = Base64.decode(partes[1], Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+            val json = JSONObject(String(jsonBytes))
+            val exp = json.optLong("exp", 0L)
+            if (exp > 0) {
+                (exp * 1000) > System.currentTimeMillis()
+            } else {
+                true
+            }
+        } catch (_: Exception) {
+            true
+        }
+    }
+
+    fun estaAutenticado(): Boolean = !token.isNullOrBlank() && esTokenValido()
 
     // Obtiene el nombre completo del usuario de forma segura
     fun obtenerNombre(): String {

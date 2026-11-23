@@ -25,9 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.data.PresenciaManager
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.LlamadaItem
 import com.example.servify.ui.componentes.indicadores.AvatarUsuario
+import com.example.servify.ui.componentes.indicadores.IndicadorEstadoLinea
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -39,6 +41,8 @@ fun ConversacionesScreen(
     llamadasViewModel: LlamadasHistorialViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    // Escucha reactiva a cambios de presencia de usuarios sin fugas de memoria
+    val estadosPresencia by PresenciaManager.estadosUsuarios.collectAsState()
 
     // Estado para alternar entre Chats (0) y Llamadas (1)
     var pestañaActiva by remember { mutableStateOf(0) }
@@ -170,6 +174,10 @@ fun ConversacionesScreen(
                         }
                     } else {
                         items(conversacionesFiltradas, key = { it.id }) { c ->
+                            // Revisa el estado de presencia en tiempo real con reactividad garantizada por estadosPresencia
+                            val estaEnLinea = estadosPresencia[c.otroId]
+                                ?: PresenciaManager.estaEnLinea(c.otroId, c.ultimoMensajeEn)
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -186,11 +194,23 @@ fun ConversacionesScreen(
                                         .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    AvatarUsuario(
-                                        nombre = c.otroNombre,
-                                        fotoUrl = c.otroFoto,
-                                        tamano = 48.dp
-                                    )
+                                    Box(contentAlignment = Alignment.BottomEnd) {
+                                        AvatarUsuario(
+                                            nombre = c.otroNombre,
+                                            fotoUrl = c.otroFoto,
+                                            tamano = 48.dp
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(13.dp)
+                                                .background(ServifySurface, CircleShape)
+                                                .padding(2.dp)
+                                                .background(
+                                                    if (estaEnLinea) Color(0xFF22C55E) else Color(0xFF9CA3AF),
+                                                    CircleShape
+                                                )
+                                        )
+                                    }
 
                                     Spacer(modifier = Modifier.width(14.dp))
 
@@ -200,12 +220,25 @@ fun ConversacionesScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = c.otroNombre,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
-                                                color = ServifyTextTitle
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            ) {
+                                                Text(
+                                                    text = c.otroNombre,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp,
+                                                    color = ServifyTextTitle,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                IndicadorEstadoLinea(
+                                                    estaEnLinea = estaEnLinea,
+                                                    mostrarTexto = false,
+                                                    tamanoPunto = 7.dp
+                                                )
+                                            }
                                             Text(
                                                 text = horaDe(c.ultimoMensajeEn),
                                                 fontSize = 11.sp,
@@ -215,14 +248,27 @@ fun ConversacionesScreen(
 
                                         Spacer(modifier = Modifier.height(2.dp))
 
-                                        Text(
-                                            text = c.solicitudTitulo,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = ServifyBlueLight,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = c.solicitudTitulo,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = ServifyBlueLight,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            IndicadorEstadoLinea(
+                                                estaEnLinea = estaEnLinea,
+                                                mostrarTexto = true,
+                                                tamanoPunto = 6.dp,
+                                                tamanoTexto = 10.sp
+                                            )
+                                        }
 
                                         Spacer(modifier = Modifier.height(2.dp))
 
