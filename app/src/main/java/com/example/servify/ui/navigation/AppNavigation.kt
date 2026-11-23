@@ -1,5 +1,6 @@
 package com.example.servify.ui.navigation
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +14,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -25,11 +31,13 @@ import androidx.navigation.navArgument
 import com.example.servify.modulos_compartidos.pagos.PagosViewModel
 import com.example.servify.data.LlamadasManager
 import com.example.servify.data.SessionManager
+import com.example.servify.data.model.MiSolicitud
 import com.example.servify.ui.componentes.navegacion.BarraNavegacion
 import com.example.servify.ui.modulos.admin.AdminDashboardScreen
 import com.example.servify.ui.modulos.admin.AdminSolicitudesScreen
 import com.example.servify.ui.modulos.admin.AdminUsuariosScreen
 import com.example.servify.ui.modulos.cliente.contratacion.CheckoutPagoScreen
+import com.example.servify.ui.modulos.cliente.contratacion.MisSolicitudesViewModel
 import com.example.servify.ui.modulos.cliente.contratacion.NuevaSolicitudScreen
 import com.example.servify.ui.modulos.cliente.gestion_perfil.EditarPerfilClienteScreen
 import com.example.servify.ui.modulos.cliente.home.HomeScreen
@@ -69,14 +77,58 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
+    val context = LocalContext.current
     val pagerState = rememberPagerState(initialPage = paginaInicial, pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
+    val solicitudesViewModel: MisSolicitudesViewModel = viewModel()
+
+    val esTecnico = SessionManager.esTecnico
+    val userId = SessionManager.usuarioActual?.id ?: 0
+    val prefs = remember(userId) {
+        context.getSharedPreferences("servify_directas_vistas_$userId", Context.MODE_PRIVATE)
+    }
+    var badgeActividad by remember { mutableIntStateOf(0) }
+
+    fun claveVista(s: MiSolicitud): String = "${s.id}_${s.estado.lowercase()}"
+
+    fun esDirectaRespondida(s: MiSolicitud): Boolean {
+        val esDirecta = s.titulo.startsWith("Contratación Directa", ignoreCase = true) ||
+                s.estado.equals("directa", ignoreCase = true)
+        val estadoLower = s.estado.lowercase()
+        return esDirecta && estadoLower in listOf("rechazado", "rechazada", "aceptado", "aceptada")
+    }
 
     LaunchedEffect(Unit) {
         SessionManager.token?.let { LlamadasManager.conectar(it) }
+        if (!esTecnico) {
+            solicitudesViewModel.cargar()
+        }
     }
 
-    val rutaInicio = if (SessionManager.esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
+    // Recalcula cuántas directas respondidas aún no ha visto el cliente
+    LaunchedEffect(solicitudesViewModel.solicitudes, pagerState.currentPage, esTecnico) {
+        if (esTecnico) {
+            badgeActividad = 0
+            return@LaunchedEffect
+        }
+        val respondidas = solicitudesViewModel.solicitudes.filter { esDirectaRespondida(it) }
+        if (pagerState.currentPage == 1) {
+            // Al entrar a Actividad, marcamos todas las respondidas como vistas y limpiamos el badge
+            if (respondidas.isNotEmpty()) {
+                val actuales = prefs.getStringSet("claves_vistas", emptySet()) ?: emptySet()
+                val nuevoSet = HashSet(actuales).apply {
+                    respondidas.forEach { add(claveVista(it)) }
+                }
+                prefs.edit().putStringSet("claves_vistas", nuevoSet).commit()
+            }
+            badgeActividad = 0
+        } else {
+            val vistas = prefs.getStringSet("claves_vistas", emptySet()) ?: emptySet()
+            badgeActividad = respondidas.count { !vistas.contains(claveVista(it)) }
+        }
+    }
+
+    val rutaInicio = if (esTecnico) Rutas.MuroSolicitudes.ruta else Rutas.Home.ruta
     val listaRutas = listOf(rutaInicio, Rutas.Actividad.ruta, Rutas.Mensajes.ruta, Rutas.Perfil.ruta)
     val rutaActual = listaRutas.getOrElse(pagerState.currentPage) { rutaInicio }
 
@@ -84,6 +136,7 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
         bottomBar = {
             BarraNavegacion(
                 rutaActual = rutaActual,
+                badgeActividad = badgeActividad,
                 onItemClick = { destino ->
                     val nuevoIndice = when (destino) {
                         Rutas.Home.ruta, Rutas.MuroSolicitudes.ruta -> 0
@@ -100,7 +153,7 @@ fun MainTabScreen(navController: NavController, paginaInicial: Int = 0) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize().padding(paddingValores)) { pagina ->
             when (pagina) {
                 0 -> {
-                    if (SessionManager.esTecnico) MuroSolicitudesScreen(navController = navController)
+                    if (esTecnico) MuroSolicitudesScreen(navController = navController)
                     else HomeScreen(navController = navController)
                 }
                 1 -> ActividadScreen(navController = navController)

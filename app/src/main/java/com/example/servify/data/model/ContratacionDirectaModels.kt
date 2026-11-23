@@ -17,6 +17,7 @@ data class ContratacionDirectaResponse(
     val descripcion: String,
     val monto_acordado: Double? = null,
     val estado: String = "pendiente", // 'pendiente', 'aceptado', 'rechazado'
+    val motivo_rechazo: String? = null,
     val creado_en: String? = null,
     val cliente_nombre: String = "Cliente",
     val cliente_foto: String? = null,
@@ -24,7 +25,8 @@ data class ContratacionDirectaResponse(
     val categoria_nombre: String = "General"
 )
 
-// Objeto para cambiar el estado (Aceptar o Rechazar)
+// Objeto para cambiar el estado (Aceptar o Rechazar con motivo)
 data class ResponderContratacionRequest(
-    val estado: String // "aceptado" o "rechazado"
+    val estado: String, // "aceptado" o "rechazado"
+    val motivo: String? = null
 )

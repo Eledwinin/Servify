@@ -32,7 +32,8 @@ sealed class ItemNav(val ruta: String, val titulo: String, val icono: ImageVecto
 @Composable
 fun BarraNavegacion(
     rutaActual: String?,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    badgeActividad: Int = 0
 ) {
     val items = listOf(
         ItemNav.Explorar,
@@ -55,8 +56,8 @@ fun BarraNavegacion(
         ) {
             items.forEach { item ->
                 val seleccionado = rutaActual == item.ruta
-
                 val colorIconoTexto = if (seleccionado) ServifyBluePrimary else ServifyTextMuted
+                val mostrarBadge = item is ItemNav.Actividad && badgeActividad > 0
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -66,12 +67,37 @@ fun BarraNavegacion(
                         .background(if (seleccionado) ServifyCianSoft else Color.Transparent)
                         .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Icon(
-                        imageVector = item.icono,
-                        contentDescription = item.titulo,
-                        tint = colorIconoTexto,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (mostrarBadge) {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    containerColor = ServifyDanger,
+                                    contentColor = Color.White
+                                ) {
+                                    Text(
+                                        text = if (badgeActividad > 99) "99+" else badgeActividad.toString(),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = item.icono,
+                                contentDescription = item.titulo,
+                                tint = colorIconoTexto,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = item.icono,
+                            contentDescription = item.titulo,
+                            tint = colorIconoTexto,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = item.titulo,

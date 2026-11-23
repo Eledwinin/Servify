@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -59,21 +58,18 @@ fun HomeScreen(
         listaProfesionales.filter { prof ->
             val esVipReal = prof.esVip == 1
             val esSemanal = prof.tipoPlan?.contains("Semanal", ignoreCase = true) == true
-
-            // Retornamos explícitamente la condición para que compile limpio
             esVipReal && !esSemanal
         }
     }
 
-    // Ranking transparente: VIPs destacados con reputación alta (>= 4.0), seguidos de orden por calificación general
     // Ranking: VIPs reales primero, luego Plan Semanal, y luego ordenados por calificación general
     val listaOrdenadaTransparente = remember(listaProfesionales) {
         listaProfesionales.sortedWith(
             compareByDescending<ProfesionalPerfil> {
                 val esSemanal = it.tipoPlan?.contains("Semanal", ignoreCase = true) == true
-                (it.esVip == 1 && !esSemanal) // VIPs reales van primero
+                (it.esVip == 1 && !esSemanal)
             }
-                .thenByDescending { it.tipoPlan?.contains("Semanal", ignoreCase = true) == true } // Plan Semanal segundo
+                .thenByDescending { it.tipoPlan?.contains("Semanal", ignoreCase = true) == true }
                 .thenByDescending { it.calificacionPromedio }
         )
     }
@@ -117,8 +113,9 @@ fun HomeScreen(
             )
         }
     }
+
     LaunchedEffect(Unit) {
-        viewModel.refrescarEstadoSesion() // Sincroniza si sigues o no siendo VIP
+        viewModel.refrescarEstadoSesion()
         viewModel.cargarTecnicos()
     }
 

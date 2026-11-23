@@ -1,5 +1,6 @@
 package com.example.servify.ui.modulos.cliente.contratacion
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.data.SessionManager
 import com.example.servify.data.model.MiSolicitud
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -33,6 +35,16 @@ fun MisSolicitudesContenido(
 
     var pestañaSeleccionada by remember { mutableStateOf(0) }
     var solicitudParaCerrar by remember { mutableStateOf<MiSolicitud?>(null) }
+
+    val userId = SessionManager.usuarioActual?.id ?: 0
+    val prefs = remember(userId) {
+        context.getSharedPreferences("servify_directas_tab_vistas_$userId", Context.MODE_PRIVATE)
+    }
+    var clavesVistasTab by remember(userId) {
+        mutableStateOf(prefs.getStringSet("claves_vistas", emptySet())?.toSet() ?: emptySet())
+    }
+
+    fun claveVista(s: MiSolicitud): String = "${s.id}_${s.estado.lowercase()}"
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -49,6 +61,21 @@ fun MisSolicitudesContenido(
     }
 
     val solicitudesDirectas = viewModel.solicitudes.filter { esSolicitudDirecta(it) }
+    val directasRespondidas = solicitudesDirectas.filter {
+        it.estado.lowercase() in listOf("rechazado", "rechazada", "aceptado", "aceptada")
+    }
+    val directasNoVistasCount = directasRespondidas.count { !clavesVistasTab.contains(claveVista(it)) }
+
+    // Al abrir la pestaña Directas (índice 2), marca todas las respondidas como vistas y limpia el 1
+    LaunchedEffect(pestañaSeleccionada, directasRespondidas) {
+        if (pestañaSeleccionada == 2 && directasRespondidas.isNotEmpty()) {
+            val nuevoSet = HashSet(clavesVistasTab).apply {
+                directasRespondidas.forEach { add(claveVista(it)) }
+            }
+            prefs.edit().putStringSet("claves_vistas", nuevoSet).commit()
+            clavesVistasTab = nuevoSet
+        }
+    }
 
     val solicitudesEnCurso = viewModel.solicitudes.filter { s ->
         !esSolicitudDirecta(s) && (
@@ -126,12 +153,29 @@ fun MisSolicitudesContenido(
                     .clip(RoundedCornerShape(24.dp))
                     .background(if (pestañaSeleccionada == 2) ServifySurface else Color.Transparent),
                 text = {
-                    Text(
-                        "Directas ✉️",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = if (pestañaSeleccionada == 2) ServifyBluePrimary else ServifyTextMuted
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            "Directas ✉️",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = if (pestañaSeleccionada == 2) ServifyBluePrimary else ServifyTextMuted
+                        )
+                        if (directasNoVistasCount > 0 && pestañaSeleccionada != 2) {
+                            Badge(
+                                containerColor = ServifyDanger,
+                                contentColor = Color.White
+                            ) {
+                                Text(
+                                    text = directasNoVistasCount.toString(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -170,9 +214,16 @@ fun MisSolicitudesContenido(
                 }
             } else {
                 items(listaActual, key = { it.id }) { s ->
-                    val (textoEstado, colorFondo, colorTexto) = when (s.estado.lowercase()) {
+                    val estadoLower = s.estado.lowercase()
+                    val esDirectaRechazada = pestañaSeleccionada == 2 && estadoLower in listOf("rechazada", "rechazado")
+
+                    val (textoEstado, colorFondo, colorTexto) = when (estadoLower) {
                         "aceptada", "aceptado" -> Triple("ACEPTADA", ServifyCianSoft, ServifyBluePrimary)
-                        "rechazada", "rechazado" -> Triple("RECHAZADA", ServifyDangerBg, ServifyDanger)
+                        "rechazada", "rechazado" -> Triple(
+                            if (pestañaSeleccionada == 2) "NO ACEPTADA" else "RECHAZADA",
+                            ServifyDangerBg,
+                            ServifyDanger
+                        )
                         "cancelado", "cancelada" -> Triple("CANCELADO", ServifyDangerBg, ServifyDanger)
                         "directa", "pendiente" -> Triple(if (pestañaSeleccionada == 2) "PENDIENTE" else "PUBLICADA", ServifyPendingBg, ServifyPendingText)
                         "en_proceso" -> Triple("EN PROCESO", ServifyCianSoft, ServifyBluePrimary)
@@ -185,8 +236,6 @@ fun MisSolicitudesContenido(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val estadoLower = s.estado.lowercase()
-
                                 when {
                                     estadoLower in listOf("completado", "completada") -> {
                                         val idTecnico = s.tecnicoId ?: 1
@@ -201,8 +250,8 @@ fun MisSolicitudesContenido(
                                         navController.navigate(Rutas.PropuestasSolicitud.crearRuta(s.id))
                                     }
 
-                                    estadoLower in listOf("cancelado", "cancelada") -> {
-                                        // Solicitud dada de baja: no navega a propuestas
+                                    estadoLower in listOf("cancelado", "cancelada", "rechazado", "rechazada") -> {
+                                        // Solicitud rechazada o dada de baja: no navega a propuestas
                                     }
 
                                     else -> {
@@ -308,6 +357,35 @@ fun MisSolicitudesContenido(
                                 }
                             }
 
+                            if (esDirectaRechazada) {
+                                Surface(
+                                    color = Color(0xFFFEF2F2),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        val nombreTec = s.tecnicoNombre?.takeIf { it.isNotBlank() } ?: "El técnico"
+                                        Text(
+                                            text = "❌ $nombreTec no aceptó la solicitud",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626)
+                                        )
+                                        if (!s.motivoRechazo.isNullOrBlank()) {
+                                            Text(
+                                                text = "Motivo: ${s.motivoRechazo}",
+                                                fontSize = 12.sp,
+                                                color = Color(0xFF7F1D1D),
+                                                lineHeight = 17.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Row(
@@ -317,9 +395,9 @@ fun MisSolicitudesContenido(
                             ) {
                                 Text(
                                     text = if (pestañaSeleccionada == 2) {
-                                        when (s.estado.lowercase()) {
+                                        when (estadoLower) {
                                             "aceptada", "aceptado" -> "¡El técnico aceptó la contratación!"
-                                            "rechazada", "rechazado" -> "El técnico rechazó la solicitud"
+                                            "rechazada", "rechazado" -> ""
                                             else -> "Esperando respuesta del técnico..."
                                         }
                                     } else if (pestañaSeleccionada == 1) {
@@ -333,11 +411,11 @@ fun MisSolicitudesContenido(
                                     },
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (pestañaSeleccionada == 2 && s.estado.lowercase() in listOf("aceptada", "aceptado")) ServifyBluePrimary else ServifyTextMuted,
+                                    color = if (pestañaSeleccionada == 2 && estadoLower in listOf("aceptada", "aceptado")) ServifyBluePrimary else ServifyTextMuted,
                                     modifier = Modifier.weight(1f)
                                 )
 
-                                if (s.estado.lowercase() in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre")) {
+                                if (estadoLower in listOf("en_proceso", "aceptada", "aceptado", "esperando_pago", "pendiente_pago", "en_cierre")) {
                                     Button(
                                         onClick = { solicitudParaCerrar = s },
                                         shape = RoundedCornerShape(12.dp),
@@ -345,7 +423,7 @@ fun MisSolicitudesContenido(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text(
-                                            if (s.estado.lowercase() in listOf("esperando_pago", "pendiente_pago", "en_cierre")) "Mostrar QR" else "Finalizar Trabajo",
+                                            if (estadoLower in listOf("esperando_pago", "pendiente_pago", "en_cierre")) "Mostrar QR" else "Finalizar Trabajo",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White

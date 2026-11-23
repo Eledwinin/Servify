@@ -50,7 +50,6 @@ class MuroSolicitudesViewModel(
             isLoading = true
             mensajeError = null
             try {
-                // 1. Cargar solicitudes públicas en IO
                 val (listaPub, err, code) = withContext(Dispatchers.IO) {
                     val res = RetrofitClient.instance.obtenerSolicitudes(
                         "Bearer $token", SessionManager.latitud, SessionManager.longitud
@@ -69,7 +68,6 @@ class MuroSolicitudesViewModel(
                     solicitudes = listaPub
                 }
 
-                // 2. Cargar solicitudes directas (Sobrecito ✉️)
                 val resDirectas = solicitudesRepository.obtenerContratacionesTecnico(token)
                 resDirectas.onSuccess { lista ->
                     contratacionesDirectas = lista
@@ -85,7 +83,6 @@ class MuroSolicitudesViewModel(
         }
     }
 
-
     private fun cargarCantidadResenas() {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
@@ -98,8 +95,6 @@ class MuroSolicitudesViewModel(
         }
     }
 
-
-
     fun cargarGanancias() {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
@@ -108,17 +103,14 @@ class MuroSolicitudesViewModel(
                 if (r.isSuccessful) {
                     ganancias = r.body() ?: GananciasResumen()
                 } else {
-                    android.util.Log.e("GANANCIAS", "Código ${r.code()} - ${r.errorBody()?.string()}")
+                    Log.e("GANANCIAS", "Código ${r.code()} - ${r.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("GANANCIAS", "Error: ${e.message}")
+                Log.e("GANANCIAS", "Error: ${e.message}")
             }
         }
     }
 
-    // ==========================================
-    // VALIDAR QR DEL CLIENTE (TÉCNICO / TRABAJADOR)
-    // ==========================================
     fun validarQrCliente(qrToken: String) {
         val token = SessionManager.token ?: run {
             mensajeError = "Sesión no válida"
@@ -130,12 +122,11 @@ class MuroSolicitudesViewModel(
             val result = solicitudesRepository.validarQr(
                 token = token,
                 qrToken = qrToken,
-                tecnicoId = 0 // El backend auto-identifica al técnico mediante el token Bearer
+                tecnicoId = 0
             )
             cargandoValidacionQr = false
 
             result.onSuccess { response ->
-                // 1. Mensaje de éxito inmediato + recarga de muro y ganancias
                 mensajeExito = response.mensaje ?: "¡Servicio completado y cerrado exitosamente!"
                 cargarSolicitudes()
                 cargarGanancias()
@@ -143,10 +134,8 @@ class MuroSolicitudesViewModel(
                 val solId = response.solicitudId ?: 0
                 val cliId = response.clienteId ?: 0
 
-                // 2. Espera rápida de 5 SEGUNDOS (5,000 ms)
                 delay(5000)
 
-                // 3. Activa la bandera para que la pantalla navegue a la reseña
                 solicitudIdParaCalificar = solId
                 clienteIdParaCalificar = cliId
                 irACalificar = true
@@ -158,32 +147,35 @@ class MuroSolicitudesViewModel(
         }
     }
 
-    // Limpia el evento de navegación tras redirigir
     fun resenaNavegada() {
         irACalificar = false
         solicitudIdParaCalificar = null
         clienteIdParaCalificar = null
     }
 
-    fun responderContratacion(idContratacion: Int, estado: String) {
+    fun responderContratacion(idContratacion: Int, estado: String, motivo: String? = null) {
         val token = SessionManager.token ?: return
         viewModelScope.launch {
-            val resultado = solicitudesRepository.responderContratacionDirecta(token, idContratacion, estado)
+            val resultado = solicitudesRepository.responderContratacionDirecta(
+                token = token,
+                idContratacion = idContratacion,
+                estado = estado,
+                motivo = motivo
+            )
             resultado.onSuccess {
-                mensajeExito = if (estado == "aceptado") "¡Solicitud aceptada!" else "Solicitud rechazada"
-
-                contratacionesDirectas = contratacionesDirectas.map { item ->
-                    if (item.id == idContratacion) item.copy(estado = estado) else item
+                if (estado == "aceptado") {
+                    mensajeExito = "¡Solicitud aceptada!"
+                    contratacionesDirectas = contratacionesDirectas.map { item ->
+                        if (item.id == idContratacion) item.copy(estado = estado) else item
+                    }
+                } else {
+                    mensajeExito = "Solicitud rechazada y notificada al cliente"
+                    contratacionesDirectas = contratacionesDirectas.filter { it.id != idContratacion }
                 }
             }.onFailure { err ->
                 mensajeError = err.localizedMessage
             }
         }
-    }
-
-    // Quitar la contratación directa de la lista local al presionar la papelera 🗑️
-    fun eliminarContratacionDirectaLocal(id: Int) {
-        contratacionesDirectas = contratacionesDirectas.filter { it.id != id }
     }
 
     fun ignorar(id: Int) {

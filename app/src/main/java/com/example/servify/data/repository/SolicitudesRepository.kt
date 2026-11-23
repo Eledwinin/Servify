@@ -67,15 +67,16 @@ class SolicitudesRepository(
         }
     }
 
-    // 3. Responder a la Contratación Directa (Aceptar / Rechazar)
+    // 3. Responder a la Contratación Directa (Aceptar / Rechazar con motivo)
     suspend fun responderContratacionDirecta(
         token: String,
         idContratacion: Int,
-        estado: String
+        estado: String,
+        motivo: String? = null
     ): Result<MensajeResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val req = ResponderContratacionRequest(estado)
+                val req = ResponderContratacionRequest(estado = estado, motivo = motivo)
                 val respuesta = apiService.responderContratacionDirecta("Bearer $token", idContratacion, req)
                 if (respuesta.isSuccessful && respuesta.body() != null) {
                     Result.success(respuesta.body()!!)

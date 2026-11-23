@@ -58,12 +58,14 @@ fun MuroSolicitudesScreen(
     var estaDisponible by remember { mutableStateOf(true) }
     var mostrarModalDirectas by remember { mutableStateOf(false) }
 
-    // 📷 LAUNCHER PARA ESCANEO DE CÓDIGO QR CON CÁMARA (ZXING)
+    // Estados para el diálogo de rechazo/eliminación con motivo
+    var contratacionARechazar by remember { mutableStateOf<ContratacionDirectaResponse?>(null) }
+    var motivoRechazoTexto by remember { mutableStateOf("") }
+
     val qrScanLauncher = rememberLauncherForActivityResult(
         contract = ScanContract()
     ) { result ->
         if (result.contents != null) {
-            // Se leyó exitosamente el QR, enviamos al backend para validar
             viewModel.validarQrCliente(result.contents)
         } else {
             Toast.makeText(context, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
@@ -74,7 +76,6 @@ fun MuroSolicitudesScreen(
     val esSemanal = tipoPlanActual.contains("Semanal", ignoreCase = true)
     val esPro = tipoPlanActual.contains("PRO", ignoreCase = true) || (esVip && !esSemanal)
 
-    // Definimos el texto que va a mostrar el botón/badge
     val textoBoton = when {
         esSemanal -> "Plan Semanal"
         esPro -> "¡Eres Plan Pro! ⭐"
@@ -103,7 +104,6 @@ fun MuroSolicitudesScreen(
         }
     }
 
-    // ⏱️ REDIRECCIÓN A RESEÑA TRAS 5 SEGUNDOS DE ESCANEAR EL QR CON ÉXITO
     LaunchedEffect(viewModel.irACalificar) {
         if (viewModel.irACalificar) {
             val solId = viewModel.solicitudIdParaCalificar ?: 0
@@ -132,7 +132,6 @@ fun MuroSolicitudesScreen(
                 navController = navController,
                 titulo = "Servify",
                 accionesDerecha = {
-                    // Botón de Sobrecito (Contrataciones Directas) ✉️
                     BadgedBox(
                         badge = {
                             if (contratacionesDirectas.isNotEmpty()) {
@@ -156,7 +155,6 @@ fun MuroSolicitudesScreen(
                         )
                     }
 
-                    // Botón de Membresía VIP
                     Surface(
                         onClick = {
                             if (!esVip) {
@@ -364,7 +362,6 @@ fun MuroSolicitudesScreen(
                         navController.navigate(Rutas.AgendaTecnico.ruta)
                     }
 
-                    // 📷 BOTÓN ESCANEAR QR ACTIVADO
                     BotonAccesoRapido("Escanear QR", Icons.Default.QrCodeScanner, Modifier.weight(1f)) {
                         val options = ScanOptions().apply {
                             setDesiredBarcodeFormats(ScanOptions.QR_CODE)
@@ -612,7 +609,7 @@ fun MuroSolicitudesScreen(
         }
     }
 
-    // Modal para revisar Solicitudes Directas (Sobrecito ✉️ con SCROLL)
+    // Modal para revisar Solicitudes Directas (Sobrecito ✉️)
     if (mostrarModalDirectas) {
         AlertDialog(
             onDismissRequest = { mostrarModalDirectas = false },
@@ -628,7 +625,7 @@ fun MuroSolicitudesScreen(
             text = {
                 if (contratacionesDirectas.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text("No tienes solicitudes directas registradas.", fontSize = 13.sp, color = ServifyTextMuted)
+                        Text("No tienes solicitudes directas pendientes.", fontSize = 13.sp, color = ServifyTextMuted)
                     }
                 } else {
                     LazyColumn(
@@ -641,8 +638,14 @@ fun MuroSolicitudesScreen(
                             ItemContratacionDirecta(
                                 contratacion = item,
                                 onAceptar = { viewModel.responderContratacion(item.id, "aceptado") },
-                                onRechazar = { viewModel.responderContratacion(item.id, "rechazado") },
-                                onEliminar = { viewModel.eliminarContratacionDirectaLocal(item.id) },
+                                onRechazar = {
+                                    motivoRechazoTexto = ""
+                                    contratacionARechazar = item
+                                },
+                                onEliminar = {
+                                    motivoRechazoTexto = ""
+                                    contratacionARechazar = item
+                                },
                                 onIrAlChat = {
                                     mostrarModalDirectas = false
                                     navController.navigate("chat/${item.id}")
@@ -659,9 +662,70 @@ fun MuroSolicitudesScreen(
             }
         )
     }
+
+    // Diálogo obligatorio para ingresar el motivo al rechazar / eliminar una solicitud directa
+    contratacionARechazar?.let { seleccionada ->
+        AlertDialog(
+            onDismissRequest = { contratacionARechazar = null },
+            containerColor = ServifySurface,
+            shape = RoundedCornerShape(20.dp),
+            title = {
+                Text(
+                    text = "Rechazar solicitud directa",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = ServifyTextTitle
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Indícale a ${seleccionada.cliente_nombre} el motivo por el cual no puedes tomar este trabajo:",
+                        fontSize = 13.sp,
+                        color = ServifyTextMuted,
+                        lineHeight = 18.sp
+                    )
+                    OutlinedTextField(
+                        value = motivoRechazoTexto,
+                        onValueChange = { motivoRechazoTexto = it },
+                        placeholder = { Text("Ej. No tengo disponibilidad esta semana...", fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 4,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val motivoLimpio = motivoRechazoTexto.trim()
+                        if (motivoLimpio.isEmpty()) {
+                            Toast.makeText(context, "Por favor escribe el motivo", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewModel.responderContratacion(
+                                idContratacion = seleccionada.id,
+                                estado = "rechazado",
+                                motivo = motivoLimpio
+                            )
+                            contratacionARechazar = null
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ServifyDanger)
+                ) {
+                    Text("Confirmar rechazo", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { contratacionARechazar = null }) {
+                    Text("Cancelar", color = ServifyTextMuted)
+                }
+            }
+        )
+    }
 }
 
-// Componentes Auxiliares
 @Composable
 fun BotonAccesoRapido(
     titulo: String,
@@ -754,7 +818,7 @@ fun ItemContratacionDirecta(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar solicitud",
+                        contentDescription = "Rechazar y eliminar solicitud",
                         tint = ServifyDanger,
                         modifier = Modifier.size(18.dp)
                     )
