@@ -273,6 +273,11 @@ interface ApiService {
     @GET("api/postulaciones/mias")
     suspend fun obtenerMisPostulaciones(@Header("Authorization") token: String): Response<List<MiPostulacion>>
 
+    @GET("api/postulaciones/agenda")
+    suspend fun obtenerAgendaTecnico(
+        @Header("Authorization") token: String
+    ): Response<List<AgendaItemResponse>>
+
     @GET("api/postulaciones/solicitud/{id}")
     suspend fun obtenerPropuestas(
         @Header("Authorization") token: String,
@@ -410,4 +415,23 @@ data class SuscripcionResponse(
     val tipoPlan: String?,
     val fechaFin: String?,
     val transaccionId: String?
+)
+
+data class AgendaItemResponse(
+    val solicitud_id: Int,
+    val titulo: String,
+    val descripcion: String? = null,
+    val direccion_texto: String? = null,
+    val latitud: Double? = null,
+    val longitud: Double? = null,
+    val estado_solicitud: String,
+    val monto: Double = 0.0,
+    val cliente_id: Int,
+    val cliente_nombre: String,
+    val cliente_foto: String? = null,
+    val categoria_nombre: String,
+    val conversacion_id: Int? = null,
+    val mensaje_postulacion: String? = null,
+    val fecha_visita: String? = null,
+    val fecha_entrega: String? = null
 )

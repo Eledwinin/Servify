@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Logout
@@ -103,6 +104,28 @@ fun TopBarConMenu(
                         },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
+
+                    if (SessionManager.esTecnico) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = ServifyBlueLight,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Mi Agenda", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Rutas.AgendaTecnico.ruta)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
 
                     DropdownMenuItem(
                         text = {
