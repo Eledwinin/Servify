@@ -347,6 +347,11 @@ fun AppNavigation() {
                         val tipoCodificado = java.net.URLEncoder.encode(tipoPlan, "UTF-8")
                         navController.navigate("metodos_pago_custom/$tipoCodificado/$monto")
                     },
+                    onPagoExitoso = {
+                        navController.navigate(Rutas.PagoExitoso.ruta) {
+                            popUpTo(Rutas.PlanesMembresia.ruta) { inclusive = true }
+                        }
+                    },
                     onVolver = { navController.popBackStack() }
                 )
             }

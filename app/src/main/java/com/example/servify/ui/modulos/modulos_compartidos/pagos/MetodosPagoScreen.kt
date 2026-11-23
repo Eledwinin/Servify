@@ -6,7 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.servify.modulos_compartidos.pagos.PagoUiState
-import com.example.servify.modulos_compartidos.pagos.PagosViewModel
+import com.example.servify.data.model.EstadoPago
+import com.stripe.android.PaymentConfiguration
+import com.stripe.android.paymentsheet.PaymentSheet
+import com.stripe.android.paymentsheet.rememberPaymentSheet
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,12 +35,56 @@ fun MetodosPagoScreen(
     val uiState by viewModel.uiState.collectAsState()
     var metodoSeleccionado by remember { mutableStateOf("Tarjeta de Crédito / Débito") }
 
-    val metodos = listOf(
-        "Tarjeta de Crédito / Débito",
-        "Transferencia Bancaria",
-        "Chivo Wallet / Bitcoin"
-    )
-    val montoFormateado = String.format(Locale.US, "%.2f", monto)
+    // 1. Integración de PaymentSheet en Compose
+    val paymentSheet = rememberPaymentSheet { result ->
+        viewModel.procesarResultadoStripe(
+            result = result,
+            tipoPlan = tipoPlan,
+            onExito = onPagoExitoso
+        )
+    }
+
+    // 2. Escuchar cuando el backend responde para presentar el PaymentSheet nativo
+    LaunchedEffect(viewModel.estadoPago) {
+        val estado = viewModel.estadoPago
+        if (estado is EstadoPago.ListoParaPresentar) {
+            try {
+                PaymentConfiguration.init(context, estado.datos.publishableKey)
+
+                val customerConfig = PaymentSheet.CustomerConfiguration(
+                    id = estado.datos.customer,
+                    ephemeralKeySecret = estado.datos.ephemeralKey
+                )
+
+                val configuration = PaymentSheet.Configuration(
+                    merchantDisplayName = "Servify",
+                    customer = customerConfig,
+                    allowsDelayedPaymentMethods = false
+                )
+
+                paymentSheet.presentWithPaymentIntent(
+                    paymentIntentClientSecret = estado.datos.paymentIntent,
+                    configuration = configuration
+                )
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error al abrir Stripe: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                viewModel.restablecerEstado()
+            }
+        } else if (estado is EstadoPago.Error) {
+            Toast.makeText(context, estado.mensaje, Toast.LENGTH_LONG).show()
+            viewModel.restablecerEstado()
+        } else if (estado is EstadoPago.Cancelado) {
+            Toast.makeText(context, estado.mensaje, Toast.LENGTH_SHORT).show()
+            viewModel.restablecerEstado()
+        }
+    }
+
+    LaunchedEffect(viewModel.mensajeNotificacion) {
+        viewModel.mensajeNotificacion?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.mensajeNotificacion = null
+        }
+    }
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -50,13 +96,21 @@ fun MetodosPagoScreen(
         }
     }
 
+    val metodos = listOf(
+        "Tarjeta de Crédito / Débito",
+        "Transferencia Bancaria",
+        "Chivo Wallet / Bitcoin"
+    )
+    val montoFormateado = String.format(Locale.US, "%.2f", monto)
+    val estaCargando = viewModel.estadoPago is EstadoPago.Cargando || uiState is PagoUiState.Loading
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Método de Pago", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                     }
                 }
             )
@@ -79,14 +133,12 @@ fun MetodosPagoScreen(
                         Text(text = "Resumen de la Orden", fontSize = 14.sp, color = Color.Gray)
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        val montoFormateado = String.format(Locale.US, "%.2f", monto)
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(text = "Suscripción - $tipoPlan", fontWeight = FontWeight.Bold)
-                            Text(text = "$$montoFormateado USD", fontWeight = FontWeight.Bold) // <--- Aquí usamos la variable formateada
+                            Text(text = "$$montoFormateado USD", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -131,30 +183,42 @@ fun MetodosPagoScreen(
 
             Button(
                 onClick = {
-                    viewModel.procesarPagoSuscripcion(
-                        monto = monto,
-                        tipoPlan = tipoPlan,
-                        metodoPago = metodoSeleccionado,
-                        onExito = {
-                            viewModel.reiniciarEstado()
-                            onPagoExitoso()
-                        }
-                    )
+                    if (metodoSeleccionado == "Tarjeta de Crédito / Débito") {
+                        viewModel.iniciarPagoSuscripcionStripe(monto = monto, tipoPlan = tipoPlan)
+                    } else {
+                        viewModel.procesarPagoSuscripcion(
+                            monto = monto,
+                            tipoPlan = tipoPlan,
+                            metodoPago = metodoSeleccionado,
+                            onExito = {
+                                viewModel.reiniciarEstado()
+                                onPagoExitoso()
+                            }
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = uiState !is PagoUiState.Loading,
+                enabled = !estaCargando,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                if (uiState is PagoUiState.Loading) {
+                if (estaCargando) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Confirmar y Pagar $$montoFormateado", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (metodoSeleccionado == "Tarjeta de Crédito / Débito") {
+                            "Pagar con Stripe $$montoFormateado"
+                        } else {
+                            "Confirmar y Pagar $$montoFormateado"
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
