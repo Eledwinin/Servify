@@ -156,6 +156,10 @@ object LlamadasManager {
                     val deNombre = j.optString("deNombre").takeIf { !it.isNullOrBlank() } ?: "Servify Chat"
                     val contenido = j.optString("contenido").takeIf { !it.isNullOrBlank() } ?: "Nuevo mensaje recibido"
                     val convId = j.optInt("conversacionId")
+                    val emisorId = j.optInt("emisorId").takeIf { it != 0 } ?: j.optInt("emisor_id")
+                    if (emisorId > 0) {
+                        PresenciaManager.registrarActividad(emisorId)
+                    }
 
                     mainHandler.post {
                         ServifyNotificationHelper.procesarEventoSocket(

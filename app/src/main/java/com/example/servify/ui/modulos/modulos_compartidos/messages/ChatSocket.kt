@@ -1,6 +1,7 @@
 package com.example.servify.ui.modulos.modulos_compartidos.messages
 
 import android.util.Log
+import com.example.servify.data.PresenciaManager
 import com.example.servify.data.model.Mensaje
 import com.google.gson.Gson
 import io.socket.client.Ack
@@ -20,6 +21,7 @@ class ChatSocket(private val token: String) {
     var onMensaje: ((Mensaje) -> Unit)? = null
     var onOfertaActualizada: ((Int, String) -> Unit)? = null // mensajeId, nuevoEstado
     var onLlamadaEntrante: ((Int, Boolean) -> Unit)? = null // 🔔 NUEVO: callback para la llamada (convId, esVideo)
+    var onPresenciaCambio: ((Int, Boolean) -> Unit)? = null // 🟢 Callback reactivo de presencia (usuarioId, enLinea)
 
     fun conectar() {
         val opts = IO.Options().apply {
@@ -33,13 +35,23 @@ class ChatSocket(private val token: String) {
 
         s.on("mensaje_nuevo") { args ->
             val json = args.firstOrNull() as? JSONObject ?: return@on
-            onMensaje?.invoke(gson.fromJson(json.toString(), Mensaje::class.java))
+            val mensaje = gson.fromJson(json.toString(), Mensaje::class.java)
+            if (mensaje.emisorId > 0) {
+                PresenciaManager.registrarActividad(mensaje.emisorId)
+                onPresenciaCambio?.invoke(mensaje.emisorId, true)
+            }
+            onMensaje?.invoke(mensaje)
         }
 
         s.on("oferta_actualizada") { args ->
             val json = args.firstOrNull() as? JSONObject ?: return@on
             val mensajeId = json.optInt("mensaje_id")
             val estado = json.optString("estado_oferta")
+            val usuarioId = json.optInt("usuarioId").takeIf { it != 0 } ?: json.optInt("emisor_id")
+            if (usuarioId > 0) {
+                PresenciaManager.registrarActividad(usuarioId)
+                onPresenciaCambio?.invoke(usuarioId, true)
+            }
             onOfertaActualizada?.invoke(mensajeId, estado)
         }
 
@@ -48,7 +60,58 @@ class ChatSocket(private val token: String) {
             val json = args.firstOrNull() as? JSONObject ?: return@on
             val conversacionId = json.optInt("conversacionId")
             val esVideo = json.optBoolean("esVideo")
+            val deUsuarioId = json.optInt("deUsuarioId").takeIf { it != 0 } ?: json.optInt("emisorId")
+            if (deUsuarioId > 0) {
+                PresenciaManager.registrarActividad(deUsuarioId)
+                onPresenciaCambio?.invoke(deUsuarioId, true)
+            }
             onLlamadaEntrante?.invoke(conversacionId, esVideo)
+        }
+
+        // 🟢 Receptores de eventos de presencia en tiempo real
+        val procesarEventoPresencia = { args: Array<Any>, enLinea: Boolean ->
+            val primerArg = args.firstOrNull()
+            val id = when (primerArg) {
+                is JSONObject -> {
+                    primerArg.optInt("usuarioId").takeIf { it != 0 }
+                        ?: primerArg.optInt("userId").takeIf { it != 0 }
+                        ?: primerArg.optInt("id")
+                }
+                is Number -> primerArg.toInt()
+                is String -> primerArg.toIntOrNull() ?: 0
+                else -> 0
+            }
+            if (id > 0) {
+                PresenciaManager.actualizarEstado(id, enLinea)
+                onPresenciaCambio?.invoke(id, enLinea)
+            }
+        }
+
+        s.on("usuario_conectado") { args -> procesarEventoPresencia(args, true) }
+        s.on("usuario_en_linea") { args -> procesarEventoPresencia(args, true) }
+        s.on("usuario_desconectado") { args -> procesarEventoPresencia(args, false) }
+        s.on("presencia") { args ->
+            val json = args.firstOrNull() as? JSONObject
+            if (json != null) {
+                val id = json.optInt("usuarioId").takeIf { it != 0 } ?: json.optInt("userId")
+                val enLinea = json.optBoolean("enLinea", json.optBoolean("online", true))
+                if (id > 0) {
+                    PresenciaManager.actualizarEstado(id, enLinea)
+                    onPresenciaCambio?.invoke(id, enLinea)
+                }
+            }
+        }
+        s.on("estado_usuario") { args ->
+            val json = args.firstOrNull() as? JSONObject
+            if (json != null) {
+                val id = json.optInt("usuarioId").takeIf { it != 0 } ?: json.optInt("userId")
+                val estado = json.optString("estado", "online")
+                val enLinea = estado.equals("online", ignoreCase = true) || estado.equals("en_linea", ignoreCase = true)
+                if (id > 0) {
+                    PresenciaManager.actualizarEstado(id, enLinea)
+                    onPresenciaCambio?.invoke(id, enLinea)
+                }
+            }
         }
 
         s.connect()

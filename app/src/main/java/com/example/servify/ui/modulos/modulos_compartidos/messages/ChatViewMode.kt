@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.servify.data.PresenciaManager
 import com.example.servify.data.SessionManager
 import com.example.servify.data.api.RetrofitClient
 import com.example.servify.data.model.Mensaje
@@ -22,6 +23,10 @@ class ChatViewModel : ViewModel() {
     var mensajeError by mutableStateOf<String?>(null)
     var miId by mutableStateOf(0)
         private set
+    var otroId by mutableStateOf(0)
+        private set
+    var otroEstaEnLinea by mutableStateOf(false)
+        private set
 
     // Estado para notificar si hay una llamada entrante mientras estás dentro del chat
     var llamadaEntrante by mutableStateOf<Pair<Int, Boolean>?>(null) // Pair<conversacionId, esVideo>
@@ -29,7 +34,22 @@ class ChatViewModel : ViewModel() {
     private var socket: ChatSocket? = null
     private var conversacionId = 0
 
-    fun iniciar(id: Int) {
+    init {
+        // Observa reactivamente cambios de presencia globales para el participante activo
+        viewModelScope.launch {
+            PresenciaManager.estadosUsuarios.collect { estados ->
+                if (otroId > 0 && estados.containsKey(otroId)) {
+                    otroEstaEnLinea = estados[otroId] == true
+                }
+            }
+        }
+    }
+
+    fun iniciar(id: Int, idOtroUsuario: Int = 0) {
+        if (idOtroUsuario > 0) {
+            otroId = idOtroUsuario
+            otroEstaEnLinea = PresenciaManager.estaEnLinea(idOtroUsuario)
+        }
         if (conversacionId == id) return
         conversacionId = id
         val token = SessionManager.token ?: return
@@ -50,7 +70,14 @@ class ChatViewModel : ViewModel() {
         s.onMensaje = { m ->
             viewModelScope.launch {
                 agregar(m)
-                if (m.emisorId != miId) marcarLeidos()
+                if (m.emisorId != miId) {
+                    if (m.emisorId > 0) {
+                        otroId = m.emisorId
+                        otroEstaEnLinea = true
+                        PresenciaManager.registrarActividad(m.emisorId)
+                    }
+                    marcarLeidos()
+                }
             }
         }
         s.onOfertaActualizada = { mensajeId, nuevoEstado ->
@@ -59,6 +86,11 @@ class ChatViewModel : ViewModel() {
                 if (index != -1) {
                     val actual = mensajes[index]
                     mensajes[index] = actual.copy(estadoOferta = nuevoEstado)
+                    if (actual.emisorId != miId && actual.emisorId > 0) {
+                        otroId = actual.emisorId
+                        otroEstaEnLinea = true
+                        PresenciaManager.registrarActividad(actual.emisorId)
+                    }
                 }
             }
         }
@@ -66,7 +98,20 @@ class ChatViewModel : ViewModel() {
         s.onLlamadaEntrante = { convId, esVideo ->
             if (convId == conversacionId) {
                 viewModelScope.launch {
+                    otroEstaEnLinea = true
+                    if (otroId > 0) {
+                        PresenciaManager.registrarActividad(otroId)
+                    }
                     llamadaEntrante = Pair(convId, esVideo)
+                }
+            }
+        }
+
+        s.onPresenciaCambio = { usuarioId, enLinea ->
+            if (usuarioId == otroId || otroId == 0) {
+                if (otroId == 0 && usuarioId > 0) otroId = usuarioId
+                viewModelScope.launch {
+                    otroEstaEnLinea = enLinea
                 }
             }
         }
@@ -91,6 +136,11 @@ class ChatViewModel : ViewModel() {
             if (ok && body != null) {
                 activa = body.activa
                 body.mensajes.forEach { agregar(it) }
+                val ultimoMensajeOtro = mensajes.lastOrNull { it.emisorId != miId && it.emisorId > 0 }
+                if (ultimoMensajeOtro != null) {
+                    if (otroId == 0) otroId = ultimoMensajeOtro.emisorId
+                    otroEstaEnLinea = PresenciaManager.estaEnLinea(otroId, ultimoMensajeOtro.enviadoEn)
+                }
                 marcarLeidos()
             } else {
                 mensajeError = "Error $code al cargar el chat"

@@ -33,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.LlamadasManager
 import com.example.servify.ui.componentes.cards.TarjetaOfertaItem
+import com.example.servify.ui.componentes.indicadores.IndicadorEstadoLinea
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 import java.text.SimpleDateFormat
@@ -114,18 +115,30 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(40.dp)
-                                .background(ServifyCianSoft, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                nombreOtro.split(" ").filter { it.isNotBlank() }.take(2)
-                                    .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                                color = ServifyBluePrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            Box(
+                                Modifier
+                                    .size(40.dp)
+                                    .background(ServifyCianSoft, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    nombreOtro.split(" ").filter { it.isNotBlank() }.take(2)
+                                        .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
+                                    color = ServifyBluePrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(11.dp)
+                                    .background(ServifySurface, CircleShape)
+                                    .padding(1.5.dp)
+                                    .background(
+                                        if (viewModel.otroEstaEnLinea) Color(0xFF22C55E) else Color(0xFF9CA3AF),
+                                        CircleShape
+                                    )
                             )
                         }
                         Spacer(Modifier.width(12.dp))
@@ -136,11 +149,12 @@ fun ChatScreen(
                                 fontSize = 16.sp,
                                 color = ServifyTextTitle
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.size(7.dp).background(Color(0xFF22C55E), CircleShape))
-                                Spacer(Modifier.width(4.dp))
-                                Text("En línea", fontSize = 11.sp, color = ServifyTextMuted)
-                            }
+                            IndicadorEstadoLinea(
+                                estaEnLinea = viewModel.otroEstaEnLinea,
+                                mostrarTexto = true,
+                                tamanoPunto = 8.dp,
+                                tamanoTexto = 11.sp
+                            )
                         }
                     }
                 },
