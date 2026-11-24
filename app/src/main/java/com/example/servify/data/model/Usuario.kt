@@ -61,6 +61,18 @@ data class UsuarioModel(
     val fechaVencimientoVip: String? = null,
 )
 
+data class PerfilCliente(
+    @SerializedName("id") val id: Int,
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("foto_url") val fotoUrl: String? = null,
+    @SerializedName("miembro_desde") val miembroDesde: String? = null,
+    @SerializedName("calificacion") val calificacion: Double = 0.0,
+    @SerializedName("total_resenas") val totalResenas: Int = 0,
+    @SerializedName("solicitudes_publicadas") val solicitudesPublicadas: Int = 0,
+    @SerializedName("solicitudes_completadas") val solicitudesCompletadas: Int = 0,
+    @SerializedName("resenas") val resenas: List<ResenaPublica> = emptyList()
+)
+
 data class FotoPerfilRespuesta(
     @SerializedName("mensaje") val mensaje: String? = null,
     @SerializedName("foto_url") val fotoUrl: String? = null

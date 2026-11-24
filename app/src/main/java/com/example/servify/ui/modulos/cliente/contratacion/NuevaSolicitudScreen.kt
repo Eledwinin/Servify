@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +36,6 @@ fun NuevaSolicitudScreen(
         ActivityResultContracts.PickMultipleVisualMedia(NuevaSolicitudViewModel.MAX_FOTOS)
     ) { uris -> viewModel.agregarFotos(uris) }
 
-    // Escucha si la solicitud fue un éxito
     LaunchedEffect(viewModel.solicitudExitosa) {
         if (viewModel.solicitudExitosa) {
             Toast.makeText(context, "Solicitud creada correctamente", Toast.LENGTH_SHORT).show()
@@ -46,7 +44,6 @@ fun NuevaSolicitudScreen(
         }
     }
 
-    // Escucha si hay errores
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -56,6 +53,7 @@ fun NuevaSolicitudScreen(
 
     Scaffold(
         containerColor = ServifyBackground,
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.union(WindowInsets.ime),
         topBar = {
             TopAppBar(
                 title = {
@@ -87,8 +85,8 @@ fun NuevaSolicitudScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(16.dp)
+                        .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Button(
                         onClick = {
@@ -103,9 +101,18 @@ fun NuevaSolicitudScreen(
                         enabled = !viewModel.isLoading
                     ) {
                         if (viewModel.isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
                         } else {
-                            Text("Publicar Solicitud", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(
+                                "Publicar Solicitud",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     }
                 }
@@ -116,13 +123,12 @@ fun NuevaSolicitudScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .imePadding()
+                .consumeWindowInsets(paddingValues)
                 .padding(horizontal = 16.dp),
             contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                // Tarjeta de formulario de la solicitud (Categoría, Título, Descripción, Presupuesto)
                 TarjetaFormulario(
                     titulo = viewModel.titulo,
                     onTituloChange = { viewModel.titulo = it },
@@ -136,7 +142,6 @@ fun NuevaSolicitudScreen(
             }
 
             item {
-                // Tarjeta de selección de fotos de referencia
                 TarjetaFotos(
                     fotos = viewModel.fotos,
                     maxFotos = NuevaSolicitudViewModel.MAX_FOTOS,

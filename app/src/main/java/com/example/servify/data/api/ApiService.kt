@@ -32,6 +32,7 @@ import com.example.servify.data.model.MiPostulacion
 import com.example.servify.data.model.MiResenaRespuesta
 import com.example.servify.data.model.MiSolicitud
 import com.example.servify.data.model.PaymentSheetResponse
+import com.example.servify.data.model.PerfilCliente
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.data.model.PropuestaItem
 import com.example.servify.data.model.RegisterRequest
@@ -320,6 +321,12 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<MensajeResponse>
+
+    @GET("api/users/{id}/perfil-cliente")
+    suspend fun getPerfilCliente(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<PerfilCliente>
 
     @DELETE("api/postulaciones/{id}")
     suspend fun cancelarPostulacion(

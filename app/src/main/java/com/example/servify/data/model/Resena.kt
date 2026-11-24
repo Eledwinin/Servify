@@ -19,3 +19,13 @@ data class MiResenaRespuesta(
     @SerializedName("calificacion") val calificacion: Int? = null,
     @SerializedName("comentario") val comentario: String? = null
 )
+
+data class ResenaPublica(
+    @SerializedName("id") val id: Int,
+    @SerializedName("calificacion") val calificacion: Int,
+    @SerializedName("comentario") val comentario: String? = null,
+    @SerializedName("creado_en") val creadoEn: String? = null,
+    @SerializedName("autor_nombre") val autorNombre: String = "Usuario",
+    @SerializedName("autor_foto") val autorFoto: String? = null,
+    @SerializedName("solicitud_titulo") val solicitudTitulo: String? = null
+)

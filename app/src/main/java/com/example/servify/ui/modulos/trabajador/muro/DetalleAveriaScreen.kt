@@ -1,10 +1,11 @@
 package com.example.servify.ui.modulos.trabajador.muro
 
-import android.R.attr.timeZone
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Star
@@ -21,18 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -148,7 +148,11 @@ fun DetalleAveriaScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(ServifySurface, RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(ServifySurface)
+                        .clickable {
+                            navController.navigate(Rutas.PerfilCliente.crearRuta(detalle.clienteId))
+                        }
                         .padding(16.dp)
                 ) {
                     Box(
@@ -166,12 +170,17 @@ fun DetalleAveriaScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(14.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
                         Text(
                             text = detalle.clienteNombre,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = ServifyTextTitle
+                            color = ServifyTextTitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -183,8 +192,8 @@ fun DetalleAveriaScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
 
-                            val calificacion = detalle?.clienteCalificacion ?: 0.0
-                            val totalResenas = detalle?.clienteTotalResenas ?: 0
+                            val calificacion = detalle.clienteCalificacion ?: 0.0
+                            val totalResenas = detalle.clienteTotalResenas ?: 0
 
                             val textoResenas = if (calificacion > 0.0) {
                                 "%.1f ($totalResenas reseñas)".format(calificacion)
@@ -200,7 +209,7 @@ fun DetalleAveriaScreen(
                         }
 
                         // Días siendo cliente
-                        val diasCliente = viewModel.calcularDiasCliente(viewModel.detalle?.clienteCreadoEn)
+                        val diasCliente = viewModel.calcularDiasCliente(detalle.clienteCreadoEn)
                         val textoCliente = if (diasCliente <= 0) "Nuevo en Servify" else "$diasCliente días siendo cliente de Servify"
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -214,10 +223,19 @@ fun DetalleAveriaScreen(
                             Text(
                                 text = textoCliente,
                                 fontSize = 12.sp,
-                                color = ServifyTextMuted
+                                color = ServifyTextMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Ver perfil ›",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ServifyBluePrimary
+                    )
                 }
 
                 Row(
@@ -239,7 +257,7 @@ fun DetalleAveriaScreen(
                     }
 
                     Text(
-                        text = viewModel.tiempoRelativo(viewModel.detalle?.creadoEn),
+                        text = viewModel.tiempoRelativo(detalle.creadoEn),
                         fontSize = 12.sp,
                         color = ServifyTextMuted
                     )

@@ -82,6 +82,10 @@ sealed class Rutas(val ruta: String) {
             "mapa_screen?lat=$lat&lng=$lng&titulo=${android.net.Uri.encode(titulo)}"
     }
 
+    object PerfilCliente : Rutas("perfil_cliente/{clienteId}") {
+        fun crearRuta(id: Int) = "perfil_cliente/$id"
+    }
+
     // Mapa de Solicitudes (Trabajador)
     object MapaSolicitudes : Rutas("mapa_solicitudes")
 

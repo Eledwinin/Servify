@@ -63,6 +63,7 @@ import com.example.servify.modulos_compartidos.pagos.PlanesMembresiaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CapturaRostroScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.CrearResenaScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.FotoPerfilViewModel
+import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilClienteScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilScreen
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.PerfilViewModel
 import com.example.servify.ui.modulos.modulos_compartidos.perfil.ResenasScreen
@@ -573,6 +574,16 @@ fun AppNavigation() {
                     navController = navController,
                     channelName = backStackEntry.arguments?.getString("channelName") ?: "default_channel",
                     esVideo = backStackEntry.arguments?.getBoolean("esVideo") ?: false
+                )
+            }
+
+            composable(
+                route = Rutas.PerfilCliente.ruta,
+                arguments = listOf(navArgument("clienteId") { type = NavType.IntType })
+            ) { entry ->
+                PerfilClienteScreen(
+                    clienteId = entry.arguments?.getInt("clienteId") ?: 0,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
 

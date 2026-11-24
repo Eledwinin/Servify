@@ -77,6 +77,7 @@ fun EnviarPropuestaScreen(
     }
 
     Scaffold(
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.union(WindowInsets.ime),
         topBar = {
             TopAppBar(
                 title = {
@@ -104,8 +105,8 @@ fun EnviarPropuestaScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(16.dp)
+                        .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Button(
                         onClick = {
@@ -141,6 +142,7 @@ fun EnviarPropuestaScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
                 .verticalScroll(scrollState)
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
