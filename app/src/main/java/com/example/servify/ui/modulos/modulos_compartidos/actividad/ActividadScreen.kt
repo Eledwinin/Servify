@@ -235,132 +235,132 @@ private fun PostulacionesTecnico(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-            if (viewModel.isLoading && viewModel.postulaciones.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = ServifyBluePrimary)
+                if (viewModel.isLoading && viewModel.postulaciones.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = ServifyBluePrimary)
+                        }
                     }
-                }
-            } else if (listaActual.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = if (pestañaSeleccionada == 0) "No tienes trabajos en curso" else "No hay historial de trabajos",
-                            color = ServifyTextMuted,
-                            fontSize = 14.sp
-                        )
+                } else if (listaActual.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (pestañaSeleccionada == 0) "No tienes trabajos en curso" else "No hay historial de trabajos",
+                                color = ServifyTextMuted,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
-                }
-            } else {
-                items(listaActual, key = { it.id }) { p ->
-                    val estPost = p.estado.lowercase()
-                    val estSol = p.estadoSolicitud?.lowercase().orEmpty()
-                    val estaCompletado = estSol in ESTADOS_COMPLETADO || estPost in ESTADOS_COMPLETADO
-                    val estaCancelado = estSol in ESTADOS_CANCELADO || estPost == "cancelada"
+                } else {
+                    items(listaActual, key = { it.id }) { p ->
+                        val estPost = p.estado.lowercase()
+                        val estSol = p.estadoSolicitud?.lowercase().orEmpty()
+                        val estaCompletado = estSol in ESTADOS_COMPLETADO || estPost in ESTADOS_COMPLETADO
+                        val estaCancelado = estSol in ESTADOS_CANCELADO || estPost == "cancelada"
 
-                    val (textoEstado, fondoEstado, colorTextoEstado) = when {
-                        estaCompletado -> Triple("COMPLETADO", ServifyCianSoft, ServifyBluePrimary)
-                        estaCancelado -> Triple("CANCELADA", ServifyDangerBg, ServifyDanger)
-                        estPost == "rechazada" -> Triple("NO SELECCIONADA", ServifyDangerBg, ServifyDanger)
-                        estSol == "esperando_pago" -> Triple("ESPERANDO PAGO", ServifyPendingBg, ServifyPendingText)
-                        estPost == "aceptada" -> Triple("EN PROGRESO", ServifyCianSoft, ServifyBluePrimary)
-                        else -> Triple("EN REVISIÓN", ServifyPendingBg, ServifyPendingText)
-                    }
+                        val (textoEstado, fondoEstado, colorTextoEstado) = when {
+                            estaCompletado -> Triple("COMPLETADO", ServifyCianSoft, ServifyBluePrimary)
+                            estaCancelado -> Triple("CANCELADA", ServifyDangerBg, ServifyDanger)
+                            estPost == "rechazada" -> Triple("NO SELECCIONADA", ServifyDangerBg, ServifyDanger)
+                            estSol == "esperando_pago" -> Triple("ESPERANDO PAGO", ServifyPendingBg, ServifyPendingText)
+                            estPost == "aceptada" -> Triple("EN PROGRESO", ServifyCianSoft, ServifyBluePrimary)
+                            else -> Triple("EN REVISIÓN", ServifyPendingBg, ServifyPendingText)
+                        }
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                navController.navigate("detalle_averia/${p.solicitudId}")
-                            },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = ServifySurface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                                .clickable {
+                                    navController.navigate("detalle_averia/${p.solicitudId}")
+                                },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Surface(
-                                    color = ServifyInputBackground,
-                                    shape = RoundedCornerShape(8.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = p.categoriaNombre.uppercase(),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ServifyTextMuted
-                                    )
-                                }
-                                Surface(
-                                    color = fondoEstado,
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = textoEstado,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colorTextoEstado
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = p.titulo,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = ServifyTextTitle
-                            )
-
-                            Text(
-                                text = "Tu propuesta: $%.2f".format(p.montoPropuesto),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ServifyTextMuted
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                if (estPost == "aceptada" && !estaCompletado && !estaCancelado && p.conversacionId != null) {
-                                    Button(
-                                        onClick = { navController.navigate(Rutas.Chat.crearRuta(p.conversacionId, "Cliente")) },
-                                        modifier = Modifier.weight(1f).height(42.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
+                                    Surface(
+                                        color = ServifyInputBackground,
+                                        shape = RoundedCornerShape(8.dp)
                                     ) {
-                                        Text("Ir al chat", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                        Text(
+                                            text = p.categoriaNombre.uppercase(),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = ServifyTextMuted
+                                        )
+                                    }
+                                    Surface(
+                                        color = fondoEstado,
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = textoEstado,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colorTextoEstado
+                                        )
                                     }
                                 }
 
-                                OutlinedButton(
-                                    onClick = { navController.navigate("detalle_averia/${p.solicitudId}") },
-                                    modifier = Modifier.weight(1f).height(42.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = ServifyInputBackground,
-                                        contentColor = ServifyBlueLight
-                                    ),
-                                    border = null
+                                Text(
+                                    text = p.titulo,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ServifyTextTitle
+                                )
+
+                                Text(
+                                    text = "Tu propuesta: $%.2f".format(p.montoPropuesto),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ServifyTextMuted
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text("Ver detalles ›", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    if (estPost == "aceptada" && !estaCompletado && !estaCancelado && p.conversacionId != null) {
+                                        Button(
+                                            onClick = { navController.navigate(Rutas.Chat.crearRuta(p.conversacionId, "Cliente")) },
+                                            modifier = Modifier.weight(1f).height(42.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary)
+                                        ) {
+                                            Text("Ir al chat", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                        }
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { navController.navigate("detalle_averia/${p.solicitudId}") },
+                                        modifier = Modifier.weight(1f).height(42.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = ServifyInputBackground,
+                                            contentColor = ServifyBlueLight
+                                        ),
+                                        border = null
+                                    ) {
+                                        Text("Ver detalles ›", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
         }
     }
 }
