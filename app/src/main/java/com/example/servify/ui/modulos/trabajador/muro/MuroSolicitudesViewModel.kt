@@ -27,6 +27,8 @@ class MuroSolicitudesViewModel(
     var solicitudes by mutableStateOf<List<SolicitudItemTecnico>>(emptyList())
     var contratacionesDirectas by mutableStateOf<List<ContratacionDirectaResponse>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
     var cargandoValidacionQr by mutableStateOf(false)
     var mensajeError by mutableStateOf<String?>(null)
     var mensajeExito by mutableStateOf<String?>(null)
@@ -79,6 +81,42 @@ class MuroSolicitudesViewModel(
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun refrescarMuro() {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val (listaPub, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerSolicitudes(
+                        "Bearer $token", SessionManager.latitud, SessionManager.longitud
+                    )
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<SolicitudItemTecnico>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    solicitudes = listaPub
+                }
+
+                val resDirectas = solicitudesRepository.obtenerContratacionesTecnico(token)
+                resDirectas.onSuccess { lista ->
+                    contratacionesDirectas = lista
+                }
+
+                cargarCantidadResenas()
+                cargarGanancias()
+            } catch (e: Exception) {
+                Log.e("MURO", "Error refrescando muro: ${e.message}")
+            } finally {
+                isRefreshing = false
             }
         }
     }

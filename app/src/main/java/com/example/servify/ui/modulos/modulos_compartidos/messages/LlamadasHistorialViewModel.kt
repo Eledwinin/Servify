@@ -15,6 +15,8 @@ import kotlinx.coroutines.withContext
 class LlamadasHistorialViewModel : ViewModel() {
     var llamadas by mutableStateOf<List<LlamadaItem>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
 
     fun cargar() {
         val token = SessionManager.token ?: return
@@ -28,6 +30,22 @@ class LlamadasHistorialViewModel : ViewModel() {
                 llamadas = lista
             } catch (_: Exception) { }
             finally { isLoading = false }
+        }
+    }
+
+    fun refrescar() {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val lista = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerLlamadas("Bearer $token")
+                    if (res.isSuccessful) res.body() ?: emptyList() else emptyList()
+                }
+                llamadas = lista
+            } catch (_: Exception) { }
+            finally { isRefreshing = false }
         }
     }
 }

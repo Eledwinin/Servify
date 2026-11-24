@@ -37,6 +37,7 @@ import com.example.servify.ui.componentes.botones.BotonAccion
 import com.example.servify.ui.componentes.cards.BannerPromocionPlanes
 import com.example.servify.ui.componentes.cards.TarjetaBase
 import com.example.servify.ui.componentes.feedback.DialogoConfirmacion
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.theme.*
 import java.util.Locale
 
@@ -192,15 +193,21 @@ fun PerfilScreen(
                 CircularProgressIndicator(color = ServifyBlueLight)
             }
         } else {
-            Column(
-                Modifier
+            ServifyPullToRefreshBox(
+                isRefreshing = ui.isRefreshing,
+                onRefresh = { viewModel.refrescarPerfil(token) },
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                CabeceraPerfil(user, esTecnico, esVip, onCambiarFoto = onIrACapturarFoto)
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CabeceraPerfil(user, esTecnico, esVip, onCambiarFoto = onIrACapturarFoto)
 
                 if (esTecnico) {
                     if (!esVip) {
@@ -374,6 +381,7 @@ fun PerfilScreen(
                     )
                 }
                 Spacer(Modifier.height(14.dp))
+            }
             }
         }
     }

@@ -19,6 +19,8 @@ class MisSolicitudesViewModel(
 ) : ViewModel() {
     var solicitudes by mutableStateOf<List<MiSolicitud>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
     var mensajeError by mutableStateOf<String?>(null)
 
     // ==========================================
@@ -61,6 +63,34 @@ class MisSolicitudesViewModel(
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun refrescar() {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val (resultado, errorTexto, codigo) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerMisSolicitudes("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val err = res.errorBody()?.string()
+                        Triple(emptyList<MiSolicitud>(), err, res.code())
+                    }
+                }
+                if (errorTexto == null) {
+                    solicitudes = resultado
+                } else {
+                    Log.e("MIS_SOL", "Error refrescando $codigo: $errorTexto")
+                }
+            } catch (e: Exception) {
+                Log.e("MIS_SOL", "Error refrescando solicitudes: ${e.message}")
+            } finally {
+                isRefreshing = false
             }
         }
     }

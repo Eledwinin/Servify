@@ -21,6 +21,7 @@ data class PerfilUiState(
     val fotosPortafolio: List<FotoPortafolioResponse> = emptyList(),
     val resenas: List<Resena> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isUploadingFoto: Boolean = false,
     val error: String? = null
 )
@@ -65,6 +66,29 @@ class PerfilViewModel(
                         error = err.message
                     )
                 }
+            }
+        }
+    }
+
+    fun refrescarPerfil(token: String) {
+        if (_uiState.value.isRefreshing || token.isBlank()) return
+        _uiState.update { it.copy(isRefreshing = true) }
+
+        viewModelScope.launch {
+            try {
+                val resultado = repository.obtenerPerfil(token)
+                resultado.onSuccess { usuario ->
+                    SessionManager.guardarSesion(token, usuario)
+                    _uiState.update {
+                        it.copy(usuario = usuario)
+                    }
+                }
+                cargarResenas(token)
+                cargarPortafolio()
+            } catch (e: Exception) {
+                Log.e("PERFIL", "Error refrescando perfil: ${e.message}")
+            } finally {
+                _uiState.update { it.copy(isRefreshing = false) }
             }
         }
     }

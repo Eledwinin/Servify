@@ -17,6 +17,8 @@ import kotlinx.coroutines.withContext
 class ActividadViewModel : ViewModel() {
     var postulaciones by mutableStateOf<List<MiPostulacion>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
     var mensajeError by mutableStateOf<String?>(null)
 
     fun cargarPostulaciones(context: Context? = null) {
@@ -43,6 +45,34 @@ class ActividadViewModel : ViewModel() {
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun refrescarPostulaciones(context: Context? = null) {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val (lista, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerMisPostulaciones("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<MiPostulacion>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    postulaciones = lista
+                } else {
+                    Log.e("ACTIVIDAD", "Error refrescando postulaciones $code - $err")
+                }
+            } catch (e: Exception) {
+                Log.e("ACTIVIDAD", "Error refrescando: ${e.message}")
+            } finally {
+                isRefreshing = false
             }
         }
     }

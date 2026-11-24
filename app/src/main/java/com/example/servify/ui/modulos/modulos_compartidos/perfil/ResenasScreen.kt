@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.data.SessionManager
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +26,7 @@ fun ResenasScreen(
     viewModel: PerfilViewModel = viewModel()
 ) {
     val ui by viewModel.uiState.collectAsState()
+    val token = SessionManager.token ?: ""
 
     Scaffold(
         containerColor = ServifyBackground,
@@ -46,20 +49,33 @@ fun ResenasScreen(
             )
         }
     ) { padding ->
-        if (ui.resenas.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No hay reseñas registradas aún.", color = ServifyTextMuted, fontSize = 14.sp)
-            }
-        } else {
+        ServifyPullToRefreshBox(
+            isRefreshing = ui.isRefreshing,
+            onRefresh = { if (token.isNotBlank()) viewModel.refrescarPerfil(token) },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(ui.resenas) { resena ->
+                if (ui.resenas.isEmpty()) {
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 80.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No hay reseñas registradas aún.", color = ServifyTextMuted, fontSize = 14.sp)
+                        }
+                    }
+                } else {
+                    items(ui.resenas) { resena ->
                     Surface(
                         color = ServifySurface,
                         shape = RoundedCornerShape(14.dp),
@@ -100,4 +116,5 @@ fun ResenasScreen(
             }
         }
     }
+}
 }

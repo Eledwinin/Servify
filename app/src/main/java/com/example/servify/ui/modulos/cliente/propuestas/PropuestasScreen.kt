@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.model.PropuestaItem
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -82,14 +83,20 @@ fun PropuestasScreen(
         },
         containerColor = ServifyBackground
     ) { padding ->
-        LazyColumn(
+        ServifyPullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            onRefresh = { viewModel.refrescar() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
             if (viewModel.isLoading && viewModel.propuestas.isEmpty()) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
@@ -269,6 +276,7 @@ fun PropuestasScreen(
                     }
                 }
             }
+        }
         }
     }
 

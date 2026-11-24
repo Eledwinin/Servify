@@ -28,6 +28,7 @@ import com.example.servify.data.SessionManager
 import com.example.servify.data.model.ProfesionalPerfil
 import com.example.servify.ui.componentes.cards.TarjetaTecnico
 import com.example.servify.ui.componentes.cards.TarjetaTecnicoDestacado
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -47,6 +48,7 @@ fun HomeScreen(
     val categoriaSeleccionada by viewModel.categoriaSeleccionada.collectAsState()
     val listaProfesionales by viewModel.listaProfesionales.collectAsState()
     val estaCargando by viewModel.estaCargando.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val mensajeError by viewModel.mensajeError.collectAsState()
 
     var tienePermisoUbicacion by remember { mutableStateOf(false) }
@@ -135,13 +137,19 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        ServifyPullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refrescarTecnicos() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // Estado Ubicación GPS
             item {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
@@ -373,4 +381,5 @@ fun HomeScreen(
             }
         }
     }
+}
 }

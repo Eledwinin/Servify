@@ -25,6 +25,9 @@ class HomeViewModel(
     private val _estaCargando = MutableStateFlow(true)
     val estaCargando: StateFlow<Boolean> = _estaCargando.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
@@ -56,6 +59,28 @@ class HomeViewModel(
             }.onFailure { error ->
                 _mensajeError.value = error.localizedMessage
                 _estaCargando.value = false
+            }
+        }
+    }
+
+    fun refrescarTecnicos() {
+        if (_isRefreshing.value) return
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            _mensajeError.value = null
+            try {
+                val resultado = repository.obtenerProfesionales()
+                resultado.onSuccess { data ->
+                    listaOriginal = data
+                    aplicarFiltrosYOrden()
+                }.onFailure { error ->
+                    _mensajeError.value = error.localizedMessage
+                }
+                refrescarEstadoSesion()
+            } catch (e: Exception) {
+                _mensajeError.value = e.localizedMessage
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

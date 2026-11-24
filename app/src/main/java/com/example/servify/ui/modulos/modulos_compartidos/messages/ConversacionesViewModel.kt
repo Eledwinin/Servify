@@ -15,6 +15,8 @@ import kotlinx.coroutines.withContext
 class ConversacionesViewModel : ViewModel() {
     var conversaciones by mutableStateOf<List<ConversacionItem>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
     var mensajeError by mutableStateOf<String?>(null)
 
     fun cargar() {
@@ -41,6 +43,34 @@ class ConversacionesViewModel : ViewModel() {
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun refrescar() {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val (lista, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerConversaciones("Bearer $token")
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<ConversacionItem>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    conversaciones = lista
+                } else {
+                    android.util.Log.e("CONVERSACIONES", "Error refrescando código $code - $err")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CONVERSACIONES", "Error refrescando: ${e.message}")
+            } finally {
+                isRefreshing = false
             }
         }
     }

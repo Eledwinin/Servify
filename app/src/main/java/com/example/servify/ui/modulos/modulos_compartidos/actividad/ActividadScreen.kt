@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.MiPostulacion
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.modulos.cliente.contratacion.MisSolicitudesContenido
 import com.example.servify.ui.navigation.Rutas
@@ -127,6 +128,7 @@ private fun esPostulacionDeHistorial(p: MiPostulacion): Boolean {
     return estPost in ESTADOS_HISTORIAL_POSTULACION || estSol in ESTADOS_HISTORIAL_SOLICITUD
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PostulacionesTecnico(
     navController: NavController,
@@ -223,10 +225,15 @@ private fun PostulacionesTecnico(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ServifyPullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            onRefresh = { viewModel.refrescarPostulaciones(context) },
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
             if (viewModel.isLoading && viewModel.postulaciones.isEmpty()) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
@@ -352,6 +359,7 @@ private fun PostulacionesTecnico(
                     }
                 }
             }
+        }
         }
     }
 }

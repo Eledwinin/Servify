@@ -16,6 +16,8 @@ import retrofit2.Response
 class PropuestasViewModel : ViewModel() {
     var propuestas by mutableStateOf<List<PropuestaItem>>(emptyList())
     var isLoading by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
     var mensajeError by mutableStateOf<String?>(null)
     var mensajeExito by mutableStateOf<String?>(null)
 
@@ -46,6 +48,35 @@ class PropuestasViewModel : ViewModel() {
                 mensajeError = "Error de conexión: ${e.message}"
             } finally {
                 isLoading = false
+            }
+        }
+    }
+
+    fun refrescar() {
+        if (isRefreshing) return
+        val token = SessionManager.token ?: return
+        if (solicitudActual <= 0) return
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val (lista, err, code) = withContext(Dispatchers.IO) {
+                    val res = RetrofitClient.instance.obtenerPropuestas("Bearer $token", solicitudActual)
+                    if (res.isSuccessful) {
+                        Triple(res.body() ?: emptyList(), null, res.code())
+                    } else {
+                        val e = res.errorBody()?.string()
+                        Triple(emptyList<PropuestaItem>(), e, res.code())
+                    }
+                }
+                if (err == null) {
+                    propuestas = lista
+                } else {
+                    android.util.Log.e("PROPUESTAS", "Error refrescando código $code - $err")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PROPUESTAS", "Error refrescando: ${e.message}")
+            } finally {
+                isRefreshing = false
             }
         }
     }

@@ -28,12 +28,14 @@ import androidx.navigation.NavController
 import com.example.servify.data.PresenciaManager
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.LlamadaItem
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.componentes.indicadores.IndicadorEstadoLinea
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversacionesScreen(
     navController: NavController,
@@ -152,149 +154,155 @@ fun ConversacionesScreen(
                             it.solicitudTitulo.contains(textoBusqueda, ignoreCase = true)
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ServifyPullToRefreshBox(
+                    isRefreshing = viewModel.isRefreshing,
+                    onRefresh = { viewModel.refrescar() },
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    if (viewModel.isLoading && viewModel.conversaciones.isEmpty()) {
-                        item {
-                            Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = ServifyBlueLight)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (viewModel.isLoading && viewModel.conversaciones.isEmpty()) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = ServifyBlueLight)
+                                }
                             }
-                        }
-                    } else if (conversacionesFiltradas.isEmpty()) {
-                        item {
-                            Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                                Text(
-                                    "Aún no tienes conversaciones activas",
-                                    color = ServifyTextMuted,
-                                    fontSize = 14.sp
-                                )
+                        } else if (conversacionesFiltradas.isEmpty()) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        "Aún no tienes conversaciones activas",
+                                        color = ServifyTextMuted,
+                                        fontSize = 14.sp
+                                    )
+                                }
                             }
-                        }
-                    } else {
-                        items(conversacionesFiltradas, key = { it.id }) { c ->
-                            // Revisa el estado de presencia en tiempo real con reactividad garantizada por estadosPresencia
-                            val estaEnLinea = estadosPresencia[c.otroId]
-                                ?: PresenciaManager.estaEnLinea(c.otroId, c.ultimoMensajeEn)
+                        } else {
+                            items(conversacionesFiltradas, key = { it.id }) { c ->
+                                // Revisa el estado de presencia en tiempo real con reactividad garantizada por estadosPresencia
+                                val estaEnLinea = estadosPresencia[c.otroId]
+                                    ?: PresenciaManager.estaEnLinea(c.otroId, c.ultimoMensajeEn)
 
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate(Rutas.Chat.crearRuta(c.id, c.otroNombre))
-                                    },
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = ServifySurface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Row(
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .clickable {
+                                            navController.navigate(Rutas.Chat.crearRuta(c.id, c.otroNombre))
+                                        },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                 ) {
-                                    Box(contentAlignment = Alignment.BottomEnd) {
-                                        AvatarUsuario(
-                                            nombre = c.otroNombre,
-                                            fotoUrl = c.otroFoto,
-                                            tamano = 48.dp
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(13.dp)
-                                                .background(ServifySurface, CircleShape)
-                                                .padding(2.dp)
-                                                .background(
-                                                    if (estaEnLinea) Color(0xFF22C55E) else Color(0xFF9CA3AF),
-                                                    CircleShape
-                                                )
-                                        )
-                                    }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(contentAlignment = Alignment.BottomEnd) {
+                                            AvatarUsuario(
+                                                nombre = c.otroNombre,
+                                                fotoUrl = c.otroFoto,
+                                                tamano = 48.dp
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(13.dp)
+                                                    .background(ServifySurface, CircleShape)
+                                                    .padding(2.dp)
+                                                    .background(
+                                                        if (estaEnLinea) Color(0xFF22C55E) else Color(0xFF9CA3AF),
+                                                        CircleShape
+                                                    )
+                                            )
+                                        }
 
-                                    Spacer(modifier = Modifier.width(14.dp))
+                                        Spacer(modifier = Modifier.width(14.dp))
 
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.weight(1f, fill = false)
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                ) {
+                                                    Text(
+                                                        text = c.otroNombre,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 15.sp,
+                                                        color = ServifyTextTitle,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    IndicadorEstadoLinea(
+                                                        estaEnLinea = estaEnLinea,
+                                                        mostrarTexto = false,
+                                                        tamanoPunto = 7.dp
+                                                    )
+                                                }
                                                 Text(
-                                                    text = c.otroNombre,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 15.sp,
-                                                    color = ServifyTextTitle,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                IndicadorEstadoLinea(
-                                                    estaEnLinea = estaEnLinea,
-                                                    mostrarTexto = false,
-                                                    tamanoPunto = 7.dp
+                                                    text = horaDe(c.ultimoMensajeEn),
+                                                    fontSize = 11.sp,
+                                                    color = ServifyTextMuted
                                                 )
                                             }
-                                            Text(
-                                                text = horaDe(c.ultimoMensajeEn),
-                                                fontSize = 11.sp,
-                                                color = ServifyTextMuted
-                                            )
-                                        }
 
-                                        Spacer(modifier = Modifier.height(2.dp))
+                                            Spacer(modifier = Modifier.height(2.dp))
 
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = c.solicitudTitulo,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = ServifyBlueLight,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
+                                                )
+                                                IndicadorEstadoLinea(
+                                                    estaEnLinea = estaEnLinea,
+                                                    mostrarTexto = true,
+                                                    tamanoPunto = 6.dp,
+                                                    tamanoTexto = 10.sp
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(2.dp))
+
                                             Text(
-                                                text = c.solicitudTitulo,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = ServifyBlueLight,
+                                                text = c.ultimoMensaje ?: "Sin mensajes todavía",
+                                                fontSize = 13.sp,
+                                                color = ServifyTextMuted,
                                                 maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.weight(1f, fill = false)
-                                            )
-                                            IndicadorEstadoLinea(
-                                                estaEnLinea = estaEnLinea,
-                                                mostrarTexto = true,
-                                                tamanoPunto = 6.dp,
-                                                tamanoTexto = 10.sp
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
 
-                                        Spacer(modifier = Modifier.height(2.dp))
-
-                                        Text(
-                                            text = c.ultimoMensaje ?: "Sin mensajes todavía",
-                                            fontSize = 13.sp,
-                                            color = ServifyTextMuted,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-
-                                    if (c.noLeidos > 0) {
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                                .background(ServifyBluePrimary, CircleShape),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${c.noLeidos}",
-                                                color = Color.White,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                        if (c.noLeidos > 0) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .background(ServifyBluePrimary, CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "${c.noLeidos}",
+                                                    color = Color.White,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -306,32 +314,42 @@ fun ConversacionesScreen(
                 // Sección de Registro de Llamadas reales obtenidas del Backend
                 val miId = SessionManager.usuarioActual?.id ?: 0
 
-                if (llamadasViewModel.isLoading && llamadasViewModel.llamadas.isEmpty()) {
-                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = ServifyBlueLight)
-                    }
-                } else if (llamadasViewModel.llamadas.isEmpty()) {
-                    Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            "No hay registros de llamadas recientes",
-                            color = ServifyTextMuted,
-                            fontSize = 14.sp
-                        )
-                    }
-                } else {
+                ServifyPullToRefreshBox(
+                    isRefreshing = llamadasViewModel.isRefreshing,
+                    onRefresh = { llamadasViewModel.refrescar() },
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(llamadasViewModel.llamadas, key = { it.id }) { llamada ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = ServifySurface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                FilaLlamada(l = llamada, miId = miId) {
-                                    navController.navigate(Rutas.Chat.crearRuta(llamada.conversacionId, llamada.otroNombre))
+                        if (llamadasViewModel.isLoading && llamadasViewModel.llamadas.isEmpty()) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = ServifyBlueLight)
+                                }
+                            }
+                        } else if (llamadasViewModel.llamadas.isEmpty()) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        "No hay registros de llamadas recientes",
+                                        color = ServifyTextMuted,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            items(llamadasViewModel.llamadas, key = { it.id }) { llamada ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = ServifySurface),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                ) {
+                                    FilaLlamada(l = llamada, miId = miId) {
+                                        navController.navigate(Rutas.Chat.crearRuta(llamada.conversacionId, llamada.otroNombre))
+                                    }
                                 }
                             }
                         }

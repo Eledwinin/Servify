@@ -23,9 +23,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.MiSolicitud
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisSolicitudesContenido(
     navController: NavController,
@@ -188,10 +190,15 @@ fun MisSolicitudesContenido(
             else -> solicitudesDirectas
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ServifyPullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            onRefresh = { viewModel.refrescar() },
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
             if (viewModel.isLoading && viewModel.solicitudes.isEmpty()) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
@@ -435,6 +442,7 @@ fun MisSolicitudesContenido(
                     }
                 }
             }
+        }
         }
     }
 

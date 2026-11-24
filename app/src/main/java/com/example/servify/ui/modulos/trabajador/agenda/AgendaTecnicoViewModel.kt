@@ -19,6 +19,9 @@ class AgendaTecnicoViewModel : ViewModel() {
     var cargando by mutableStateOf(false)
         private set
 
+    var isRefreshing by mutableStateOf(false)
+        private set
+
     var errorMensaje by mutableStateOf<String?>(null)
         private set
 
@@ -49,6 +52,27 @@ class AgendaTecnicoViewModel : ViewModel() {
                 errorMensaje = "Error de conexión: ${e.localizedMessage ?: "Intenta de nuevo"}"
             } finally {
                 cargando = false
+            }
+        }
+    }
+
+    fun refrescarAgenda() {
+        if (isRefreshing) return
+        val token = SessionManager.token
+        if (token.isNullOrBlank()) return
+
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                val res = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.obtenerAgendaTecnico("Bearer $token")
+                }
+                if (res.isSuccessful) {
+                    itemsAgenda = res.body().orEmpty()
+                }
+            } catch (_: Exception) {
+            } finally {
+                isRefreshing = false
             }
         }
     }

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.api.AgendaItemResponse
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 import java.text.SimpleDateFormat
@@ -125,13 +126,18 @@ fun AgendaTecnicoScreen(
         },
         containerColor = ServifyBackground
     ) { padding ->
-        LazyColumn(
+        ServifyPullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            onRefresh = { viewModel.refrescarAgenda() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(padding)
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // Calendario mensual con indicadores visuales de Visita y Entrega
             item {
                 CalendarioAgendaMarcado(
@@ -277,6 +283,7 @@ fun AgendaTecnicoScreen(
                     }
                 }
             }
+        }
         }
     }
 }

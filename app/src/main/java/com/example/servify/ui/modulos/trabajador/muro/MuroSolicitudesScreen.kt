@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.SessionManager
 import com.example.servify.data.model.ContratacionDirectaResponse
+import com.example.servify.ui.componentes.feedback.ServifyPullToRefreshBox
 import com.example.servify.ui.componentes.navegacion.TopBarConMenu
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -183,13 +184,19 @@ fun MuroSolicitudesScreen(
         },
         containerColor = ServifyBackground
     ) { paddingValues ->
-        LazyColumn(
+        ServifyPullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            onRefresh = { viewModel.refrescarMuro() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // 1. TARJETA DE GANANCIAS
             item {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -606,6 +613,7 @@ fun MuroSolicitudesScreen(
                     }
                 }
             }
+        }
         }
     }
 
