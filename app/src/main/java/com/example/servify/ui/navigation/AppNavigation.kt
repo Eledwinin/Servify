@@ -575,6 +575,22 @@ fun AppNavigation() {
                     esVideo = backStackEntry.arguments?.getBoolean("esVideo") ?: false
                 )
             }
+
+            composable(
+                route = Rutas.Call.ruta,
+                arguments = listOf(
+                    navArgument("channelName") { type = NavType.StringType },
+                    navArgument("esVideo") { type = NavType.BoolType },
+                    navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                CallScreen(
+                    navController = navController,
+                    channelName = backStackEntry.arguments?.getString("channelName") ?: "default_channel",
+                    esVideo = backStackEntry.arguments?.getBoolean("esVideo") ?: false,
+                    nombre = backStackEntry.arguments?.getString("nombre").orEmpty()
+                )
+            }
         }
 
         LlamadasManager.llamadaEntrante?.let { ll ->

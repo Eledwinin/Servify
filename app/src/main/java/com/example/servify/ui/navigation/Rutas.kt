@@ -12,6 +12,11 @@ sealed class Rutas(val ruta: String) {
         fun crearRuta(role: String) = "terminos_condiciones/$role"
     }
 
+    object Call : Rutas("call_screen/{channelName}/{esVideo}?nombre={nombre}") {
+        fun crearRuta(channelName: String, esVideo: Boolean, nombre: String = "") =
+            "call_screen/$channelName/$esVideo?nombre=${android.net.Uri.encode(nombre)}"
+    }
+
     object CapturaRostro : Rutas("captura_rostro")
 
     object PoliticasPrivacidad : Rutas("politicas_privacidad")
@@ -81,7 +86,5 @@ sealed class Rutas(val ruta: String) {
     object MapaSolicitudes : Rutas("mapa_solicitudes")
 
     // Para llamadas y videollamadas
-    object Call : Rutas("call_screen/{channelName}/{esVideo}") {
-        fun crearRuta(channelName: String, esVideo: Boolean) = "call_screen/$channelName/$esVideo"
-    }
+
 }
