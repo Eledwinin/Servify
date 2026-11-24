@@ -136,6 +136,7 @@ fun CheckoutPagoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .navigationBarsPadding()
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,

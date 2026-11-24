@@ -81,28 +81,34 @@ fun NuevaSolicitudScreen(
             )
         },
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(ServifySurface)
-                    .padding(16.dp)
+            Surface(
+                color = ServifySurface,
+                shadowElevation = 8.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = {
-                        val token = SessionManager.token ?: ""
-                        viewModel.enviarSolicitud(token, context.contentResolver)
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
-                    enabled = !viewModel.isLoading
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(16.dp)
                 ) {
-                    if (viewModel.isLoading) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text("Publicar Solicitud", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Button(
+                        onClick = {
+                            val token = SessionManager.token ?: ""
+                            viewModel.enviarSolicitud(token, context.contentResolver)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ServifyBluePrimary),
+                        enabled = !viewModel.isLoading
+                    ) {
+                        if (viewModel.isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("Publicar Solicitud", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
             }

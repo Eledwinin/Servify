@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -30,6 +31,7 @@ fun TopBarPrincipal(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -39,7 +41,10 @@ fun TopBarPrincipal(
                 text = titulo,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = ServifyBluePrimary
+                color = ServifyBluePrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
             )
 
             // Contenedor de la foto o iniciales

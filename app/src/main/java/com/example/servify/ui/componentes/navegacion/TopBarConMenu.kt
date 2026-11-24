@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -33,21 +34,28 @@ fun TopBarConMenu(
     var expanded by remember { mutableStateOf(false) }
     var mostrarDialogoCierre by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ServifyBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = ServifyBackground
     ) {
-        // Título de la app a la izquierda
-        Text(
-            text = titulo,
-            color = ServifyBlueLight,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Título de la app a la izquierda
+            Text(
+                text = titulo,
+                color = ServifyBlueLight,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Elementos extra opcionales (botón VIP)
@@ -217,6 +225,7 @@ fun TopBarConMenu(
             }
         }
     }
+}
 
     if (mostrarDialogoCierre) {
         AlertDialog(

@@ -161,7 +161,8 @@ fun ConversacionesScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp)
                     ) {
                         if (viewModel.isLoading && viewModel.conversaciones.isEmpty()) {
                             item {
@@ -321,7 +322,8 @@ fun ConversacionesScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp)
                     ) {
                         if (llamadasViewModel.isLoading && llamadasViewModel.llamadas.isEmpty()) {
                             item {

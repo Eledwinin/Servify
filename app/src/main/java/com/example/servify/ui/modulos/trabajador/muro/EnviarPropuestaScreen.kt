@@ -100,8 +100,13 @@ fun EnviarPropuestaScreen(
             )
         },
         bottomBar = {
-            Surface(shadowElevation = 10.dp, color = ServifySurface) {
-                Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Surface(shadowElevation = 10.dp, color = ServifySurface, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(16.dp)
+                ) {
                     Button(
                         onClick = {
                             val monto = precioEstimado.replace(",", ".").toDoubleOrNull()

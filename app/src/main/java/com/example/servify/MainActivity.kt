@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Habilitar diseño Edge-to-Edge para adaptar barras del sistema Android (Estado y Navegación)
+        enableEdgeToEdge()
 
         // Inicializar helper nativo de notificaciones y crear canales
         ServifyNotificationHelper.init(applicationContext)

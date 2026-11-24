@@ -232,7 +232,8 @@ private fun PostulacionesTecnico(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
             if (viewModel.isLoading && viewModel.postulaciones.isEmpty()) {
                 item {

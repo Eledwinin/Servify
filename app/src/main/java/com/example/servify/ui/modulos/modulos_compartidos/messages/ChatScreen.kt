@@ -216,7 +216,7 @@ fun ChatScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .navigationBarsPadding()
+                .imePadding()
         ) {
             if (hayAcuerdoCerrado) {
                 Surface(color = Color(0xFFCCFBF1), modifier = Modifier.fillMaxWidth()) {
@@ -355,7 +355,10 @@ fun ChatScreen(
             } else {
                 Surface(color = ServifySurface, shadowElevation = 8.dp, modifier = Modifier.fillMaxWidth()) {
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(

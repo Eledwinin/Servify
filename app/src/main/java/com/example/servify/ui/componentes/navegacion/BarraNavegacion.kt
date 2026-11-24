@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.ui.navigation.Rutas
@@ -50,7 +51,8 @@ fun BarraNavegacion(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 4.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -62,10 +64,11 @@ fun BarraNavegacion(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onItemClick(item.ruta) }
                         .background(if (seleccionado) ServifyCianSoft else Color.Transparent)
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .padding(horizontal = 4.dp, vertical = 6.dp)
                 ) {
                     if (mostrarBadge) {
                         BadgedBox(
@@ -103,7 +106,9 @@ fun BarraNavegacion(
                         text = item.titulo,
                         fontSize = 11.sp,
                         fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium,
-                        color = colorIconoTexto
+                        color = colorIconoTexto,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

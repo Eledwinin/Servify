@@ -148,7 +148,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 88.dp)
             ) {
             // Estado Ubicación GPS
             item {

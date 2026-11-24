@@ -195,7 +195,8 @@ fun MuroSolicitudesScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
             // 1. TARJETA DE GANANCIAS
             item {
