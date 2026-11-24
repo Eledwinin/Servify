@@ -58,7 +58,9 @@ fun OlvidePasswordScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ServifyBackground) // Fondo celeste pastel luminoso
+            .background(ServifyBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .imePadding()
             .padding(horizontal = 24.dp)
     ) {

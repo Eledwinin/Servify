@@ -43,10 +43,8 @@ fun ConversacionesScreen(
     llamadasViewModel: LlamadasHistorialViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    // Escucha reactiva a cambios de presencia de usuarios sin fugas de memoria
     val estadosPresencia by PresenciaManager.estadosUsuarios.collectAsState()
 
-    // Estado para alternar entre Chats (0) y Llamadas (1)
     var pestañaActiva by remember { mutableStateOf(0) }
     var textoBusqueda by remember { mutableStateOf("") }
 
@@ -74,9 +72,8 @@ fun ConversacionesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Pestañas superiores estilo píldora corporativa
             TabRow(
                 selectedTabIndex = pestañaActiva,
                 containerColor = ServifyInputBackground,
@@ -107,7 +104,7 @@ fun ConversacionesScreen(
                     selected = pestañaActiva == 1,
                     onClick = {
                         pestañaActiva = 1
-                        llamadasViewModel.cargar() // Recargar historial al abrir pestaña
+                        llamadasViewModel.cargar()
                     },
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
@@ -123,11 +120,9 @@ fun ConversacionesScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Contenido dinámico según la pestaña
             if (pestañaActiva == 0) {
-                // Sección de Chats con barra de búsqueda
                 OutlinedTextField(
                     value = textoBusqueda,
                     onValueChange = { textoBusqueda = it },
@@ -147,7 +142,7 @@ fun ConversacionesScreen(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 val conversacionesFiltradas = viewModel.conversaciones.filter {
                     it.otroNombre.contains(textoBusqueda, ignoreCase = true) ||
@@ -182,7 +177,6 @@ fun ConversacionesScreen(
                             }
                         } else {
                             items(conversacionesFiltradas, key = { it.id }) { c ->
-                                // Revisa el estado de presencia en tiempo real con reactividad garantizada por estadosPresencia
                                 val estaEnLinea = estadosPresencia[c.otroId]
                                     ?: PresenciaManager.estaEnLinea(c.otroId, c.ultimoMensajeEn)
 
@@ -312,7 +306,6 @@ fun ConversacionesScreen(
                     }
                 }
             } else {
-                // Sección de Registro de Llamadas reales obtenidas del Backend
                 val miId = SessionManager.usuarioActual?.id ?: 0
 
                 ServifyPullToRefreshBox(
@@ -362,7 +355,6 @@ fun ConversacionesScreen(
     }
 }
 
-// Componente reutilizable para cada fila del historial de llamadas
 @Composable
 fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
     val saliente = l.emisorId == miId

@@ -29,24 +29,23 @@ import com.example.servify.ui.theme.*
 fun TopBarConMenu(
     navController: NavController,
     titulo: String = "Servify",
+    modifier: Modifier = Modifier,
     accionesDerecha: @Composable RowScope.() -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     var mostrarDialogoCierre by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = ServifyBackground
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Título de la app a la izquierda
             Text(
                 text = titulo,
                 color = ServifyBlueLight,
@@ -57,175 +56,172 @@ fun TopBarConMenu(
                 modifier = Modifier.weight(1f, fill = false)
             )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Elementos extra opcionales (botón VIP)
-            accionesDerecha()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                accionesDerecha()
 
-            Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
-            // Botón de menú hamburguesa con superficie estilizada
-            Box {
-                Surface(
-                    onClick = { expanded = true },
-                    color = ServifySurface,
-                    shape = RoundedCornerShape(12.dp),
-                    shadowElevation = 2.dp
-                ) {
-                    Box(
-                        modifier = Modifier.padding(8.dp),
-                        contentAlignment = Alignment.Center
+                Box {
+                    Surface(
+                        onClick = { expanded = true },
+                        color = ServifySurface,
+                        shape = RoundedCornerShape(12.dp),
+                        shadowElevation = 2.dp
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Menú de opciones",
-                            tint = ServifyBlueLight,
-                            modifier = Modifier.size(22.dp)
-                        )
+                        Box(
+                            modifier = Modifier.padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menú de opciones",
+                                tint = ServifyBlueLight,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
-                }
 
-                // Menú desplegable con diseño moderno e iconos en fila
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .background(ServifySurface)
-                        .width(235.dp)
-                        .padding(vertical = 6.dp)
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PersonOutline,
-                                    contentDescription = null,
-                                    tint = ServifyBlueLight,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Ver Perfil", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            }
-                        },
-                        onClick = {
-                            expanded = false
-                            navController.navigate(Rutas.Perfil.ruta)
-                        },
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-
-                    if (SessionManager.esTecnico) {
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .background(ServifySurface)
+                            .width(235.dp)
+                            .padding(vertical = 6.dp)
+                    ) {
                         DropdownMenuItem(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Icons.Default.CalendarMonth,
+                                        imageVector = Icons.Default.PersonOutline,
                                         contentDescription = null,
                                         tint = ServifyBlueLight,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text("Mi Agenda", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text("Ver Perfil", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                 }
                             },
                             onClick = {
                                 expanded = false
-                                navController.navigate(Rutas.AgendaTecnico.ruta)
+                                navController.navigate(Rutas.Perfil.ruta)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
+                        if (SessionManager.esTecnico) {
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = ServifyBlueLight,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text("Mi Agenda", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    }
+                                },
+                                onClick = {
+                                    expanded = false
+                                    navController.navigate(Rutas.AgendaTecnico.ruta)
+                                },
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Gavel,
+                                        contentDescription = null,
+                                        tint = ServifyTextMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Términos y Condiciones", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                val rolActual = if (SessionManager.esTecnico) "TECNICO" else "CLIENTE"
+                                navController.navigate(Rutas.TerminosCondiciones.crearRuta(rolActual))
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.PrivacyTip,
+                                        contentDescription = null,
+                                        tint = ServifyTextMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Políticas de Privacidad", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Rutas.PoliticasPrivacidad.ruta)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.HelpOutline,
+                                        contentDescription = null,
+                                        tint = ServifyTextMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Ayuda y Soporte", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Rutas.AyudaSoporte.ruta)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
+                        HorizontalDivider(
+                            color = ServifyBorder,
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
+                        )
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Logout,
+                                        contentDescription = null,
+                                        tint = ServifyDanger,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Cerrar Sesión", color = ServifyDanger, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                mostrarDialogoCierre = true
                             },
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )
                     }
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Gavel,
-                                    contentDescription = null,
-                                    tint = ServifyTextMuted,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Términos y Condiciones", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            }
-                        },
-                        onClick = {
-                            expanded = false
-                            val rolActual = if (SessionManager.esTecnico) "TECNICO" else "CLIENTE"
-                            navController.navigate(Rutas.TerminosCondiciones.crearRuta(rolActual))
-                        },
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PrivacyTip,
-                                    contentDescription = null,
-                                    tint = ServifyTextMuted,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Políticas de Privacidad", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            }
-                        },
-                        onClick = {
-                            expanded = false
-                            navController.navigate(Rutas.PoliticasPrivacidad.ruta)
-                        },
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.HelpOutline,
-                                    contentDescription = null,
-                                    tint = ServifyTextMuted,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Ayuda y Soporte", color = ServifyTextTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            }
-                        },
-                        onClick = {
-                            expanded = false
-                            navController.navigate(Rutas.AyudaSoporte.ruta)
-                        },
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-
-                    HorizontalDivider(
-                        color = ServifyBorder,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
-                    )
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Logout,
-                                    contentDescription = null,
-                                    tint = ServifyDanger,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Cerrar Sesión", color = ServifyDanger, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                        },
-                        onClick = {
-                            expanded = false
-                            mostrarDialogoCierre = true
-                        },
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
                 }
             }
         }
     }
-}
 
     if (mostrarDialogoCierre) {
         AlertDialog(

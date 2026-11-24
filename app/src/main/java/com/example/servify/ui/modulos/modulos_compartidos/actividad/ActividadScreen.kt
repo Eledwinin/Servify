@@ -10,10 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -96,7 +95,11 @@ fun ActividadScreen(
         },
         containerColor = ServifyBackground
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             if (esTecnico) {
                 PostulacionesTecnico(navController, viewModel)
             } else {
@@ -128,6 +131,24 @@ private fun esPostulacionDeHistorial(p: MiPostulacion): Boolean {
     return estPost in ESTADOS_HISTORIAL_POSTULACION || estSol in ESTADOS_HISTORIAL_SOLICITUD
 }
 
+private data class OpcionFiltroTecnico(
+    val clave: String,
+    val etiqueta: String
+)
+
+private val FILTROS_TECNICO_EN_CURSO = listOf(
+    OpcionFiltroTecnico("TODAS", "Todas"),
+    OpcionFiltroTecnico("EN_REVISION", "En revisión"),
+    OpcionFiltroTecnico("EN_PROGRESO", "En progreso"),
+    OpcionFiltroTecnico("POR_CERRAR", "Por cerrar")
+)
+
+private val FILTROS_TECNICO_HISTORIAL = listOf(
+    OpcionFiltroTecnico("TODAS", "Todas"),
+    OpcionFiltroTecnico("COMPLETADO", "Completados"),
+    OpcionFiltroTecnico("CANCELADO_O_RECHAZADO", "Canceladas / No sel.")
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PostulacionesTecnico(
@@ -136,6 +157,11 @@ private fun PostulacionesTecnico(
 ) {
     val context = LocalContext.current
     var pestañaSeleccionada by remember { mutableStateOf(0) } // 0 = En Curso, 1 = Historial
+    var filtroEstado by remember { mutableStateOf("TODAS") }
+
+    LaunchedEffect(pestañaSeleccionada) {
+        filtroEstado = "TODAS"
+    }
 
     val postulacionesHistorial = remember(viewModel.postulaciones) {
         viewModel.postulaciones.filter { esPostulacionDeHistorial(it) }
@@ -145,85 +171,127 @@ private fun PostulacionesTecnico(
         viewModel.postulaciones.filter { !esPostulacionDeHistorial(it) }
     }
 
-    val listaActual = if (pestañaSeleccionada == 0) postulacionesEnCurso else postulacionesHistorial
+    val basePestana = if (pestañaSeleccionada == 0) postulacionesEnCurso else postulacionesHistorial
+
+    val listaActual = remember(basePestana, filtroEstado) {
+        if (filtroEstado == "TODAS") {
+            basePestana
+        } else {
+            basePestana.filter { p ->
+                val estPost = p.estado.lowercase()
+                val estSol = p.estadoSolicitud?.lowercase().orEmpty()
+                when (filtroEstado) {
+                    "EN_REVISION" -> estPost != "aceptada" && estSol != "esperando_pago"
+                    "EN_PROGRESO" -> estPost == "aceptada" && estSol != "esperando_pago"
+                    "POR_CERRAR" -> estSol == "esperando_pago"
+                    "COMPLETADO" -> estSol in ESTADOS_COMPLETADO || estPost in ESTADOS_COMPLETADO
+                    "CANCELADO_O_RECHAZADO" -> estSol in ESTADOS_CANCELADO ||
+                            estPost == "cancelada" ||
+                            estPost == "rechazada"
+                    else -> true
+                }
+            }
+        }
+    }
+
+    val opcionesFiltroActual = if (pestañaSeleccionada == 0) {
+        FILTROS_TECNICO_EN_CURSO
+    } else {
+        FILTROS_TECNICO_HISTORIAL
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
+        TabRow(
+            selectedTabIndex = pestañaSeleccionada,
+            containerColor = ServifyInputBackground,
+            contentColor = ServifyBluePrimary,
+            indicator = {},
+            divider = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(RoundedCornerShape(24.dp))
+        ) {
+            Tab(
+                selected = pestañaSeleccionada == 0,
+                onClick = {
+                    pestañaSeleccionada = 0
+                    viewModel.cargarPostulaciones(context)
+                },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (pestañaSeleccionada == 0) ServifySurface else Color.Transparent),
+                text = {
+                    Text(
+                        "En Curso",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (pestañaSeleccionada == 0) ServifyBlueLight else ServifyTextMuted
+                    )
+                }
+            )
+            Tab(
+                selected = pestañaSeleccionada == 1,
+                onClick = {
+                    pestañaSeleccionada = 1
+                    viewModel.cargarPostulaciones(context)
+                },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (pestañaSeleccionada == 1) ServifySurface else Color.Transparent),
+                text = {
+                    Text(
+                        "Historial",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (pestañaSeleccionada == 1) ServifyBlueLight else ServifyTextMuted
+                    )
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            TabRow(
-                selectedTabIndex = pestañaSeleccionada,
-                containerColor = ServifyInputBackground,
-                contentColor = ServifyBluePrimary,
-                indicator = {},
-                divider = {},
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(24.dp))
-            ) {
-                Tab(
-                    selected = pestañaSeleccionada == 0,
-                    onClick = {
-                        pestañaSeleccionada = 0
-                        viewModel.cargarPostulaciones(context)
-                    },
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(if (pestañaSeleccionada == 0) ServifySurface else Color.Transparent),
-                    text = {
+            items(opcionesFiltroActual, key = { it.clave }) { opcion ->
+                val seleccionado = filtroEstado == opcion.clave
+                FilterChip(
+                    selected = seleccionado,
+                    onClick = { filtroEstado = opcion.clave },
+                    label = {
                         Text(
-                            "En Curso",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = if (pestañaSeleccionada == 0) ServifyBlueLight else ServifyTextMuted
+                            text = opcion.etiqueta,
+                            fontSize = 12.sp,
+                            fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium
                         )
-                    }
-                )
-                Tab(
-                    selected = pestañaSeleccionada == 1,
-                    onClick = {
-                        pestañaSeleccionada = 1
-                        viewModel.cargarPostulaciones(context)
                     },
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(if (pestañaSeleccionada == 1) ServifySurface else Color.Transparent),
-                    text = {
-                        Text(
-                            "Historial",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = if (pestañaSeleccionada == 1) ServifyBlueLight else ServifyTextMuted
-                        )
-                    }
-                )
-            }
-
-            IconButton(
-                onClick = { viewModel.cargarPostulaciones(context) },
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(ServifySurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Actualizar lista",
-                    tint = ServifyBlueLight
+                    shape = RoundedCornerShape(20.dp),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = seleccionado,
+                        borderColor = ServifyBluePrimary.copy(alpha = 0.55f),
+                        selectedBorderColor = ServifyBlueLight
+                    ),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = ServifyBluePrimary,
+                        selectedLabelColor = Color.White,
+                        containerColor = ServifySurface,
+                        labelColor = ServifyTextTitle
+                    )
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         ServifyPullToRefreshBox(
             isRefreshing = viewModel.isRefreshing,
@@ -245,7 +313,11 @@ private fun PostulacionesTecnico(
                     item {
                         Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
                             Text(
-                                text = if (pestañaSeleccionada == 0) "No tienes trabajos en curso" else "No hay historial de trabajos",
+                                text = when {
+                                    filtroEstado != "TODAS" -> "No hay trabajos con ese estado"
+                                    pestañaSeleccionada == 0 -> "No tienes trabajos en curso"
+                                    else -> "No hay historial de trabajos"
+                                },
                                 color = ServifyTextMuted,
                                 fontSize = 14.sp
                             )

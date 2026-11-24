@@ -169,7 +169,7 @@ fun MisSolicitudesContenido(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         TabRow(
             selectedTabIndex = pestañaSeleccionada,
@@ -265,16 +265,24 @@ fun MisSolicitudesContenido(
                             )
                         },
                         shape = RoundedCornerShape(20.dp),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = seleccionado,
+                            borderColor = ServifyBluePrimary.copy(alpha = 0.55f),
+                            selectedBorderColor = ServifyBlueLight
+                        ),
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = ServifyCianSoft,
-                            selectedLabelColor = ServifyBluePrimary,
+                            selectedContainerColor = ServifyBluePrimary,
+                            selectedLabelColor = Color.White,
                             containerColor = ServifySurface,
-                            labelColor = ServifyTextMuted
+                            labelColor = ServifyTextTitle
                         )
                     )
                 }
             }
         }
+
+
 
         Spacer(modifier = Modifier.height(12.dp))
 

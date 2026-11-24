@@ -48,6 +48,8 @@ fun SeleccionRolScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ServifyBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
         Column(
             modifier = Modifier

@@ -99,6 +99,8 @@ fun RegistroTrabajadorScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ServifyBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .imePadding()
             .padding(horizontal = 24.dp)
     ) {

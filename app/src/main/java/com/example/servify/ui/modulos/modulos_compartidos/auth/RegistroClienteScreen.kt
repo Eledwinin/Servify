@@ -79,6 +79,9 @@ fun RegistroClienteScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ServifyBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
             .padding(horizontal = 24.dp)
     ) {
         Column(

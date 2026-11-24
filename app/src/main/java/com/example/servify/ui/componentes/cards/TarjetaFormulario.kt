@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.servify.ui.componentes.util.bringIntoViewOnFocus
 import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -201,7 +202,9 @@ fun TarjetaFormulario(
                 value = titulo,
                 onValueChange = onTituloChange,
                 placeholder = { Text("Ej: Fuga de agua en lavabo", color = ServifyTextPlaceholder) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bringIntoViewOnFocus(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -224,7 +227,9 @@ fun TarjetaFormulario(
                 onValueChange = onPresupuestoChange,
                 placeholder = { Text("Ej: 25.00", color = ServifyTextPlaceholder) },
                 leadingIcon = { Text("$", color = ServifyTextMuted, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 12.dp)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bringIntoViewOnFocus(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -249,7 +254,8 @@ fun TarjetaFormulario(
                 placeholder = { Text("Describe los detalles del problema...", color = ServifyTextPlaceholder) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp),
+                    .height(110.dp)
+                    .bringIntoViewOnFocus(),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = ServifyBorder,
