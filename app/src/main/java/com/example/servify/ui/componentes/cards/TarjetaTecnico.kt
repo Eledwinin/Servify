@@ -1,10 +1,8 @@
 package com.example.servify.ui.componentes.cards
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -13,12 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.theme.*
 
 @Composable
@@ -28,20 +26,24 @@ fun TarjetaTecnico(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 🌟 Distinguimos entre VIP real y Plan Semanal
+    // Distinguimos entre VIP real y Plan Semanal
     val esSemanal = profesional.tipoPlan?.contains("Semanal", ignoreCase = true) == true
     val esVipReal = profesional.esVip == 1 && !esSemanal
 
     val nombre = profesional.nombreCompleto.ifBlank { "Técnico" }
     val oficio = profesional.oficio.ifBlank { "Servicio" }
 
-    val iniciales = nombre
-        .split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .mapNotNull { it.firstOrNull()?.uppercase() }
-        .joinToString("")
-        .ifEmpty { "PR" }
+    val fondoAvatar = when {
+        esVipReal -> Color(0xFFFEF3C7) // Fondo dorado claro
+        esSemanal -> Color(0xFFE0F2FE) // Fondo celeste claro
+        else -> ServifyCianSoft
+    }
+
+    val colorIniciales = when {
+        esVipReal -> Color(0xFFB45309)
+        esSemanal -> Color(0xFF0284C7)
+        else -> ServifyBluePrimary
+    }
 
     Card(
         modifier = modifier
@@ -65,30 +67,13 @@ fun TarjetaTecnico(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            esVipReal -> Color(0xFFFEF3C7) // Fondo dorado claro
-                            esSemanal -> Color(0xFFE0F2FE) // Fondo celeste claro
-                            else -> ServifyCianSoft
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = iniciales,
-                    color = when {
-                        esVipReal -> Color(0xFFB45309)
-                        esSemanal -> Color(0xFF0284C7)
-                        else -> ServifyBluePrimary
-                    },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
+            AvatarUsuario(
+                nombre = nombre,
+                fotoUrl = profesional.fotoUrl,
+                tamano = 52.dp,
+                fondo = fondoAvatar,
+                colorTexto = colorIniciales
+            )
 
             Spacer(modifier = Modifier.width(14.dp))
 
@@ -104,7 +89,7 @@ fun TarjetaTecnico(
                         color = ServifyTextTitle
                     )
 
-                    // 🌟 ETIQUETA DINÁMICA: VIP VS SEMANAL VS VERIFICADO NORMAL
+                    // ETIQUETA DINÁMICA: VIP VS SEMANAL VS VERIFICADO NORMAL
                     when {
                         esVipReal -> {
                             Surface(

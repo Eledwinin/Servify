@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.theme.*
 
 @Composable
@@ -30,7 +31,7 @@ fun TarjetaTecnicoDestacado(
 
     Card(
         modifier = modifier
-            .width(220.dp)
+            .width(230.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = ServifySurface),
@@ -75,20 +76,37 @@ fun TarjetaTecnicoDestacado(
 
             Spacer(Modifier.height(10.dp))
 
-            Text(
-                text = nombre,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = ServifyTextTitle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AvatarUsuario(
+                    nombre = nombre,
+                    fotoUrl = profesional.fotoUrl,
+                    tamano = 42.dp,
+                    fondo = Color(0xFFFEF3C7),
+                    colorTexto = Color(0xFFB45309)
+                )
 
-            Text(
-                text = "${profesional.anosExperiencia} años de exp.",
-                fontSize = 11.sp,
-                color = ServifyTextMuted
-            )
+                Spacer(Modifier.width(10.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = nombre,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = ServifyTextTitle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Text(
+                        text = "${profesional.anosExperiencia} años de exp.",
+                        fontSize = 11.sp,
+                        color = ServifyTextMuted
+                    )
+                }
+            }
 
             Spacer(Modifier.height(10.dp))
 

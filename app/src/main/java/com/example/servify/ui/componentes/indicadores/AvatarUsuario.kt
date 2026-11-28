@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.servify.ui.modulos.modulos_compartidos.messages.ChatConfig
 import com.example.servify.ui.theme.ServifyBluePrimary
 import com.example.servify.ui.theme.ServifyCianSoft
 
@@ -34,15 +35,31 @@ fun AvatarUsuario(
         nombre.orEmpty().split(" ").filter { it.isNotBlank() }.take(2)
             .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" }
     }
+
+    val urlCompleta = remember(fotoUrl) {
+        when {
+            fotoUrl.isNullOrBlank() -> null
+            fotoUrl.startsWith("http") -> fotoUrl
+            else -> ChatConfig.SERVER_URL.trimEnd('/') + "/" + fotoUrl.trimStart('/')
+        }
+    }
+
     Box(
-        modifier.size(tamano).clip(CircleShape).background(fondo),
+        modifier = modifier.size(tamano).clip(CircleShape).background(fondo),
         contentAlignment = Alignment.Center
     ) {
-        Text(iniciales, color = colorTexto, fontWeight = FontWeight.Bold, fontSize = (tamano.value * 0.36f).sp)
-        if (!fotoUrl.isNullOrBlank()) {
+        Text(
+            text = iniciales,
+            color = colorTexto,
+            fontWeight = FontWeight.Bold,
+            fontSize = (tamano.value * 0.36f).sp
+        )
+        if (!urlCompleta.isNullOrBlank()) {
             AsyncImage(
-                model = fotoUrl, contentDescription = "Foto de perfil",
-                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
+                model = urlCompleta,
+                contentDescription = "Foto de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
         }
     }

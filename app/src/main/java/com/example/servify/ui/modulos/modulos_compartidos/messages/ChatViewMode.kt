@@ -28,6 +28,8 @@ class ChatViewModel : ViewModel() {
     var otroEstaEnLinea by mutableStateOf(false)
         private set
 
+    var fotoOtro by mutableStateOf<String?>(null)
+
     // Estado para notificar si hay una llamada entrante mientras estás dentro del chat
     var llamadaEntrante by mutableStateOf<Pair<Int, Boolean>?>(null) // Pair<conversacionId, esVideo>
 

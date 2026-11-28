@@ -53,6 +53,22 @@ fun ConversacionesScreen(
         llamadasViewModel.cargar()
     }
 
+    LaunchedEffect(viewModel.conversaciones.size) {
+        viewModel.conversaciones.forEach { c ->
+            if (!c.otroFoto.isNullOrBlank()) {
+                SessionManager.fotosConversaciones[c.id] = c.otroFoto
+            }
+        }
+    }
+
+    LaunchedEffect(llamadasViewModel.llamadas.size) {
+        llamadasViewModel.llamadas.forEach { l ->
+            if (!l.otroFoto.isNullOrBlank()) {
+                SessionManager.fotosConversaciones[l.conversacionId] = l.otroFoto
+            }
+        }
+    }
+
     LaunchedEffect(viewModel.mensajeError) {
         viewModel.mensajeError?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -184,6 +200,7 @@ fun ConversacionesScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
+                                            SessionManager.fotosConversaciones[c.id] = c.otroFoto
                                             navController.navigate(Rutas.Chat.crearRuta(c.id, c.otroNombre))
                                         },
                                     shape = RoundedCornerShape(16.dp),
@@ -343,6 +360,7 @@ fun ConversacionesScreen(
                                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                 ) {
                                     FilaLlamada(l = llamada, miId = miId) {
+                                        SessionManager.fotosConversaciones[llamada.conversacionId] = llamada.otroFoto
                                         navController.navigate(Rutas.Chat.crearRuta(llamada.conversacionId, llamada.otroNombre))
                                     }
                                 }
@@ -382,7 +400,8 @@ fun FilaLlamada(l: LlamadaItem, miId: Int, onClick: () -> Unit) {
     ) {
         AvatarUsuario(
             nombre = l.otroNombre,
-            fotoUrl = l.otroFoto,
+            fotoUrl = l.otroFoto?.takeIf { it.isNotBlank() }
+                ?: SessionManager.fotosConversaciones[l.conversacionId],
             tamano = 50.dp
         )
 

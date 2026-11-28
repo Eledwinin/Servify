@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +23,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.servify.data.SessionManager
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +37,6 @@ fun EditarPerfilClienteScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
-
-    val iniciales = uiState.nombre.trim().split(" ").filter { it.isNotBlank() }.take(2)
-        .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "CL" }
 
     LaunchedEffect(token) {
         if (token.isNotBlank()) {
@@ -107,15 +105,13 @@ fun EditarPerfilClienteScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Box(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(ServifyBluePrimary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = iniciales, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-                    }
+                    AvatarUsuario(
+                        nombre = uiState.nombre.ifBlank { SessionManager.usuarioActual?.nombre },
+                        fotoUrl = SessionManager.usuarioActual?.fotoUrl,
+                        tamano = 80.dp,
+                        fondo = ServifyBluePrimary,
+                        colorTexto = Color.White
+                    )
                 }
 
                 Card(

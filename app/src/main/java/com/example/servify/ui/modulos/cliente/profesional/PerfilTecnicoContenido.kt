@@ -1,8 +1,6 @@
 package com.example.servify.ui.modulos.cliente.profesional
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -15,14 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.servify.data.model.ProfesionalPerfil
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.theme.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PerfilTecnicoContenido(perfil: ProfesionalPerfil) {
-    val iniciales = perfil.nombreCompleto.split(" ").filter { it.isNotBlank() }.take(2)
-        .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" }
-
     val categoriaPrincipal = perfil.oficio.ifBlank {
         perfil.especialidades.firstOrNull() ?: "Técnico Profesional"
     }
@@ -31,19 +27,11 @@ fun PerfilTecnicoContenido(perfil: ProfesionalPerfil) {
 
         // Cabecera Principal con Avatar, Nombre, Badge de Categoría y Calificación
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(72.dp)
-                    .background(ServifyCianSoft, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = iniciales,
-                    color = ServifyBluePrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
-                )
-            }
+            AvatarUsuario(
+                nombre = perfil.nombreCompleto,
+                fotoUrl = perfil.fotoUrl,
+                tamano = 72.dp
+            )
 
             Spacer(Modifier.width(14.dp))
 

@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.servify.data.LlamadasManager
+import com.example.servify.data.SessionManager
 import com.example.servify.ui.componentes.cards.TarjetaOfertaItem
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.componentes.indicadores.IndicadorEstadoLinea
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
@@ -56,6 +58,7 @@ fun ChatScreen(
     nombreOtro: String,
     onBackClick: () -> Unit,
     navController: NavController,
+    fotoOtro: String? = null,
     viewModel: ChatViewModel = viewModel(),
     onVerPerfil: () -> Unit = {},
     onReportarUsuario: (motivo: String) -> Unit = {},
@@ -116,20 +119,11 @@ fun ChatScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(contentAlignment = Alignment.BottomEnd) {
-                            Box(
-                                Modifier
-                                    .size(40.dp)
-                                    .background(ServifyCianSoft, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    nombreOtro.split(" ").filter { it.isNotBlank() }.take(2)
-                                        .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("").ifEmpty { "?" },
-                                    color = ServifyBluePrimary,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                )
-                            }
+                            AvatarUsuario(
+                                nombre = nombreOtro,
+                                fotoUrl = fotoOtro ?: SessionManager.fotosConversaciones[conversacionId] ?: viewModel.fotoOtro,
+                                tamano = 40.dp
+                            )
                             Box(
                                 modifier = Modifier
                                     .size(11.dp)

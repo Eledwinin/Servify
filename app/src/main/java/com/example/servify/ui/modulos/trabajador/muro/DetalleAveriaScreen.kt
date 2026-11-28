@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,6 +33,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.navigation.Rutas
 import com.example.servify.ui.theme.*
 
@@ -155,20 +155,11 @@ fun DetalleAveriaScreen(
                         }
                         .padding(16.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .background(ServifyCianSoft.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = detalle.clienteNombre.firstOrNull()?.uppercase() ?: "C",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = ServifyBlueLight
-                        )
-                    }
+                    AvatarUsuario(
+                        nombre = detalle.clienteNombre,
+                        fotoUrl = detalle.clienteFoto,
+                        tamano = 50.dp
+                    )
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(
                         modifier = Modifier.weight(1f),

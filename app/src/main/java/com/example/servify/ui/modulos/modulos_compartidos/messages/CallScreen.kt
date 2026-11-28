@@ -46,9 +46,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.servify.data.LlamadasManager
+import com.example.servify.data.SessionManager
+import com.example.servify.ui.componentes.indicadores.AvatarUsuario
 import com.example.servify.ui.modulos.modulos_compartidos.messages.CallViewModel.Evento
 import com.example.servify.ui.modulos.modulos_compartidos.messages.CallViewModel.Fase
-import com.example.servify.data.LlamadasManager
 import com.example.servify.ui.theme.*
 
 private val FondoOscuro = Color(0xFF021024)
@@ -65,6 +67,7 @@ fun CallScreen(
     val context = LocalContext.current
     val view = LocalView.current
     val conversacionId = remember(channelName) { channelName.removePrefix("chat_").toIntOrNull() ?: 0 }
+    val fotoRemota = remember(conversacionId) { SessionManager.fotosConversaciones[conversacionId] }
 
     // La pantalla no se apaga durante la llamada
     DisposableEffect(view) {
@@ -135,6 +138,7 @@ fun CallScreen(
             PanelLlamada(
                 esVideo = esVideo,
                 nombre = nombre,
+                fotoUrl = fotoRemota,
                 fase = vm.fase,
                 tiempo = tiempo,
                 remotoSinVideo = esVideo && vm.uidRemoto != null
@@ -246,6 +250,7 @@ fun CallScreen(
 private fun PanelLlamada(
     esVideo: Boolean,
     nombre: String,
+    fotoUrl: String?,
     fase: Fase,
     tiempo: String,
     remotoSinVideo: Boolean
@@ -256,7 +261,12 @@ private fun PanelLlamada(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            AvatarPulso(nombre = nombre, esVideo = esVideo, pulsando = fase != Fase.EN_LLAMADA)
+            AvatarPulso(
+                nombre = nombre,
+                fotoUrl = fotoUrl,
+                esVideo = esVideo,
+                pulsando = fase != Fase.EN_LLAMADA
+            )
             Spacer(Modifier.height(28.dp))
 
             Text(
@@ -283,7 +293,7 @@ private fun PanelLlamada(
 }
 
 @Composable
-private fun AvatarPulso(nombre: String, esVideo: Boolean, pulsando: Boolean) {
+private fun AvatarPulso(nombre: String, fotoUrl: String?, esVideo: Boolean, pulsando: Boolean) {
     val transicion = rememberInfiniteTransition(label = "pulso")
     val spec = infiniteRepeatable<Float>(tween(2000, easing = LinearEasing), RepeatMode.Restart)
     val specDesfasada = infiniteRepeatable<Float>(
@@ -301,15 +311,22 @@ private fun AvatarPulso(nombre: String, esVideo: Boolean, pulsando: Boolean) {
         } else {
             Box(Modifier.size(148.dp).border(2.dp, ServifyCianSoft.copy(alpha = 0.35f), CircleShape))
         }
-        Box(
-            Modifier.size(112.dp).clip(CircleShape).background(ServifyBluePrimary)
-                .border(3.dp, ServifyBlueLight.copy(alpha = 0.6f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            val iniciales = inicialesDe(nombre)
-            if (iniciales.isNotEmpty()) {
-                Text(iniciales, color = Color.White, fontSize = 38.sp, fontWeight = FontWeight.Bold)
-            } else {
+
+        if (!fotoUrl.isNullOrBlank() || nombre.isNotBlank()) {
+            AvatarUsuario(
+                nombre = nombre,
+                fotoUrl = fotoUrl,
+                tamano = 112.dp,
+                fondo = ServifyBluePrimary,
+                colorTexto = Color.White,
+                modifier = Modifier.border(3.dp, ServifyBlueLight.copy(alpha = 0.6f), CircleShape)
+            )
+        } else {
+            Box(
+                Modifier.size(112.dp).clip(CircleShape).background(ServifyBluePrimary)
+                    .border(3.dp, ServifyBlueLight.copy(alpha = 0.6f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(if (esVideo) Icons.Default.Videocam else Icons.Default.Call, null, tint = Color.White, modifier = Modifier.size(48.dp))
             }
         }
@@ -378,7 +395,3 @@ private fun BotonControl(
 private fun formatoTiempo(s: Int): String =
     if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s % 3600 / 60, s % 60)
     else "%02d:%02d".format(s / 60, s % 60)
-
-private fun inicialesDe(nombre: String): String =
-    nombre.split(" ").filter { it.isNotBlank() }.take(2)
-        .mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("")

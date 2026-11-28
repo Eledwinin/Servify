@@ -19,6 +19,8 @@ object SessionManager {
     var categoriaId: Int? = null
         private set
 
+    val fotosConversaciones = mutableMapOf<Int, String?>()
+
     var tipoPlanActivo: String? = null // Para guardar si es "Plan Semanal" o "Plan Servify PRO"
         private set
 
